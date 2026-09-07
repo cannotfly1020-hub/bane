@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>💥 瞬発力・爆発バネドック</title>
+  <!-- Google Fonts: M PLUS Rounded 1c (900 Black) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@800;900&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-dark-1: #070c18;
+      --bg-dark-2: #0c1428;
+      --panel-bg: rgba(17, 26, 47, 0.95);
+      --panel-border: #22355b;
+      --accent-orange: #ff7700;
+      --accent-orange-dark: #b84400;
+      --accent-emerald: #00d26a;
+      --accent-emerald-dark: #008f47;
+      --accent-gold: #ffc400;
+      --accent-gold-dark: #b38600;
+      --accent-blue: #0099ff;
+      --accent-blue-dark: #005bb5;
+      --accent-purple: #9d4edd;
+      --accent-purple-dark: #621b96;
+      --accent-red: #ef4444;
+      --accent-red-dark: #991b1b;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      margin: 0;
+      padding: 0;
+      font-family: 'M PLUS Rounded 1c', sans-serif;
+      font-weight: 900;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background: radial-gradient(circle at center, var(--bg-dark-2) 0%, var(--bg-dark-1) 100%);
+      color: #ffffff;
+      position: fixed;
+    }
+
+    .sunburst-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 250vmax;
+      height: 250vmax;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.15;
+      background: repeating-conic-gradient(
+        from 0deg,
+        rgba(255, 140, 0, 0.6) 0deg 10deg,
+        transparent 10deg 20deg
+      );
+      animation: spinRays 40s linear infinite;
+    }
+
+    @keyframes spinRays {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    /* App Layout Container - 全画面カメラビュー＆HUDオーバーレイ構成 */
+    #app-viewport {
+      position: relative;
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      z-index: 10;
+    }
+
+    .brawl-text {
+      text-shadow: 
+        -2px -2px 0 #000,  
+         2px -2px 0 #000,
+        -2px  2px 0 #000,
+         2px  2px 0 #000,
+         0 3px 6px rgba(0, 0, 0, 0.9);
+      letter-spacing: 0.5px;
+    }
+
+    .brawl-text-glow {
+      text-shadow: 
+        0 0 10px rgba(255, 180, 0, 0.8),
+        -2px -2px 0 #000,  
+         2px -2px 0 #000,
+        -2px  2px 0 #000,
+         2px  2px 0 #000;
+    }
+
+    .btn-brawl {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      border: 2px solid #000;
+      cursor: pointer;
+      color: #fff;
+      font-size: 14px;
+      text-align: center;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.1s ease;
+      position: relative;
+      overflow: hidden;
+      line-height: 1.1;
+      padding: 8px 12px;
+    }
+
+    .btn-brawl:active {
+      transform: translateY(3px);
+    }
+
+    .btn-orange {
+      background: linear-gradient(180deg, #ffa200 0%, #ff6600 100%);
+      box-shadow: 0 4px 0 var(--accent-orange-dark), 0 6px 12px rgba(0,0,0,0.6);
+    }
+    .btn-orange:active {
+      box-shadow: 0 1px 0 var(--accent-orange-dark), 0 2px 4px rgba(0,0,0,0.6);
+    }
+
+    .btn-emerald {
+      background: linear-gradient(180deg, #25f187 0%, #00b853 100%);
+      box-shadow: 0 4px 0 var(--accent-emerald-dark), 0 6px 12px rgba(0,0,0,0.6);
+    }
+    .btn-emerald:active {
+      box-shadow: 0 1px 0 var(--accent-emerald-dark), 0 2px 4px rgba(0,0,0,0.6);
+    }
+
+    .btn-gold {
+      background: linear-gradient(180deg, #ffe033 0%, #e6a800 100%);
+      box-shadow: 0 4px 0 var(--accent-gold-dark), 0 6px 12px rgba(0,0,0,0.6);
+    }
+    .btn-gold:active {
+      box-shadow: 0 1px 0 var(--accent-gold-dark), 0 2px 4px rgba(0,0,0,0.6);
+    }
+
+    .btn-blue {
+      background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+      box-shadow: 0 4px 0 var(--accent-blue-dark), 0 6px 12px rgba(0,0,0,0.6);
+    }
+    .btn-blue:active {
+      box-shadow: 0 1px 0 var(--accent-blue-dark), 0 2px 4px rgba(0,0,0,0.6);
+    }
+
+    .btn-purple {
+      background: linear-gradient(180deg, #c084fc 0%, #9333ea 100%);
+      box-shadow: 0 4px 0 var(--accent-purple-dark), 0 6px 12px rgba(0,0,0,0.6);
+    }
+    .btn-purple:active {
+      box-shadow: 0 1px 0 var(--accent-purple-dark), 0 2px 4px rgba(0,0,0,0.6);
+    }
+
+    .btn-pulse-gold {
+      animation: buttonGoldPulse 1.2s infinite ease-in-out;
+    }
+    @keyframes buttonGoldPulse {
+      0%, 100% { box-shadow: 0 4px 0 var(--accent-gold-dark), 0 0 14px rgba(255, 215, 0, 0.6); transform: scale(1); }
+      50% { box-shadow: 0 4px 0 var(--accent-gold-dark), 0 0 24px rgba(255, 230, 0, 1); transform: scale(1.02); }
+    }
+
+    /* Common Panel System */
+    .panel-brawl {
+      background: var(--panel-bg);
+      border: 3px solid var(--panel-border);
+      border-radius: 16px;
+      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.2), 0 8px 24px rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .badge-brawl {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 8px;
+      border: 2px solid #000;
+      background: rgba(8, 14, 28, 0.9);
+      font-size: 11px;
+      color: #f1f5f9;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 4px rgba(0,0,0,0.4);
+    }
+
+    .badge-brawl.badge-attention {
+      border-color: #ffd000;
+      background: linear-gradient(180deg, #b45309 0%, #78350f 100%);
+      color: #ffea79;
+      animation: alertBorderPulse 1s infinite ease-in-out;
+    }
+
+    .alert-pulse {
+      animation: alertBorderPulse 1.2s infinite ease-in-out;
+    }
+    @keyframes alertBorderPulse {
+      0%, 100% { border-color: #ffd000; box-shadow: 0 0 12px rgba(255, 208, 0, 0.8); }
+      50% { border-color: #ff3300; box-shadow: 0 0 20px rgba(255, 51, 0, 0.9); }
+    }
+
+    /* 上部フローティングHUDグループ */
+    .top-hud-group {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 40;
+      padding: calc(6px + env(safe-area-inset-top)) 10px 0 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(7, 12, 24, 0.85) 0%, rgba(7, 12, 24, 0.4) 75%, transparent 100%);
+      padding-bottom: 12px;
+    }
+    .top-hud-group > * {
+      pointer-events: auto;
+    }
+
+    header.brawl-header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      height: 38px;
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      font-size: 15px;
+      color: #fff;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Calibration Step Banner (半透明スリム化) */
+    .step-banner-bar {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      border: 1.5px solid #f59e0b;
+      border-radius: 8px;
+      padding: 3px 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    .step-badge {
+      font-size: 9px;
+      padding: 2px 5px;
+      border-radius: 5px;
+      border: 1px solid #000;
+      background: rgba(51, 65, 85, 0.8);
+      color: #94a3b8;
+    }
+
+    .step-badge.active {
+      background: #f59e0b;
+      color: #000;
+      font-weight: 900;
+      box-shadow: 0 0 8px #f59e0b;
+    }
+
+    .step-badge.done {
+      background: #10b981;
+      color: #fff;
+    }
+
+    .step-text {
+      font-size: 10px;
+      color: #ffea79;
+      flex: 1;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Test Selector Grid (スリムピル型) */
+    .tab-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      width: 100%;
+      flex-shrink: 0;
+    }
+
+    .tab-btn {
+      padding: 4px 2px;
+      border-radius: 8px;
+      border: 1.5px solid #000;
+      background: rgba(18, 29, 52, 0.75);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      color: #94a3b8;
+      font-size: 10px;
+      text-align: center;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1px;
+      box-shadow: 0 2px 0 #0b1424;
+      transition: all 0.15s ease;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(180deg, #ff9400 0%, #e65100 100%);
+      color: #fff;
+      border-color: #fff;
+      box-shadow: 0 3px 0 #8c2500, 0 0 10px rgba(255, 120, 0, 0.6);
+      transform: translateY(-1px);
+    }
+
+    .tab-btn span.sub {
+      font-size: 8px;
+      opacity: 0.9;
+      font-weight: 800;
+    }
+
+    /* カメラ全画面化 */
+    #screen-wrapper {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      z-index: 1;
+    }
+
+    #camera-feed {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1); /* default front camera */
+    }
+
+    #canvas-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* Gyro Spirit Level */
+    .gyro-indicator {
+      position: absolute;
+      top: 118px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      background: rgba(10, 16, 30, 0.75);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      border: 1.5px solid #334155;
+      padding: 3px 8px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      color: #cbd5e1;
+    }
+
+    .gyro-indicator.valid {
+      border-color: var(--accent-emerald);
+      color: #a7f3d0;
+      box-shadow: 0 0 10px rgba(0, 210, 106, 0.4);
+    }
+
+    .gyro-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #64748b;
+    }
+    .gyro-indicator.valid .gyro-dot {
+      background: var(--accent-emerald);
+      box-shadow: 0 0 8px #00d26a;
+    }
+
+    /* Safe Boundary & Feet Lock Box */
+    .safe-frame {
+      position: absolute;
+      top: 110px;
+      bottom: 120px;
+      left: 10px;
+      right: 10px;
+      border: 2px dashed rgba(255, 255, 255, 0.25);
+      border-radius: 14px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .head-guideline {
+      position: absolute;
+      top: 124px;
+      left: 15%;
+      right: 15%;
+      height: 2px;
+      border-top: 2px dashed #facc15;
+      z-index: 12;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .head-guideline span {
+      background: rgba(0,0,0,0.7);
+      padding: 1px 6px;
+      border-radius: 6px;
+      font-size: 9px;
+      color: #facc15;
+      transform: translateY(-8px);
+    }
+
+    .foot-lock-box {
+      position: absolute;
+      bottom: 118px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 190px;
+      height: 68px;
+      border: 3px solid rgba(255, 200, 0, 0.85);
+      background: rgba(255, 200, 0, 0.12);
+      border-radius: 12px;
+      z-index: 15;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      color: #ffea79;
+      font-size: 10px;
+      text-align: center;
+      pointer-events: none;
+      box-shadow: 0 0 14px rgba(255, 200, 0, 0.4);
+    }
+
+    .foot-lock-box.locked {
+      border-color: var(--accent-emerald);
+      background: rgba(0, 210, 106, 0.2);
+      color: #6ee7b7;
+      box-shadow: 0 0 18px rgba(0, 210, 106, 0.6);
+    }
+
+    /* Calibrate Guide Overlay in Camera */
+    .calib-guide-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(7, 12, 24, 0.75);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      z-index: 25;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .calib-guide-overlay.hidden {
+      display: none;
+    }
+
+    /* HUD Metrics Badges (フローティング位置微調整) */
+    .hud-metrics {
+      position: absolute;
+      top: 146px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .hud-card {
+      background: rgba(12, 20, 36, 0.78);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      border: 1.5px solid #233556;
+      border-radius: 10px;
+      padding: 5px 8px;
+      min-width: 82px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+
+    .hud-card .hud-label {
+      font-size: 9px;
+      color: #94a3b8;
+    }
+
+    .hud-card .hud-value {
+      font-size: 18px;
+      color: #fff;
+    }
+
+    .hud-card .hud-unit {
+      font-size: 9px;
+      color: var(--accent-gold);
+    }
+
+    .countdown-overlay {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 30;
+      pointer-events: none;
+    }
+
+    .countdown-num {
+      font-size: 110px;
+      color: #fff;
+      transform: scale(0.6);
+      animation: countPop 0.8s cubic-bezier(0.18, 0.89, 0.32, 1.28) infinite;
+    }
+
+    @keyframes countPop {
+      0% { transform: scale(0.5); opacity: 0; }
+      50% { transform: scale(1.1); opacity: 1; }
+      100% { transform: scale(1); opacity: 0.9; }
+    }
+
+    .state-banner {
+      position: absolute;
+      bottom: 196px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(230, 81, 0, 0.95);
+      border: 2px solid #ffcc80;
+      border-radius: 20px;
+      padding: 4px 16px;
+      font-size: 12px;
+      color: #fff;
+      display: none;
+      align-items: center;
+      gap: 6px;
+      z-index: 25;
+      box-shadow: 0 4px 14px rgba(255, 102, 0, 0.6);
+    }
+
+    /* 10s Ult Drill HUD */
+    .drill-hud {
+      position: absolute;
+      top: 112px;
+      right: 10px;
+      left: 10px;
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 22;
+      pointer-events: none;
+    }
+
+    .drill-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .combo-badge {
+      font-size: 15px;
+      color: #ffd000;
+      background: rgba(0,0,0,0.7);
+      padding: 3px 8px;
+      border-radius: 8px;
+      border: 1px solid #ffd000;
+    }
+
+    .ult-bar-frame {
+      width: 100%;
+      height: 12px;
+      background: rgba(0,0,0,0.6);
+      border: 2px solid #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .ult-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ffea00, #ff0055);
+      transition: width 0.15s ease-out;
+      box-shadow: 0 0 10px #ff3366;
+    }
+
+    /* 下部フローティングHUDフッター */
+    footer.brawl-footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 40;
+      padding: 0 10px calc(8px + env(safe-area-inset-bottom)) 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      pointer-events: none;
+      background: linear-gradient(0deg, rgba(7, 12, 24, 0.85) 0%, rgba(7, 12, 24, 0.4) 75%, transparent 100%);
+      padding-top: 14px;
+    }
+    footer.brawl-footer > * {
+      pointer-events: auto;
+    }
+
+    .main-trigger-btn {
+      width: 100%;
+      height: 44px;
+      font-size: 15px;
+      letter-spacing: 0.5px;
+    }
+
+    .footer-sub-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      height: 34px;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 9, 18, 0.88);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+      animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-box {
+      width: 100%;
+      max-width: 380px;
+      max-height: 90dvh;
+      overflow-y: auto;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #233556;
+      padding-bottom: 8px;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      color: #fff;
+    }
+
+    .btn-close-modal {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #e11d48;
+      border: 2px solid #000;
+      box-shadow: 0 3px 0 #881337;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    /* Form Fields in Modal */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-size: 12px;
+      color: #cbd5e1;
+    }
+
+    .form-input-number {
+      width: 100%;
+      background: #0f172a;
+      border: 2px solid #334155;
+      border-radius: 10px;
+      color: #f8fafc;
+      font-size: 24px;
+      padding: 8px 12px;
+      text-align: center;
+      outline: none;
+    }
+    .form-input-number:focus {
+      border-color: var(--accent-orange);
+      box-shadow: 0 0 10px rgba(255, 120, 0, 0.5);
+    }
+
+    /* Replay & Report Styling */
+    .replay-player {
+      width: 100%;
+      height: 180px;
+      background: #000;
+      border-radius: 12px;
+      border: 2px solid #334155;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .replay-player video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .report-stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .report-stat-card {
+      background: #0b1325;
+      border: 1px solid #1f2f4e;
+      border-radius: 10px;
+      padding: 8px;
+      text-align: center;
+    }
+
+    .star-player-banner {
+      background: linear-gradient(90deg, #b45309, #f59e0b, #b45309);
+      border: 2px solid #fff;
+      border-radius: 12px;
+      padding: 8px;
+      text-align: center;
+      color: #fff;
+      font-size: 14px;
+      box-shadow: 0 0 16px rgba(245, 158, 11, 0.7);
+    }
+
+    /* Toast Notification System */
+    #brawl-toast {
+      position: fixed;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: rgba(15, 23, 42, 0.96);
+      border: 2px solid var(--accent-gold);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.8), 0 0 12px rgba(255, 196, 0, 0.4);
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 24px;
+      font-size: 13px;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      white-space: nowrap;
+    }
+
+    #brawl-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sunburst-container"></div>
+
+  <!-- Toast Notification Node -->
+  <div id="brawl-toast" class="brawl-text">通知メッセージ</div>
+
+  <!-- Main Viewport (100dvh Locked, 全画面カメラ＋HUD構造) -->
+  <div id="app-viewport">
+    
+    <!-- 全画面カメラスクリーン（最背面） -->
+    <main id="screen-wrapper">
+      <video id="camera-feed" playsinline autoplay muted></video>
+      <canvas id="canvas-overlay"></canvas>
+
+      <!-- AI水準器 -->
+      <div id="gyro-indicator" class="gyro-indicator">
+        <div class="gyro-dot"></div>
+        <span id="gyro-text" class="brawl-text">📐 傾き確認中...</span>
+      </div>
+
+      <!-- ガイドライン＆枠 -->
+      <div class="safe-frame"></div>
+      
+      <div class="head-guideline" id="head-guideline">
+        <span class="brawl-text">頭頂部ガイド</span>
+      </div>
+
+      <div id="foot-lock-box" class="foot-lock-box">
+        <span class="brawl-text" style="font-size: 11px;">ここに両足を揃える</span>
+        <span id="foot-lock-status" style="font-size: 9px; opacity: 0.9;">立ち位置を探索中...</span>
+      </div>
+
+      <!-- 初回スキャン誘導オーバーレイ -->
+      <div id="calib-guide-overlay" class="calib-guide-overlay">
+        <div style="font-size: 38px;">📏</div>
+        <div class="brawl-text-glow" style="font-size: 18px; color: #ffea79;">精密測定のための初期設定</div>
+        <p style="font-size: 12px; color: #cbd5e1; line-height: 1.5; font-weight: 800; max-width: 280px;">
+          単眼カメラで反発力をミリ単位で測るため、最初に<span style="color: var(--accent-gold);">「身長」</span>と<span style="color: var(--accent-gold);">「立ち位置」</span>を登録する必要があります！
+        </p>
+        <button id="btn-guide-start-calib" class="btn-brawl btn-gold btn-pulse-gold brawl-text" style="padding: 10px 24px; font-size: 15px;">
+          👉 身長を入力してスタート
+        </button>
+      </div>
+
+      <!-- Live HUD Metrics -->
+      <div class="hud-metrics">
+        <div class="hud-card">
+          <span class="hud-label brawl-text" id="metric-main-title">接地時間</span>
+          <div>
+            <span class="hud-value brawl-text" id="metric-main-val">--</span>
+            <span class="hud-unit brawl-text" id="metric-main-unit">ms</span>
+          </div>
+        </div>
+        <div class="hud-card">
+          <span class="hud-label brawl-text" id="metric-sub-title">跳躍高/RSI</span>
+          <div>
+            <span class="hud-value brawl-text" id="metric-sub-val">--</span>
+            <span class="hud-unit brawl-text" id="metric-sub-unit">cm</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 10s Ult Drill HUD -->
+      <div id="drill-hud" class="drill-hud">
+        <div class="drill-top-row">
+          <span class="combo-badge brawl-text" id="drill-combo-text">COMBO 0</span>
+          <span class="brawl-text" id="drill-timer-text" style="color: #ff3b30; font-size: 16px;">⏱️ 10.0s</span>
+        </div>
+        <div class="ult-bar-frame">
+          <div id="ult-bar-fill" class="ult-bar-fill"></div>
+        </div>
+      </div>
+
+      <!-- カウントダウン -->
+      <div id="countdown-overlay" class="countdown-overlay">
+        <div id="countdown-num" class="countdown-num brawl-text-glow">3</div>
+      </div>
+
+      <!-- 計測中バナー -->
+      <div id="state-banner" class="state-banner alert-pulse">
+        <span id="state-banner-icon">💥</span>
+        <span id="state-banner-text" class="brawl-text">バネ計測中...</span>
+      </div>
+    </main>
+
+    <!-- 上部フローティングHUDグループ（ヘッダー＋ステップバー＋タブ） -->
+    <div class="top-hud-group">
+      <header class="brawl-header">
+        <div class="brand-title brawl-text">
+          <span>💥</span>
+          <span>瞬発力・爆発バネドック</span>
+        </div>
+        <div class="header-actions">
+          <button id="btn-open-scan" class="badge-brawl badge-attention brawl-text" style="cursor: pointer;">
+            <span id="badge-height-val">⚠️ 身長未設定</span>
+          </button>
+          <button id="btn-toggle-cam" class="btn-brawl btn-blue" style="padding: 4px 8px; font-size: 11px;">
+            🔄 カメラ
+          </button>
+          <button id="btn-open-records" class="btn-brawl btn-purple" style="padding: 4px 8px; font-size: 11px;">
+            📊 カルテ
+          </button>
+        </div>
+      </header>
+
+      <!-- 3ステップ・ナビゲーションバー -->
+      <div class="step-banner-bar" id="step-banner-bar">
+        <div class="step-badge active" id="step-badge-1">1. 身長登録</div>
+        <span style="color:#64748b; font-size:9px;">▶</span>
+        <div class="step-badge" id="step-badge-2">2. 直立スキャン</div>
+        <span style="color:#64748b; font-size:9px;">▶</span>
+        <div class="step-badge" id="step-badge-3">3. 測定GO</div>
+        <div class="step-text brawl-text" id="step-guide-text">まずは身長を入力してください</div>
+      </div>
+
+      <!-- テスト選択タブ -->
+      <div class="tab-grid">
+        <button class="tab-btn active" data-test="RJ">
+          <span class="brawl-text">🦘 ① 2連続RJ</span>
+          <span class="sub">反発バネ＆接地速</span>
+        </button>
+        <button class="tab-btn" data-test="VERTICAL">
+          <span class="brawl-text">🦘 ② 単発垂直跳び</span>
+          <span class="sub">最大カウンター</span>
+        </button>
+        <button class="tab-btn" data-test="BRAKE">
+          <span class="brawl-text">🛑 ③ 前足急停止</span>
+          <span class="sub">着地エキセントリック</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 下部フローティングHUDフッター -->
+    <footer class="brawl-footer">
+      <button id="btn-main-start" class="btn-brawl btn-gold btn-pulse-gold main-trigger-btn brawl-text">
+        📏 STEP 1: 身長を登録してスキャン開始
+      </button>
+      <div class="footer-sub-actions">
+        <button id="btn-open-report" class="btn-brawl btn-emerald brawl-text" style="font-size: 12px;">
+          📋 診断レポート
+        </button>
+        <button id="btn-start-drill" class="btn-brawl btn-purple brawl-text" style="font-size: 12px;">
+          🎮 10秒ウルトドリル
+        </button>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- 身長設定＆初期キャリブレーションモーダル -->
+  <div id="modal-scan" class="modal-backdrop">
+    <div class="panel-brawl modal-box">
+      <div class="modal-header">
+        <div class="modal-title brawl-text">📏 STEP 1: 選手の選択・身長登録</div>
+        <button class="btn-close-modal brawl-text" data-close="modal-scan">✕</button>
+      </div>
+      
+      <!-- 登録済み選手クイック選択セクション -->
+      <div class="form-group">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <label class="form-label brawl-text">👤 登録済み選手から選ぶ:</label>
+          <span style="font-size: 10px; color: var(--accent-gold);">タップで即時適用</span>
+        </div>
+        <div id="profile-select-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto; padding-right: 2px;">
+          <!-- JSで登録済み選手ボタンを動的生成 -->
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 8px; margin: 4px 0;">
+        <div style="flex: 1; height: 1px; background: #334155;"></div>
+        <span style="font-size: 10px; color: #94a3b8;" class="brawl-text">または新規登録</span>
+        <div style="flex: 1; height: 1px; background: #334155;"></div>
+      </div>
+
+      <!-- 新規選手登録フォーム -->
+      <div class="form-group">
+        <label class="form-label brawl-text">選手名 (ニックネーム):</label>
+        <input type="text" id="input-player-name" class="form-input-number brawl-text" placeholder="例: はると" style="font-size: 16px; padding: 6px 10px; text-align: left;" maxlength="10">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label brawl-text">身長 (cm):</label>
+        <input type="number" id="input-height" class="form-input-number brawl-text" value="140" min="90" max="220">
+      </div>
+
+      <div class="panel-brawl" style="padding: 10px; background: rgba(0,0,0,0.4); border-color: #334155; font-size: 11px; line-height: 1.4;">
+        <p class="brawl-text" style="color: var(--accent-gold);">⚠️ なぜ最初に設定が必要？</p>
+        <p style="color: #cbd5e1; margin-top: 4px; font-weight: 800;">
+          カメラ画面内の身長ピクセル数から「1cmあたりの比率」を算出し、ミリ秒単位のバネ弾性や跳躍高を割り出すためです。
+        </p>
+      </div>
+
+      <button id="btn-save-height" class="btn-brawl btn-emerald brawl-text" style="height: 44px; font-size: 15px;">
+        ➕ 新規保存して直立スキャンへ
+      </button>
+    </div>
+  </div>
+
+  <!-- 診断レポートモーダル -->
+  <div id="modal-report" class="modal-backdrop">
+    <div class="panel-brawl modal-box">
+      <div class="modal-header">
+        <div class="modal-title brawl-text">📋 爆発バネ診断カルテ</div>
+        <button class="btn-close-modal brawl-text" data-close="modal-report">✕</button>
+      </div>
+      
+      <div class="star-player-banner brawl-text" id="report-rank-banner">
+        ⭐ STAR PLAYER: 爆発的バネマスター
+      </div>
+
+      <div class="replay-player">
+        <video id="replay-video" loop playsinline muted controls></video>
+        <div id="replay-placeholder" style="color: #64748b; font-size: 12px;" class="brawl-text">
+          📹 測定後にリプレイが生成されます
+        </div>
+      </div>
+
+      <div class="report-stat-grid">
+        <div class="report-stat-card">
+          <div class="hud-label brawl-text">接地時間</div>
+          <div class="hud-value brawl-text" id="rep-contact-time" style="color: #38bdf8;">168<span style="font-size: 12px;">ms</span></div>
+        </div>
+        <div class="report-stat-card">
+          <div class="hud-label brawl-text">跳躍高</div>
+          <div class="hud-value brawl-text" id="rep-jump-height" style="color: #4ade80;">34.2<span style="font-size: 12px;">cm</span></div>
+        </div>
+        <div class="report-stat-card">
+          <div class="hud-label brawl-text">バネ指数 (RSI)</div>
+          <div class="hud-value brawl-text" id="rep-rsi-score" style="color: #facc15;">2.03</div>
+        </div>
+        <div class="report-stat-card">
+          <div class="hud-label brawl-text">着地ブレーキ支持</div>
+          <div class="hud-value brawl-text" id="rep-brake-score" style="color: #fb923c;">A判定</div>
+        </div>
+      </div>
+
+      <div class="panel-brawl" style="padding: 10px; background: rgba(0,0,0,0.4); border-color: #334155; font-size: 11px; line-height: 1.4;">
+        <div class="brawl-text" style="color: #38bdf8; margin-bottom: 2px;">⚾ 野球パフォーマンス還元分析</div>
+        <p id="rep-baseball-text" style="color: #e2e8f0; font-weight: 800;">
+          接地時間が短く、腱の弾性を活かした鋭い反発が獲得できています。内野手の1歩目の出足、および投球の前足ブロッキング動作において大きな推進力・骨盤回旋速度を生み出せます。
+        </p>
+      </div>
+
+      <button class="btn-brawl btn-orange brawl-text" data-close="modal-report" style="height: 38px;">
+        閉じて次の測定へ
+      </button>
+    </div>
+  </div>
+
+  <!-- 測定履歴カルテモーダル -->
+  <div id="modal-records" class="modal-backdrop">
+    <div class="panel-brawl modal-box">
+      <div class="modal-header">
+        <div class="modal-title brawl-text">📊 測定履歴カルテ</div>
+        <button class="btn-close-modal brawl-text" data-close="modal-records">✕</button>
+      </div>
+
+      <div id="history-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow-y: auto; padding-right: 2px;"></div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+        <button id="btn-export-csv" class="btn-brawl btn-emerald brawl-text" style="font-size: 12px; padding: 6px;">
+          📥 CSV出力
+        </button>
+        <button id="btn-clear-logs" class="btn-brawl btn-purple brawl-text" style="font-size: 12px; padding: 6px;">
+          🗑️ 履歴消去
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * 瞬発力・爆発バネドック
+     * アーキテクチャ構成:
+     * - App.State: アプリ内状態ストア（校正進捗ステップを追加）
+     * - App.Audio: Web Audio APIシンセ音・音声案内
+     * - App.UI: DOM操作・ステップバー・モーダル・HUD制御
+     * - App.Sensor: 【スロット1】第2便でカメラ・水準器・MediaPipe・ロック判定を注入
+     * - App.Engine: 【スロット2】第2便で滞空時間・2連続RJ・ブレーキ計算を注入
+     * - App.Drill:  【スロット3】第2便で10秒ウルトドリル・録画再生を注入
+     * - App.Storage: LocalStorageカルテ保存・CSV出力
+     */
+    const App = {
+      State: {
+        mode: 'TEST_IDLE', // TEST_IDLE | TEST_RUNNING | DRILL_ACTIVE
+        testType: 'RJ',    // RJ | VERTICAL | BRAKE
+        userHeightCm: null, // 初期値は null (未設定)
+        activePlayerName: '',
+        step: 1,           // 1: 身長未設定 | 2: 直立スキャン待ち | 3: 測定可能
+        cameraFacing: 'user', // user | environment
+        isLocked: false,
+        gyroAngle: 82,
+        calibration: {
+          isCalibrated: false,
+          pxPerCm: 2.5,
+          baselineHipY: 0,
+          baselineFootBox: null
+        }
+      },
+
+      Audio: {
+        ctx: null,
+        init() {
+          try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx && !this.ctx) {
+              this.ctx = new AudioCtx();
+            }
+            if (this.ctx && this.ctx.state === 'suspended') {
+              this.ctx.resume();
+            }
+          } catch (e) {
+            console.warn('Audio Context Init Failed:', e);
+          }
+        },
+        playSE(freq, dur = 0.08, type = 'sine', vol = 0.25) {
+          try {
+            this.init();
+            if (!this.ctx) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + dur);
+          } catch (e) {}
+        },
+        playImpact() {
+          try {
+            this.init();
+            if (!this.ctx) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(140, this.ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.07);
+            gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.07);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.07);
+          } catch (e) {}
+        },
+        playExplosion() {
+          try {
+            this.init();
+            if (!this.ctx) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(220, this.ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.18);
+            gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.18);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.18);
+          } catch (e) {}
+        },
+        playLock() {
+          this.playSE(587.33, 0.09, 'sine', 0.2);
+          setTimeout(() => this.playSE(880, 0.14, 'sine', 0.25), 90);
+        },
+        speak(text) {
+          if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = 'ja-JP';
+            utter.rate = 1.1;
+            utter.pitch = 1.05;
+            window.speechSynthesis.speak(utter);
+          }
+        }
+      },
+
+      UI: {
+        setStep(step) {
+          App.State.step = step;
+          const b1 = document.getElementById('step-badge-1');
+          const b2 = document.getElementById('step-badge-2');
+          const b3 = document.getElementById('step-badge-3');
+          const guideText = document.getElementById('step-guide-text');
+          const mainBtn = document.getElementById('btn-main-start');
+          const overlay = document.getElementById('calib-guide-overlay');
+
+          b1.className = 'step-badge' + (step === 1 ? ' active' : (step > 1 ? ' done' : ''));
+          b2.className = 'step-badge' + (step === 2 ? ' active' : (step > 2 ? ' done' : ''));
+          b3.className = 'step-badge' + (step === 3 ? ' active done' : '');
+
+          if (step === 1) {
+            overlay.classList.remove('hidden');
+            guideText.textContent = 'まずは身長を入力してください';
+            mainBtn.className = 'btn-brawl btn-gold btn-pulse-gold main-trigger-btn brawl-text';
+            mainBtn.textContent = '📏 STEP 1: 身長を登録してスキャン開始';
+          } else if (step === 2) {
+            overlay.classList.add('hidden');
+            guideText.textContent = '足元枠に入って直立静止スキャン';
+            mainBtn.className = 'btn-brawl btn-orange alert-pulse main-trigger-btn brawl-text';
+            mainBtn.textContent = '🧍 足元枠に立って2秒静止（自動スキャン）';
+          } else if (step === 3) {
+            overlay.classList.add('hidden');
+            guideText.textContent = '準備完了！測定を始められます';
+            mainBtn.className = 'btn-brawl btn-orange main-trigger-btn brawl-text';
+            mainBtn.textContent = '🚀 全身を映すと自動スタート！';
+          }
+        },
+
+        selectTest(type) {
+          App.State.testType = type;
+          document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-test') === type);
+          });
+
+          const mainTitle = document.getElementById('metric-main-title');
+          const mainUnit = document.getElementById('metric-main-unit');
+          const subTitle = document.getElementById('metric-sub-title');
+          const subUnit = document.getElementById('metric-sub-unit');
+
+          if (type === 'RJ') {
+            mainTitle.textContent = '接地時間';
+            mainUnit.textContent = 'ms';
+            subTitle.textContent = 'RSIバネ指数';
+            subUnit.textContent = '指数';
+            this.showToast('🦘 2連続RJモード: 接地を最短にし高く跳べ！');
+          } else if (type === 'VERTICAL') {
+            mainTitle.textContent = '跳躍高';
+            mainUnit.textContent = 'cm';
+            subTitle.textContent = '踏込沈み込み';
+            subUnit.textContent = 'cm';
+            this.showToast('🦘 単発垂直跳び: 最大カウンターで跳躍！');
+          } else if (type === 'BRAKE') {
+            mainTitle.textContent = '停止減速時間';
+            mainUnit.textContent = 'ms';
+            subTitle.textContent = '膝支持角度';
+            subUnit.textContent = 'deg';
+            this.showToast('🛑 前足急停止: 1歩踏み出してピタッと静止！');
+          }
+        },
+
+        updateBadges(mainVal, subVal) {
+          const mainEl = document.getElementById('metric-main-val');
+          const subEl = document.getElementById('metric-sub-val');
+          if (mainEl) mainEl.textContent = mainVal !== undefined ? mainVal : '--';
+          if (subEl) subEl.textContent = subVal !== undefined ? subVal : '--';
+        },
+
+        setFootLockState(locked, message = '') {
+          App.State.isLocked = locked;
+          const box = document.getElementById('foot-lock-box');
+          const statusText = document.getElementById('foot-lock-status');
+          if (box && statusText) {
+            box.classList.toggle('locked', locked);
+            statusText.textContent = message || (locked ? '✅ ロック完了！開始準備OK' : '立ち位置を探索中...');
+          }
+        },
+
+        setGyroAngle(angle) {
+          App.State.gyroAngle = angle;
+          const indicator = document.getElementById('gyro-indicator');
+          const text = document.getElementById('gyro-text');
+          const isValid = angle >= 75 && angle <= 88;
+          if (indicator && text) {
+            indicator.classList.toggle('valid', isValid);
+            text.textContent = `📐 傾き ${Math.round(angle)}° ${isValid ? 'OK' : '(75~88°推奨)'}`;
+          }
+        },
+
+        openModal(id) {
+          App.Audio.init();
+          const modal = document.getElementById(id);
+          if (modal) {
+            modal.classList.add('open');
+            if (id === 'modal-records') {
+              App.Storage.renderHistoryList();
+            } else if (id === 'modal-scan') {
+              App.UI.renderProfileList();
+            }
+          }
+        },
+
+        closeModal(id) {
+          const modal = document.getElementById(id);
+          if (modal) {
+            modal.classList.remove('open');
+          }
+        },
+
+        renderProfileList() {
+          const container = document.getElementById('profile-select-list');
+          if (!container) return;
+          const profiles = App.Storage.loadProfiles();
+          if (profiles.length === 0) {
+            container.innerHTML = `
+              <div style="text-align: center; color: #64748b; font-size: 11px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px;" class="brawl-text">
+                登録済みの選手はいません。<br>下のフォームから登録してください。
+              </div>`;
+            return;
+          }
+
+          container.innerHTML = profiles.map(p => `
+            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(18, 29, 52, 0.9); border: 2px solid #233556; border-radius: 10px; padding: 6px 10px; cursor: pointer; transition: transform 0.1s ease;" class="profile-card" data-id="${p.id}" data-name="${p.name}" data-height="${p.heightCm}">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 16px;">👤</span>
+                <div>
+                  <div class="brawl-text" style="font-size: 13px; color: #fff;">${p.name}</div>
+                  <div class="brawl-text" style="font-size: 11px; color: var(--accent-gold);">${p.heightCm} cm</div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <button class="btn-brawl btn-gold btn-select-player brawl-text" data-id="${p.id}" data-name="${p.name}" data-height="${p.heightCm}" style="padding: 4px 10px; font-size: 11px;">
+                  選択
+                </button>
+                <button class="btn-brawl btn-delete-player" data-id="${p.id}" style="padding: 4px 6px; font-size: 10px; background: #dc2626; border-color: #000; box-shadow: 0 2px 0 #7f1d1d;">
+                  ✕
+                </button>
+              </div>
+            </div>
+          `).join('');
+
+          // 選手選択ボタン
+          container.querySelectorAll('.btn-select-player').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const name = btn.getAttribute('data-name');
+              const height = parseInt(btn.getAttribute('data-height'), 10);
+              App.applySelectedPlayer(name, height);
+            });
+          });
+
+          // 行全体のタップでも選択
+          container.querySelectorAll('.profile-card').forEach(card => {
+            card.addEventListener('click', () => {
+              const name = card.getAttribute('data-name');
+              const height = parseInt(card.getAttribute('data-height'), 10);
+              App.applySelectedPlayer(name, height);
+            });
+          });
+
+          // 削除ボタン
+          container.querySelectorAll('.btn-delete-player').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const id = btn.getAttribute('data-id');
+              App.Storage.deleteProfile(id);
+              App.UI.renderProfileList();
+              App.UI.showToast('選手を削除しました');
+            });
+          });
+        },
+
+        showToast(text) {
+          const toast = document.getElementById('brawl-toast');
+          if (!toast) return;
+          toast.textContent = text;
+          toast.classList.add('show');
+          if (this._toastTimer) clearTimeout(this._toastTimer);
+          this._toastTimer = setTimeout(() => {
+            toast.classList.remove('show');
+          }, 2400);
+        }
+      },
+
+      Sensor: {
+        // 【スロット1】：第2便で注入
+        initCamera() {
+          console.log('[Sensor Slot1] Camera initialized placeholder');
+        },
+        switchCamera() {
+          App.State.cameraFacing = App.State.cameraFacing === 'user' ? 'environment' : 'user';
+          const video = document.getElementById('camera-feed');
+          if (video) {
+            video.style.transform = App.State.cameraFacing === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+          }
+          App.UI.showToast(`カメラ切替: ${App.State.cameraFacing === 'user' ? 'インカメラ' : '外カメラ'}`);
+        }
+      },
+
+      Engine: {
+        // 【スロット2】：第2便で注入
+        startTest() {
+          if (App.State.step === 1) {
+            App.UI.openModal('modal-scan');
+            return;
+          }
+          if (App.State.step === 2) {
+            App.UI.showToast('足元枠内に立って2秒静止してください');
+            App.Audio.speak('足元枠に入って静止してください');
+            return;
+          }
+          console.log('[Engine Slot2] Test start triggered');
+          App.Audio.speak('スタートします');
+          App.UI.showToast('全身が枠内に入ると自動でカウントダウンします');
+        }
+      },
+
+      Drill: {
+        // 【スロット3】：第2便で注入
+        startDrill() {
+          if (App.State.step < 3) {
+            App.UI.showToast('⚠️ 先に身長設定と直立スキャンを完了してください');
+            App.UI.openModal('modal-scan');
+            return;
+          }
+          console.log('[Drill Slot3] 10s Ult Drill triggered');
+          App.UI.showToast('🎮 10秒ウルトドリル準備中（第2便で始動）');
+        }
+      },
+
+      Storage: {
+        STORAGE_KEY: 'BRAWL_SPRING_DOCK_LOGS',
+        PROFILE_KEY: 'BRAWL_SPRING_DOCK_PROFILES',
+
+        loadProfiles() {
+          try {
+            const raw = localStorage.getItem(this.PROFILE_KEY);
+            return raw ? JSON.parse(raw) : [
+              { id: 'default_1', name: '選手A', heightCm: 142 },
+              { id: 'default_2', name: '選手B', heightCm: 155 }
+            ];
+          } catch (e) {
+            return [];
+          }
+        },
+        saveProfile(name, heightCm) {
+          try {
+            const profiles = this.loadProfiles();
+            const newProfile = {
+              id: 'p_' + Date.now(),
+              name: name || `選手${profiles.length + 1}`,
+              heightCm: heightCm
+            };
+            profiles.unshift(newProfile);
+            localStorage.setItem(this.PROFILE_KEY, JSON.stringify(profiles.slice(0, 15)));
+            return newProfile;
+          } catch (e) {
+            console.error('Save profile error:', e);
+          }
+        },
+        deleteProfile(id) {
+          try {
+            let profiles = this.loadProfiles();
+            profiles = profiles.filter(p => p.id !== id);
+            localStorage.setItem(this.PROFILE_KEY, JSON.stringify(profiles));
+          } catch (e) {
+            console.error('Delete profile error:', e);
+          }
+        },
+
+        loadLogs() {
+          try {
+            const raw = localStorage.getItem(this.STORAGE_KEY);
+            return raw ? JSON.parse(raw) : [];
+          } catch (e) {
+            return [];
+          }
+        },
+        saveLog(data) {
+          try {
+            const logs = this.loadLogs();
+            const record = {
+              id: Date.now(),
+              date: new Date().toLocaleString('ja-JP'),
+              playerName: App.State.activePlayerName || '未登録',
+              type: data.type || App.State.testType,
+              mainMetric: data.mainMetric || '--',
+              subMetric: data.subMetric || '--',
+              rsi: data.rsi || '--',
+              rank: data.rank || 'PRO'
+            };
+            logs.unshift(record);
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(logs.slice(0, 30)));
+            return record;
+          } catch (e) {
+            console.error('Save log error:', e);
+          }
+        },
+        clearLogs() {
+          localStorage.removeItem(this.STORAGE_KEY);
+          this.renderHistoryList();
+          App.UI.showToast('履歴カルテを消去しました');
+        },
+        renderHistoryList() {
+          const listEl = document.getElementById('history-list');
+          if (!listEl) return;
+          const logs = this.loadLogs();
+          if (logs.length === 0) {
+            listEl.innerHTML = '<div style="text-align:center; color:#64748b; font-size:12px; padding:16px;" class="brawl-text">履歴はありません</div>';
+            return;
+          }
+          listEl.innerHTML = logs.map(item => `
+            <div style="background:#0c1527; border:1px solid #1e293b; border-radius:8px; padding:8px; display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <div class="brawl-text" style="font-size:11px; color:#94a3b8;">${item.date} [${item.playerName || '選手'}] - ${item.type}</div>
+                <div class="brawl-text" style="font-size:14px; color:#fff;">${item.mainMetric} / ${item.subMetric}</div>
+              </div>
+              <div class="badge-brawl brawl-text" style="color:var(--accent-gold);">${item.rank}</div>
+            </div>
+          `).join('');
+        },
+        exportCSV() {
+          const logs = this.loadLogs();
+          if (logs.length === 0) {
+            App.UI.showToast('エクスポートするデータがありません');
+            return;
+          }
+          let csvContent = 'ID,日時,選手名,テスト種別,主指標,副指標,RSI,ランク\n';
+          logs.forEach(l => {
+            csvContent += `"${l.id}","${l.date}","${l.playerName || ''}","${l.type}","${l.mainMetric}","${l.subMetric}","${l.rsi}","${l.rank}"\n`;
+          });
+          const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.setAttribute('href', url);
+          link.setAttribute('download', `爆発バネカルテ_${Date.now()}.csv`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          App.UI.showToast('CSVファイルを書き出しました');
+        }
+      },
+
+      applySelectedPlayer(name, heightCm) {
+        App.State.activePlayerName = name;
+        App.State.userHeightCm = heightCm;
+
+        const badge = document.getElementById('badge-height-val');
+        badge.textContent = `👤 ${name} (${heightCm}cm)`;
+        document.getElementById('btn-open-scan').classList.remove('badge-attention');
+
+        App.Audio.playLock();
+        App.UI.closeModal('modal-scan');
+
+        // Step 2 (カメラ直立スキャン待ち) へ遷移
+        App.UI.setStep(2);
+        App.UI.showToast(`「${name}」(${heightCm}cm) を選択！枠内に立ってください`);
+
+        // モック演出: 直立静止で自動キャリブレーション
+        setTimeout(() => {
+          if (App.State.step === 2) {
+            App.State.calibration.isCalibrated = true;
+            App.UI.setFootLockState(true, '✅ スキャン＆ロック完了！');
+            App.UI.setStep(3);
+            App.Audio.playLock();
+            App.Audio.speak(`${name}選手、スキャン完了です。測定できます`);
+            App.UI.showToast(`🎉 ${name}選手の準備完了！測定OK`);
+          }
+        }, 2200);
+      },
+
+      init() {
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            App.Audio.playSE(440, 0.05, 'square', 0.15);
+            const type = btn.getAttribute('data-test');
+            App.UI.selectTest(type);
+          });
+        });
+
+        // Header Modal buttons
+        document.getElementById('btn-open-scan').addEventListener('click', () => {
+          App.UI.openModal('modal-scan');
+        });
+
+        document.getElementById('btn-toggle-cam').addEventListener('click', () => {
+          App.Audio.playSE(520, 0.06, 'sine', 0.2);
+          App.Sensor.switchCamera();
+        });
+
+        document.getElementById('btn-open-records').addEventListener('click', () => {
+          App.UI.openModal('modal-records');
+        });
+
+        // Overlay Guide Button
+        document.getElementById('btn-guide-start-calib').addEventListener('click', () => {
+          App.Audio.playLock();
+          App.UI.openModal('modal-scan');
+        });
+
+        // Footer buttons
+        document.getElementById('btn-main-start').addEventListener('click', () => {
+          App.Audio.playExplosion();
+          App.Engine.startTest();
+        });
+
+        document.getElementById('btn-open-report').addEventListener('click', () => {
+          App.UI.openModal('modal-report');
+        });
+
+        document.getElementById('btn-start-drill').addEventListener('click', () => {
+          App.Audio.playLock();
+          App.Drill.startDrill();
+        });
+
+        // Modal Close buttons
+        document.querySelectorAll('[data-close]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            App.Audio.playSE(330, 0.05, 'triangle', 0.2);
+            const targetId = btn.getAttribute('data-close');
+            App.UI.closeModal(targetId);
+          });
+        });
+
+        // 新規選手登録＆身長保存 -> STEP 2 へ移行
+        document.getElementById('btn-save-height').addEventListener('click', () => {
+          const nameInput = document.getElementById('input-player-name');
+          const heightInput = document.getElementById('input-height');
+          const name = nameInput.value.trim() || '選手';
+          const val = parseInt(heightInput.value, 10);
+
+          if (val >= 90 && val <= 220) {
+            // ストレージに保存
+            App.Storage.saveProfile(name, val);
+            nameInput.value = '';
+
+            // 選手適用
+            App.applySelectedPlayer(name, val);
+          } else {
+            App.UI.showToast('適正な身長を入力してください (90~220cm)');
+          }
+        });
+
+        // Records Modal CSV & Clear
+        document.getElementById('btn-export-csv').addEventListener('click', () => {
+          App.Storage.exportCSV();
+        });
+
+        document.getElementById('btn-clear-logs').addEventListener('click', () => {
+          App.Storage.clearLogs();
+        });
+
+        // Viewport resize and canvas auto sync
+        const resizeCanvas = () => {
+          const wrapper = document.getElementById('screen-wrapper');
+          const canvas = document.getElementById('canvas-overlay');
+          if (wrapper && canvas) {
+            canvas.width = wrapper.clientWidth;
+            canvas.height = wrapper.clientHeight;
+          }
+        };
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Initial setup
+        App.UI.setGyroAngle(82);
+        App.UI.setStep(1); // 初期状態は STEP 1（身長未登録）
+
+        console.log('💥 瞬発力・爆発バネドック UI基盤（ステップ誘導強化版）Ready');
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => App.init());
+  </script>
+</body>
+</html>
