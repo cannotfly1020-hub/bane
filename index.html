@@ -40,13 +40,15 @@
       font-weight: 900;
     }
 
+    /* iOSブラウザのバー出現によるズレ・余白を完全抑止 */
     body, html {
       width: 100%;
-      height: 100dvh;
+      height: 100%;
+      position: fixed;
+      inset: 0;
       overflow: hidden;
       background: radial-gradient(circle at center, var(--bg-dark-2) 0%, var(--bg-dark-1) 100%);
       color: #ffffff;
-      position: fixed;
     }
 
     .sunburst-container {
@@ -72,13 +74,17 @@
       100% { transform: translate(-50%, -50%) rotate(360deg); }
     }
 
-    /* App Layout Container - 全画面カメラビュー＆HUDオーバーレイ構成 */
+    /* 画面全体に吸着するビューポート */
     #app-viewport {
-      position: relative;
+      position: absolute;
+      inset: 0;
       width: 100%;
-      height: 100dvh;
+      height: 100%;
       overflow: hidden;
       z-index: 10;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
 
     .brawl-text {
@@ -110,7 +116,7 @@
       color: #fff;
       font-size: 14px;
       text-align: center;
-      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.1s ease;
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
       position: relative;
       overflow: hidden;
       line-height: 1.1;
@@ -169,7 +175,6 @@
       50% { box-shadow: 0 4px 0 var(--accent-gold-dark), 0 0 24px rgba(255, 230, 0, 1); transform: scale(1.02); }
     }
 
-    /* Common Panel System */
     .panel-brawl {
       background: var(--panel-bg);
       border: 3px solid var(--panel-border);
@@ -219,7 +224,7 @@
       flex-direction: column;
       gap: 5px;
       pointer-events: none;
-      background: linear-gradient(180deg, rgba(7, 12, 24, 0.85) 0%, rgba(7, 12, 24, 0.4) 75%, transparent 100%);
+      background: linear-gradient(180deg, rgba(7, 12, 24, 0.9) 0%, rgba(7, 12, 24, 0.5) 80%, transparent 100%);
       padding-bottom: 12px;
     }
     .top-hud-group > * {
@@ -248,33 +253,42 @@
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
     }
 
-    /* Calibration Step Banner (半透明スリム化) */
+    /* 3ステップナビゲーションバー（改修：文字切れ防止の2段レイアウト） */
     .step-banner-bar {
       width: 100%;
-      background: rgba(15, 23, 42, 0.75);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
       border: 1.5px solid #f59e0b;
-      border-radius: 8px;
-      padding: 3px 6px;
+      border-radius: 10px;
+      padding: 4px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    .step-badges-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 4px;
-      flex-shrink: 0;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
     }
 
     .step-badge {
-      font-size: 9px;
-      padding: 2px 5px;
-      border-radius: 5px;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 6px;
       border: 1px solid #000;
       background: rgba(51, 65, 85, 0.8);
       color: #94a3b8;
+      flex: 1;
+      text-align: center;
+      white-space: nowrap;
     }
 
     .step-badge.active {
@@ -289,17 +303,22 @@
       color: #fff;
     }
 
-    .step-text {
-      font-size: 10px;
-      color: #ffea79;
-      flex: 1;
-      text-align: center;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    .step-arrow {
+      color: #64748b;
+      font-size: 9px;
+      flex-shrink: 0;
     }
 
-    /* Test Selector Grid (スリムピル型) */
+    .step-text {
+      font-size: 11px;
+      color: #ffea79;
+      text-align: center;
+      white-space: normal;
+      line-height: 1.2;
+      padding-top: 1px;
+    }
+
+    /* Test Selector Grid */
     .tab-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -358,7 +377,7 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transform: scaleX(-1); /* default front camera */
+      transform: scaleX(-1);
     }
 
     #canvas-overlay {
@@ -371,24 +390,25 @@
       z-index: 5;
     }
 
-    /* Gyro Spirit Level */
+    /* Gyro Spirit Level（位置調整：タブの下にすっきり配置） */
     .gyro-indicator {
       position: absolute;
-      top: 118px;
+      top: 136px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 20;
-      background: rgba(10, 16, 30, 0.75);
+      background: rgba(10, 16, 30, 0.85);
       backdrop-filter: blur(4px);
       -webkit-backdrop-filter: blur(4px);
       border: 1.5px solid #334155;
-      padding: 3px 8px;
+      padding: 3px 10px;
       border-radius: 16px;
       display: flex;
       align-items: center;
       gap: 5px;
       font-size: 10px;
       color: #cbd5e1;
+      white-space: nowrap;
     }
 
     .gyro-indicator.valid {
@@ -411,8 +431,8 @@
     /* Safe Boundary & Feet Lock Box */
     .safe-frame {
       position: absolute;
-      top: 110px;
-      bottom: 120px;
+      top: 126px;
+      bottom: 110px;
       left: 10px;
       right: 10px;
       border: 2px dashed rgba(255, 255, 255, 0.25);
@@ -423,7 +443,7 @@
 
     .head-guideline {
       position: absolute;
-      top: 124px;
+      top: 172px;
       left: 15%;
       right: 15%;
       height: 2px;
@@ -446,11 +466,11 @@
 
     .foot-lock-box {
       position: absolute;
-      bottom: 118px;
+      bottom: 102px;
       left: 50%;
       transform: translateX(-50%);
       width: 190px;
-      height: 68px;
+      height: 62px;
       border: 3px solid rgba(255, 200, 0, 0.85);
       background: rgba(255, 200, 0, 0.12);
       border-radius: 12px;
@@ -494,10 +514,10 @@
       display: none;
     }
 
-    /* HUD Metrics Badges (フローティング位置微調整) */
+    /* HUD Metrics Badges */
     .hud-metrics {
       position: absolute;
-      top: 146px;
+      top: 168px;
       left: 10px;
       right: 10px;
       display: flex;
@@ -561,7 +581,7 @@
 
     .state-banner {
       position: absolute;
-      bottom: 196px;
+      bottom: 174px;
       left: 50%;
       transform: translateX(-50%);
       background: rgba(230, 81, 0, 0.95);
@@ -575,6 +595,7 @@
       gap: 6px;
       z-index: 25;
       box-shadow: 0 4px 14px rgba(255, 102, 0, 0.6);
+      white-space: nowrap;
     }
 
     /* 10s Ult Drill HUD */
@@ -623,20 +644,19 @@
       box-shadow: 0 0 10px #ff3366;
     }
 
-    /* 下部フローティングHUDフッター */
+    /* 下部フローティングHUDフッター（改修：画面最下部にピタッと密着） */
     footer.brawl-footer {
       position: absolute;
       bottom: 0;
       left: 0;
       right: 0;
       z-index: 40;
-      padding: 0 10px calc(8px + env(safe-area-inset-bottom)) 10px;
+      padding: 10px 10px 6px 10px;
       display: flex;
       flex-direction: column;
       gap: 5px;
       pointer-events: none;
-      background: linear-gradient(0deg, rgba(7, 12, 24, 0.85) 0%, rgba(7, 12, 24, 0.4) 75%, transparent 100%);
-      padding-top: 14px;
+      background: linear-gradient(0deg, rgba(7, 12, 24, 0.95) 0%, rgba(7, 12, 24, 0.6) 80%, transparent 100%);
     }
     footer.brawl-footer > * {
       pointer-events: auto;
@@ -682,7 +702,7 @@
     .modal-box {
       width: 100%;
       max-width: 380px;
-      max-height: 90dvh;
+      max-height: 90vh;
       overflow-y: auto;
       padding: 18px;
       display: flex;
@@ -719,7 +739,6 @@
       cursor: pointer;
     }
 
-    /* Form Fields in Modal */
     .form-group {
       display: flex;
       flex-direction: column;
@@ -747,7 +766,6 @@
       box-shadow: 0 0 10px rgba(255, 120, 0, 0.5);
     }
 
-    /* Replay & Report Styling */
     .replay-player {
       width: 100%;
       height: 180px;
@@ -792,7 +810,6 @@
       box-shadow: 0 0 16px rgba(245, 158, 11, 0.7);
     }
 
-    /* Toast Notification System */
     #brawl-toast {
       position: fixed;
       top: 50px;
@@ -825,7 +842,7 @@
   <!-- Toast Notification Node -->
   <div id="brawl-toast" class="brawl-text">通知メッセージ</div>
 
-  <!-- Main Viewport (100dvh Locked, 全画面カメラ＋HUD構造) -->
+  <!-- Main Viewport (画面最下部まで隙間なく密着) -->
   <div id="app-viewport">
     
     <!-- 全画面カメラスクリーン（最背面） -->
@@ -833,10 +850,10 @@
       <video id="camera-feed" playsinline autoplay muted></video>
       <canvas id="canvas-overlay"></canvas>
 
-      <!-- AI水準器 -->
+      <!-- AI水準器（タブ下端と被らない最適位置） -->
       <div id="gyro-indicator" class="gyro-indicator">
         <div class="gyro-dot"></div>
-        <span id="gyro-text" class="brawl-text">📐 傾き確認中...</span>
+        <span id="gyro-text" class="brawl-text">📐 傾き 82° OK</span>
       </div>
 
       <!-- ガイドライン＆枠 -->
@@ -924,13 +941,15 @@
         </div>
       </header>
 
-      <!-- 3ステップ・ナビゲーションバー -->
+      <!-- 3ステップ・ナビゲーションバー（改修：文字切れ防止レイアウト） -->
       <div class="step-banner-bar" id="step-banner-bar">
-        <div class="step-badge active" id="step-badge-1">1. 身長登録</div>
-        <span style="color:#64748b; font-size:9px;">▶</span>
-        <div class="step-badge" id="step-badge-2">2. 直立スキャン</div>
-        <span style="color:#64748b; font-size:9px;">▶</span>
-        <div class="step-badge" id="step-badge-3">3. 測定GO</div>
+        <div class="step-badges-row">
+          <div class="step-badge active" id="step-badge-1">① 身長登録</div>
+          <span class="step-arrow">▶</span>
+          <div class="step-badge" id="step-badge-2">② スキャン</div>
+          <span class="step-arrow">▶</span>
+          <div class="step-badge" id="step-badge-3">③ 測定GO</div>
+        </div>
         <div class="step-text brawl-text" id="step-guide-text">まずは身長を入力してください</div>
       </div>
 
@@ -951,7 +970,7 @@
       </div>
     </div>
 
-    <!-- 下部フローティングHUDフッター -->
+    <!-- 下部フローティングHUDフッター（下端に密着固定） -->
     <footer class="brawl-footer">
       <button id="btn-main-start" class="btn-brawl btn-gold btn-pulse-gold main-trigger-btn brawl-text">
         📏 STEP 1: 身長を登録してスキャン開始
@@ -983,7 +1002,6 @@
           <span style="font-size: 10px; color: var(--accent-gold);">タップで即時適用</span>
         </div>
         <div id="profile-select-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto; padding-right: 2px;">
-          <!-- JSで登録済み選手ボタンを動的生成 -->
         </div>
       </div>
 
@@ -1092,23 +1110,15 @@
   <script>
     /**
      * 瞬発力・爆発バネドック
-     * アーキテクチャ構成:
-     * - App.State: アプリ内状態ストア（校正進捗ステップを追加）
-     * - App.Audio: Web Audio APIシンセ音・音声案内
-     * - App.UI: DOM操作・ステップバー・モーダル・HUD制御
-     * - App.Sensor: 【スロット1】第2便でカメラ・水準器・MediaPipe・ロック判定を注入
-     * - App.Engine: 【スロット2】第2便で滞空時間・2連続RJ・ブレーキ計算を注入
-     * - App.Drill:  【スロット3】第2便で10秒ウルトドリル・録画再生を注入
-     * - App.Storage: LocalStorageカルテ保存・CSV出力
      */
     const App = {
       State: {
-        mode: 'TEST_IDLE', // TEST_IDLE | TEST_RUNNING | DRILL_ACTIVE
-        testType: 'RJ',    // RJ | VERTICAL | BRAKE
-        userHeightCm: null, // 初期値は null (未設定)
+        mode: 'TEST_IDLE',
+        testType: 'RJ',
+        userHeightCm: null,
         activePlayerName: '',
-        step: 1,           // 1: 身長未設定 | 2: 直立スキャン待ち | 3: 測定可能
-        cameraFacing: 'user', // user | environment
+        step: 1,
+        cameraFacing: 'user',
         isLocked: false,
         gyroAngle: 82,
         calibration: {
@@ -1344,7 +1354,6 @@
             </div>
           `).join('');
 
-          // 選手選択ボタン
           container.querySelectorAll('.btn-select-player').forEach(btn => {
             btn.addEventListener('click', (e) => {
               e.stopPropagation();
@@ -1354,7 +1363,6 @@
             });
           });
 
-          // 行全体のタップでも選択
           container.querySelectorAll('.profile-card').forEach(card => {
             card.addEventListener('click', () => {
               const name = card.getAttribute('data-name');
@@ -1363,7 +1371,6 @@
             });
           });
 
-          // 削除ボタン
           container.querySelectorAll('.btn-delete-player').forEach(btn => {
             btn.addEventListener('click', (e) => {
               e.stopPropagation();
@@ -1388,10 +1395,7 @@
       },
 
       Sensor: {
-        // 【スロット1】：第2便で注入
-        initCamera() {
-          console.log('[Sensor Slot1] Camera initialized placeholder');
-        },
+        initCamera() {},
         switchCamera() {
           App.State.cameraFacing = App.State.cameraFacing === 'user' ? 'environment' : 'user';
           const video = document.getElementById('camera-feed');
@@ -1403,7 +1407,6 @@
       },
 
       Engine: {
-        // 【スロット2】：第2便で注入
         startTest() {
           if (App.State.step === 1) {
             App.UI.openModal('modal-scan');
@@ -1414,21 +1417,18 @@
             App.Audio.speak('足元枠に入って静止してください');
             return;
           }
-          console.log('[Engine Slot2] Test start triggered');
           App.Audio.speak('スタートします');
           App.UI.showToast('全身が枠内に入ると自動でカウントダウンします');
         }
       },
 
       Drill: {
-        // 【スロット3】：第2便で注入
         startDrill() {
           if (App.State.step < 3) {
             App.UI.showToast('⚠️ 先に身長設定と直立スキャンを完了してください');
             App.UI.openModal('modal-scan');
             return;
           }
-          console.log('[Drill Slot3] 10s Ult Drill triggered');
           App.UI.showToast('🎮 10秒ウルトドリル準備中（第2便で始動）');
         }
       },
@@ -1557,11 +1557,9 @@
         App.Audio.playLock();
         App.UI.closeModal('modal-scan');
 
-        // Step 2 (カメラ直立スキャン待ち) へ遷移
         App.UI.setStep(2);
         App.UI.showToast(`「${name}」(${heightCm}cm) を選択！枠内に立ってください`);
 
-        // モック演出: 直立静止で自動キャリブレーション
         setTimeout(() => {
           if (App.State.step === 2) {
             App.State.calibration.isCalibrated = true;
@@ -1575,7 +1573,6 @@
       },
 
       init() {
-        // Tab switching
         document.querySelectorAll('.tab-btn').forEach(btn => {
           btn.addEventListener('click', () => {
             App.Audio.playSE(440, 0.05, 'square', 0.15);
@@ -1584,7 +1581,6 @@
           });
         });
 
-        // Header Modal buttons
         document.getElementById('btn-open-scan').addEventListener('click', () => {
           App.UI.openModal('modal-scan');
         });
@@ -1598,13 +1594,11 @@
           App.UI.openModal('modal-records');
         });
 
-        // Overlay Guide Button
         document.getElementById('btn-guide-start-calib').addEventListener('click', () => {
           App.Audio.playLock();
           App.UI.openModal('modal-scan');
         });
 
-        // Footer buttons
         document.getElementById('btn-main-start').addEventListener('click', () => {
           App.Audio.playExplosion();
           App.Engine.startTest();
@@ -1619,7 +1613,6 @@
           App.Drill.startDrill();
         });
 
-        // Modal Close buttons
         document.querySelectorAll('[data-close]').forEach(btn => {
           btn.addEventListener('click', () => {
             App.Audio.playSE(330, 0.05, 'triangle', 0.2);
@@ -1628,7 +1621,6 @@
           });
         });
 
-        // 新規選手登録＆身長保存 -> STEP 2 へ移行
         document.getElementById('btn-save-height').addEventListener('click', () => {
           const nameInput = document.getElementById('input-player-name');
           const heightInput = document.getElementById('input-height');
@@ -1636,18 +1628,14 @@
           const val = parseInt(heightInput.value, 10);
 
           if (val >= 90 && val <= 220) {
-            // ストレージに保存
             App.Storage.saveProfile(name, val);
             nameInput.value = '';
-
-            // 選手適用
             App.applySelectedPlayer(name, val);
           } else {
             App.UI.showToast('適正な身長を入力してください (90~220cm)');
           }
         });
 
-        // Records Modal CSV & Clear
         document.getElementById('btn-export-csv').addEventListener('click', () => {
           App.Storage.exportCSV();
         });
@@ -1656,7 +1644,6 @@
           App.Storage.clearLogs();
         });
 
-        // Viewport resize and canvas auto sync
         const resizeCanvas = () => {
           const wrapper = document.getElementById('screen-wrapper');
           const canvas = document.getElementById('canvas-overlay');
@@ -1668,11 +1655,8 @@
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        // Initial setup
         App.UI.setGyroAngle(82);
-        App.UI.setStep(1); // 初期状態は STEP 1（身長未登録）
-
-        console.log('💥 瞬発力・爆発バネドック UI基盤（ステップ誘導強化版）Ready');
+        App.UI.setStep(1);
       }
     };
 
