@@ -8,9 +8,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@800;900&display=swap" rel="stylesheet">
   
-  <!-- MediaPipe Pose CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+  <!-- MediaPipe Pose CDN (バージョン固定でロード) -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.4/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js" crossorigin="anonymous"></script>
 
   <style>
     :root {
@@ -526,7 +526,24 @@
     }
 
     .calib-guide-overlay.hidden {
+      display: none !important;
+    }
+
+    .camera-error-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.92);
+      z-index: 60;
       display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 24px;
+      text-align: center;
+    }
+    .camera-error-overlay.show {
+      display: flex;
     }
 
     .hud-metrics {
@@ -868,6 +885,17 @@
         <span id="foot-lock-status" style="font-size: 8.5px; opacity: 0.9;">立ち位置を探索中...</span>
       </div>
 
+      <div id="camera-error-overlay" class="camera-error-overlay">
+        <div style="font-size: 36px;">📷❌</div>
+        <div class="brawl-text-glow" style="font-size: 16px; color: #ff5555;">カメラの起動に失敗しました</div>
+        <p style="font-size: 11px; color: #cbd5e1; line-height: 1.5; max-width: 280px;" id="camera-error-desc">
+          ブラウザのカメラ利用が許可されているか確認してください。
+        </p>
+        <button id="btn-retry-camera" class="btn-brawl btn-emerald brawl-text" style="padding: 8px 18px; font-size: 13px;">
+          🔄 カメラの再試行・アクセス許可
+        </button>
+      </div>
+
       <div id="calib-guide-overlay" class="calib-guide-overlay">
         <div style="font-size: 34px;">📏</div>
         <div class="brawl-text-glow" style="font-size: 17px; color: #ffea79;">精密測定のための初期設定</div>
@@ -1096,24 +1124,24 @@
 
   <script>
     /**
-     * 定数・設定群 (マジックナンバーの排除)
+     * 定数・設定群
      */
     const CONFIG = {
       GRAVITY: 9.80665,
       GYRO_MIN_ANGLE: 75,
       GYRO_MAX_ANGLE: 88,
-      MIN_CONTACT_TIME_MS: 40,       // チャタリング防止の最小接地時間
-      SCAN_STABLE_DURATION_MS: 1600, // スキャン時の静止必要時間
-      TRIGGER_STABLE_DURATION_MS: 1100, // トリガー時の静止必要時間
-      STABLE_BUFFER_SIZE: 12,        // 重心動揺監視フレーム数
-      MAX_TREMOR_CM: 1.8,            // 許容重心ブレ幅 (cm)
-      MAX_SLOPE_DEGREE: 7.0,         // 肩・腰の最大許容傾き角度 (°)
-      FOOT_LIFT_THRESHOLD_PX: 16     // 離地検知のピクセル閾値
+      MIN_CONTACT_TIME_MS: 40,
+      SCAN_STABLE_DURATION_MS: 1600,
+      TRIGGER_STABLE_DURATION_MS: 1100,
+      STABLE_BUFFER_SIZE: 12,
+      MAX_TREMOR_CM: 1.8,
+      MAX_SLOPE_DEGREE: 7.0,
+      FOOT_LIFT_THRESHOLD_PX: 16
     };
 
     const App = {
       State: {
-        mode: 'TEST_IDLE', // 'TEST_IDLE' | 'TEST_COUNTDOWN' | 'TEST_RUNNING' | 'DRILL_COUNTDOWN' | 'DRILL_ACTIVE'
+        mode: 'TEST_IDLE',
         testType: 'RJ',
         userHeightCm: 140,
         activePlayerName: '選手A',
@@ -1454,7 +1482,7 @@
       },
 
       /**
-       * 【スロット1】：センサー・座標変換・幾何アライメント・3重ロック
+       * 【スロット1】：センサー・安全カメラ初期化・座標変換・幾何アライメント・3重ロック
        */
       Sensor: {
         videoElement: null,
@@ -1473,9 +1501,16 @@
           this.canvasElement = document.getElementById('canvas-overlay');
           this.canvasCtx = this.canvasElement.getContext('2d');
 
+          // WebKit インライン再生強制設定
+          this.videoElement.muted = true;
+          this.videoElement.defaultMuted = true;
+          this.videoElement.playsInline = true;
+          this.videoElement.setAttribute('playsinline', '');
+          this.videoElement.setAttribute('webkit-playsinline', '');
+
           this.initGyro();
           await this.startCamera();
-          this.initMediaPipe();
+          this.initMediaPipeWithRetry();
         },
 
         requestGyroPermission() {
@@ -1506,29 +1541,117 @@
           });
         },
 
+        // 解像度フォールバック付き安全カメラ起動
         async startCamera() {
+          const errOverlay = document.getElementById('camera-error-overlay');
+          const errDesc = document.getElementById('camera-error-desc');
+          if (errOverlay) errOverlay.classList.remove('show');
+
           if (this.cameraStream) {
-            this.cameraStream.getTracks().forEach(t => t.stop());
+            try {
+              this.cameraStream.getTracks().forEach(t => t.stop());
+            } catch (e) {}
+            this.cameraStream = null;
           }
-          const constraints = {
-            video: {
-              facingMode: App.State.cameraFacing,
-              width: { ideal: 1280 },
-              height: { ideal: 720 }
+
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            this.showCameraError('このブラウザまたは接続環境(HTTPS必須)はカメラアクセスに対応していません。');
+            return;
+          }
+
+          const attempts = [
+            // 試行1: ideal 1280x720
+            {
+              video: {
+                facingMode: App.State.cameraFacing,
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+              },
+              audio: false
             },
-            audio: false
-          };
+            // 試行2: facingMode のみ（機種標準解像度）
+            {
+              video: { facingMode: App.State.cameraFacing },
+              audio: false
+            },
+            // 試行3: 制約なしプレーンビデオ
+            {
+              video: true,
+              audio: false
+            }
+          ];
+
+          let stream = null;
+          let lastError = null;
+
+          for (let i = 0; i < attempts.length; i++) {
+            try {
+              stream = await navigator.mediaDevices.getUserMedia(attempts[i]);
+              if (stream) break;
+            } catch (err) {
+              lastError = err;
+              console.warn(`Camera attempt ${i + 1} failed:`, err.name, err.message);
+            }
+          }
+
+          if (!stream) {
+            console.error('All camera attempts failed:', lastError);
+            let msg = 'カメラのアクセスがブロックされたか、別のアプリがカメラを使用中です。設定をご確認ください。';
+            if (lastError && lastError.name === 'NotAllowedError') {
+              msg = 'カメラのアクセスが拒否されています。ブラウザの設定からカメラの許可をオンにしてください。';
+            }
+            this.showCameraError(msg);
+            return;
+          }
+
           try {
-            this.cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
-            this.videoElement.srcObject = this.cameraStream;
-            await new Promise(res => { this.videoElement.onloadedmetadata = () => res(); });
-            await this.videoElement.play();
+            this.cameraStream = stream;
+            this.videoElement.srcObject = stream;
+
+            // onloadedmetadata の永久ハング防止ガード (タイムアウト付き Promise)
+            await new Promise((resolve) => {
+              if (this.videoElement.readyState >= 1) {
+                resolve();
+              } else {
+                let resolved = false;
+                const onLoaded = () => {
+                  if (!resolved) {
+                    resolved = true;
+                    this.videoElement.removeEventListener('loadedmetadata', onLoaded);
+                    resolve();
+                  }
+                };
+                this.videoElement.addEventListener('loadedmetadata', onLoaded);
+                setTimeout(() => {
+                  if (!resolved) {
+                    resolved = true;
+                    this.videoElement.removeEventListener('loadedmetadata', onLoaded);
+                    resolve();
+                  }
+                }, 2000);
+              }
+            });
+
+            // iOS 自動再生強制
+            await this.videoElement.play().catch(err => {
+              console.warn('video.play() auto-blocked, awaiting user click:', err);
+            });
+
             this.updateVideoTransform();
             App.Drill.initMediaRecorder(this.cameraStream);
+            App.UI.showToast('✅ カメラ接続完了');
           } catch (e) {
-            console.error('Camera Init Error:', e);
-            App.UI.showToast('カメラへのアクセスを許可してください');
+            console.error('Video feed stream setup failed:', e);
+            this.showCameraError('カメラストリームの再生に失敗しました。');
           }
+        },
+
+        showCameraError(message) {
+          const errOverlay = document.getElementById('camera-error-overlay');
+          const errDesc = document.getElementById('camera-error-desc');
+          if (errDesc) errDesc.textContent = message;
+          if (errOverlay) errOverlay.classList.add('show');
+          App.UI.showToast('⚠️ カメラの起動に失敗しました');
         },
 
         switchCamera() {
@@ -1539,12 +1662,15 @@
         },
 
         updateVideoTransform() {
-          const cW = this.canvasElement.width;
-          const cH = this.canvasElement.height;
+          const cW = this.canvasElement.clientWidth || window.innerWidth;
+          const cH = this.canvasElement.clientHeight || window.innerHeight;
+          this.canvasElement.width = cW;
+          this.canvasElement.height = cH;
+
           const vW = this.videoElement.videoWidth || 1280;
           const vH = this.videoElement.videoHeight || 720;
 
-          // object-fit: cover に準拠したスケーリングとオフセットの計算
+          // object-fit: cover に準拠したスケーリングとオフセット
           const scale = Math.max(cW / vW, cH / vH);
           const scaledW = vW * scale;
           const scaledH = vH * scale;
@@ -1554,10 +1680,8 @@
           this.videoTransform = { scale, offsetX, offsetY, vW, vH, cW, cH };
         },
 
-        // MediaPipeの正規化座標 (0~1) を画面表示ピクセル座標へ補正変換
         toScreenCoords(normX, normY) {
           const vt = this.videoTransform;
-          // インカメラ時は水平反転
           const rawPixelX = (App.State.cameraFacing === 'user' ? (1 - normX) : normX) * vt.vW;
           const rawPixelY = normY * vt.vH;
 
@@ -1567,34 +1691,49 @@
           };
         },
 
-        initMediaPipe() {
-          if (!window.Pose) return;
-          this.pose = new Pose({
-            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
-          });
-          this.pose.setOptions({
-            modelComplexity: 1,
-            smoothLandmarks: true,
-            enableSegmentation: false,
-            minDetectionConfidence: 0.55,
-            minTrackingConfidence: 0.55
-          });
-          this.pose.onResults((results) => this.handlePoseResults(results));
+        // CDNロード遅延に対応するリトライ付き初期化
+        initMediaPipeWithRetry(retries = 15) {
+          if (window.Pose) {
+            this.initMediaPipe();
+          } else if (retries > 0) {
+            setTimeout(() => this.initMediaPipeWithRetry(retries - 1), 350);
+          } else {
+            console.error('MediaPipe Pose failed to load from CDN');
+            App.UI.showToast('AI骨格検出ライブラリの読込に失敗しました');
+          }
+        },
 
-          const sendFrame = async () => {
-            if (!this.isPoseBusy && this.videoElement.readyState >= 2) {
-              this.isPoseBusy = true;
-              try {
-                await this.pose.send({ image: this.videoElement });
-              } catch (err) {
-                console.error('Pose Send Error:', err);
-              } finally {
-                this.isPoseBusy = false;
+        initMediaPipe() {
+          try {
+            this.pose = new Pose({
+              locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${file}`
+            });
+            this.pose.setOptions({
+              modelComplexity: 1,
+              smoothLandmarks: true,
+              enableSegmentation: false,
+              minDetectionConfidence: 0.5,
+              minTrackingConfidence: 0.5
+            });
+            this.pose.onResults((results) => this.handlePoseResults(results));
+
+            const sendFrame = async () => {
+              if (!this.isPoseBusy && this.videoElement.readyState >= 2 && !this.videoElement.paused) {
+                this.isPoseBusy = true;
+                try {
+                  await this.pose.send({ image: this.videoElement });
+                } catch (err) {
+                  // フレーム送出時の一時的エラーは無視
+                } finally {
+                  this.isPoseBusy = false;
+                }
               }
-            }
+              requestAnimationFrame(sendFrame);
+            };
             requestAnimationFrame(sendFrame);
-          };
-          requestAnimationFrame(sendFrame);
+          } catch (e) {
+            console.error('Failed to initialize MediaPipe Pose:', e);
+          }
         },
 
         handlePoseResults(results) {
@@ -1612,7 +1751,7 @@
           const lm = results.poseLandmarks;
           App.State.currentLandmarks = lm;
 
-          // スクリーンピクセル座標への一括マッピング
+          // スクリーンピクセル座標への一括変換
           const pts = {
             nose: this.toScreenCoords(lm[0].x, lm[0].y),
             leftShoulder: this.toScreenCoords(lm[11].x, lm[11].y),
@@ -1650,7 +1789,7 @@
           const isFeetInBox = (footX >= targetBox.left - 20 && footX <= targetBox.right + 20 &&
                                footY >= targetBox.top - 20 && footY <= targetBox.bottom + 40);
 
-          // 2. 幾何アライメント検知（角度ベースで厳格判定）
+          // 2. 幾何アライメント検知
           const shoulderAngle = Math.abs(Math.atan2(pts.rightShoulder.y - pts.leftShoulder.y, pts.rightShoulder.x - pts.leftShoulder.x) * 180 / Math.PI);
           const hipAngle = Math.abs(Math.atan2(pts.rightHip.y - pts.leftHip.y, pts.rightHip.x - pts.leftHip.x) * 180 / Math.PI);
           const shoulderSlopeDeg = Math.min(shoulderAngle, Math.abs(180 - shoulderAngle));
@@ -1661,7 +1800,7 @@
                                  hipSlopeDeg <= CONFIG.MAX_SLOPE_DEGREE &&
                                  ankleWidth <= (shoulderWidth * 1.35));
 
-          // 3. 重心動揺収束判定 (直近NフレームのPeak-to-Peak監視)
+          // 3. 重心動揺収束判定 (Peak-to-Peak)
           this.hipYBuffer.push(hipCenterY);
           if (this.hipYBuffer.length > CONFIG.STABLE_BUFFER_SIZE) this.hipYBuffer.shift();
 
@@ -1784,7 +1923,7 @@
         timestamps: { testStart: 0, contactStart: 0, takeoff: 0, landed: 0 },
         hipTracking: { baselineY: 0, takeoffHipY: 0, minHipY: 999999, deepestSquatY: 0 },
         calculated: { contactTimeMs: 0, airTimeSec: 0, jumpHeightCm: 0, rsi: 0, kneeAngleMin: 180 },
-        airKneeMinDeg: 180, // 空中での最小膝屈曲角度（抱え込みカンニング検知）
+        airKneeMinDeg: 180,
 
         triggerTestStart() {
           App.State.mode = 'TEST_COUNTDOWN';
@@ -1852,7 +1991,6 @@
                 if (hipY > this.hipTracking.deepestSquatY) {
                   this.hipTracking.deepestSquatY = hipY;
                 }
-                // チャタリング防止: 最小接地時間を経過した後の離地のみ受容
                 if (isFeetLifted && (now - this.timestamps.contactStart > CONFIG.MIN_CONTACT_TIME_MS)) {
                   this.currentPhase = this.RJ_PHASE.AIR_2;
                   this.timestamps.takeoff = now;
@@ -1867,17 +2005,14 @@
                 break;
 
               case this.RJ_PHASE.AIR_2:
-                // 空中滞空中の骨盤最高到達点
                 if (hipY < this.hipTracking.minHipY) {
                   this.hipTracking.minHipY = hipY;
                 }
-                // 空中滞空中の膝屈曲（くの字カンニング）追跡
                 const currentKneeAngle = this.calculateKneeAngle(pts);
                 if (currentKneeAngle < this.airKneeMinDeg) {
                   this.airKneeMinDeg = currentKneeAngle;
                 }
 
-                // 再着地の検知
                 if (isFeetOnFloor && (now - this.timestamps.takeoff > 150)) {
                   this.currentPhase = this.RJ_PHASE.LANDED;
                   this.timestamps.landed = now;
@@ -1950,21 +2085,17 @@
             return;
           }
 
-          // 1. 滞空時間法公式: h_air = (1/8) * g * t^2
           const airTimeSec = Math.max(0.01, (this.timestamps.landed - this.timestamps.takeoff) / 1000.0);
           const hAirCm = (0.125 * CONFIG.GRAVITY * (airTimeSec ** 2)) * 100;
 
-          // 2. 骨盤ピクセル法
           const hPixelRaw = Math.max(0, (this.hipTracking.takeoffHipY - this.hipTracking.minHipY)) / pxPerCm;
 
-          // 3. 空中での最小屈曲角度に基づくカンニング補正
           let cheatFactor = 1.0;
           if (this.airKneeMinDeg < 115) {
             cheatFactor = Math.max(0.72, (this.airKneeMinDeg / 115));
           }
           const hPixelCorrected = hPixelRaw * cheatFactor;
 
-          // 4. ハイブリッド二重クロス検証
           const finalHeightCm = Math.round(((hAirCm * 0.6) + (hPixelCorrected * 0.4)) * 10) / 10;
           const contactTimeMs = Math.max(1, this.calculated.contactTimeMs);
           const rsi = Math.round(((finalHeightCm / 100) / (contactTimeMs / 1000)) * 100) / 100;
@@ -2094,7 +2225,6 @@
           try {
             if (!window.MediaRecorder) return;
 
-            // iOS Safari対応のMIMEタイプ安全判定
             let mimeType = 'video/mp4';
             if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1')) {
               mimeType = 'video/mp4;codecs=avc1';
@@ -2382,6 +2512,11 @@
           App.UI.openModal('modal-scan');
         });
 
+        document.getElementById('btn-retry-camera').addEventListener('click', () => {
+          App.Audio.playSE(440, 0.05, 'square', 0.2);
+          App.Sensor.startCamera();
+        });
+
         document.getElementById('btn-main-start').addEventListener('click', () => {
           App.Audio.playExplosion();
           App.Sensor.requestGyroPermission();
@@ -2437,16 +2572,9 @@
         });
 
         const onResize = () => {
-          const wrapper = document.getElementById('screen-wrapper');
-          const canvas = document.getElementById('canvas-overlay');
-          if (wrapper && canvas) {
-            canvas.width = wrapper.clientWidth;
-            canvas.height = wrapper.clientHeight;
-            App.Sensor.updateVideoTransform();
-          }
+          App.Sensor.updateVideoTransform();
         };
         window.addEventListener('resize', onResize);
-        onResize();
 
         App.Sensor.init();
         App.UI.setStep(1);
