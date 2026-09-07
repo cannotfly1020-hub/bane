@@ -89,47 +89,47 @@
 
     .brawl-text {
       text-shadow: 
-        -2px -2px 0 #000,  
-         2px -2px 0 #000,
-        -2px  2px 0 #000,
-         2px  2px 0 #000,
-         0 3px 6px rgba(0, 0, 0, 0.9);
-      letter-spacing: 0.5px;
+        -1.5px -1.5px 0 #000,  
+         1.5px -1.5px 0 #000,
+        -1.5px  1.5px 0 #000,
+         1.5px  1.5px 0 #000,
+         0 2px 4px rgba(0, 0, 0, 0.9);
+      letter-spacing: 0.3px;
     }
 
     .brawl-text-glow {
       text-shadow: 
         0 0 10px rgba(255, 180, 0, 0.8),
-        -2px -2px 0 #000,  
-         2px -2px 0 #000,
-        -2px  2px 0 #000,
-         2px  2px 0 #000;
+        -1.5px -1.5px 0 #000,  
+         1.5px -1.5px 0 #000,
+        -1.5px  1.5px 0 #000,
+         1.5px  1.5px 0 #000;
     }
 
     .btn-brawl {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      border-radius: 12px;
-      border: 2px solid #000;
+      border-radius: 10px;
+      border: 1.5px solid #000;
       cursor: pointer;
       color: #fff;
-      font-size: 14px;
+      font-size: 13px;
       text-align: center;
       transition: transform 0.08s ease, box-shadow 0.08s ease;
       position: relative;
       overflow: hidden;
       line-height: 1.1;
-      padding: 8px 12px;
+      padding: 6px 10px;
     }
 
     .btn-brawl:active {
-      transform: translateY(3px);
+      transform: translateY(2px);
     }
 
     .btn-orange {
       background: linear-gradient(180deg, #ffa200 0%, #ff6600 100%);
-      box-shadow: 0 4px 0 var(--accent-orange-dark), 0 6px 12px rgba(0,0,0,0.6);
+      box-shadow: 0 3px 0 var(--accent-orange-dark), 0 4px 8px rgba(0,0,0,0.6);
     }
     .btn-orange:active {
       box-shadow: 0 1px 0 var(--accent-orange-dark), 0 2px 4px rgba(0,0,0,0.6);
@@ -137,7 +137,7 @@
 
     .btn-emerald {
       background: linear-gradient(180deg, #25f187 0%, #00b853 100%);
-      box-shadow: 0 4px 0 var(--accent-emerald-dark), 0 6px 12px rgba(0,0,0,0.6);
+      box-shadow: 0 3px 0 var(--accent-emerald-dark), 0 4px 8px rgba(0,0,0,0.6);
     }
     .btn-emerald:active {
       box-shadow: 0 1px 0 var(--accent-emerald-dark), 0 2px 4px rgba(0,0,0,0.6);
@@ -145,7 +145,7 @@
 
     .btn-gold {
       background: linear-gradient(180deg, #ffe033 0%, #e6a800 100%);
-      box-shadow: 0 4px 0 var(--accent-gold-dark), 0 6px 12px rgba(0,0,0,0.6);
+      box-shadow: 0 3px 0 var(--accent-gold-dark), 0 4px 8px rgba(0,0,0,0.6);
     }
     .btn-gold:active {
       box-shadow: 0 1px 0 var(--accent-gold-dark), 0 2px 4px rgba(0,0,0,0.6);
@@ -153,7 +153,7 @@
 
     .btn-blue {
       background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
-      box-shadow: 0 4px 0 var(--accent-blue-dark), 0 6px 12px rgba(0,0,0,0.6);
+      box-shadow: 0 3px 0 var(--accent-blue-dark), 0 4px 8px rgba(0,0,0,0.6);
     }
     .btn-blue:active {
       box-shadow: 0 1px 0 var(--accent-blue-dark), 0 2px 4px rgba(0,0,0,0.6);
@@ -161,7 +161,7 @@
 
     .btn-purple {
       background: linear-gradient(180deg, #c084fc 0%, #9333ea 100%);
-      box-shadow: 0 4px 0 var(--accent-purple-dark), 0 6px 12px rgba(0,0,0,0.6);
+      box-shadow: 0 3px 0 var(--accent-purple-dark), 0 4px 8px rgba(0,0,0,0.6);
     }
     .btn-purple:active {
       box-shadow: 0 1px 0 var(--accent-purple-dark), 0 2px 4px rgba(0,0,0,0.6);
@@ -171,14 +171,14 @@
       animation: buttonGoldPulse 1.2s infinite ease-in-out;
     }
     @keyframes buttonGoldPulse {
-      0%, 100% { box-shadow: 0 4px 0 var(--accent-gold-dark), 0 0 14px rgba(255, 215, 0, 0.6); transform: scale(1); }
-      50% { box-shadow: 0 4px 0 var(--accent-gold-dark), 0 0 24px rgba(255, 230, 0, 1); transform: scale(1.02); }
+      0%, 100% { box-shadow: 0 3px 0 var(--accent-gold-dark), 0 0 14px rgba(255, 215, 0, 0.6); transform: scale(1); }
+      50% { box-shadow: 0 3px 0 var(--accent-gold-dark), 0 0 22px rgba(255, 230, 0, 1); transform: scale(1.02); }
     }
 
     .panel-brawl {
       background: var(--panel-bg);
-      border: 3px solid var(--panel-border);
-      border-radius: 16px;
+      border: 2px solid var(--panel-border);
+      border-radius: 14px;
       box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.2), 0 8px 24px rgba(0, 0, 0, 0.7);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
@@ -187,12 +187,12 @@
     .badge-brawl {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      padding: 4px 8px;
-      border-radius: 8px;
-      border: 2px solid #000;
+      gap: 3px;
+      padding: 3px 7px;
+      border-radius: 7px;
+      border: 1.5px solid #000;
       background: rgba(8, 14, 28, 0.9);
-      font-size: 11px;
+      font-size: 10.5px;
       color: #f1f5f9;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 4px rgba(0,0,0,0.4);
     }
@@ -208,8 +208,8 @@
       animation: alertBorderPulse 1.2s infinite ease-in-out;
     }
     @keyframes alertBorderPulse {
-      0%, 100% { border-color: #ffd000; box-shadow: 0 0 12px rgba(255, 208, 0, 0.8); }
-      50% { border-color: #ff3300; box-shadow: 0 0 20px rgba(255, 51, 0, 0.9); }
+      0%, 100% { border-color: #ffd000; box-shadow: 0 0 10px rgba(255, 208, 0, 0.8); }
+      50% { border-color: #ff3300; box-shadow: 0 0 18px rgba(255, 51, 0, 0.9); }
     }
 
     /* 上部フローティングHUDグループ */
@@ -219,70 +219,79 @@
       left: 0;
       right: 0;
       z-index: 40;
-      padding: calc(6px + env(safe-area-inset-top)) 10px 0 10px;
+      padding: calc(4px + env(safe-area-inset-top)) 8px 6px 8px;
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 4px;
       pointer-events: none;
-      background: linear-gradient(180deg, rgba(7, 12, 24, 0.9) 0%, rgba(7, 12, 24, 0.5) 80%, transparent 100%);
-      padding-bottom: 12px;
+      background: linear-gradient(180deg, rgba(7, 12, 24, 0.92) 0%, rgba(7, 12, 24, 0.65) 85%, transparent 100%);
     }
     .top-hud-group > * {
       pointer-events: auto;
     }
 
+    /* ヘッダーのコンパクト化 */
     header.brawl-header {
       width: 100%;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 6px;
-      height: 38px;
+      gap: 4px;
+      height: 32px;
       flex-shrink: 0;
     }
 
     .brand-title {
-      font-size: 15px;
+      font-size: 13.5px;
       color: #fff;
       white-space: nowrap;
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
     }
 
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
     }
 
-    /* 3ステップナビゲーションバー（改修：文字切れ防止の2段レイアウト） */
+    /* ヘッダー内ボタンスリム化 */
+    .btn-header-compact {
+      height: 28px;
+      padding: 2px 7px;
+      font-size: 10.5px;
+      border-radius: 7px;
+      line-height: 1;
+    }
+
+    /* 3ステップナビゲーションバー（コンパクト化） */
     .step-banner-bar {
       width: 100%;
       background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      border: 1.5px solid #f59e0b;
-      border-radius: 10px;
-      padding: 4px 8px;
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      border: 1px solid rgba(245, 158, 11, 0.8);
+      border-radius: 8px;
+      padding: 3px 6px;
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 2px;
       flex-shrink: 0;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
     }
 
     .step-badges-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 4px;
+      gap: 3px;
     }
 
     .step-badge {
-      font-size: 10px;
-      padding: 2px 8px;
-      border-radius: 6px;
+      font-size: 9.5px;
+      padding: 1.5px 5px;
+      border-radius: 5px;
       border: 1px solid #000;
       background: rgba(51, 65, 85, 0.8);
       color: #94a3b8;
@@ -295,7 +304,7 @@
       background: #f59e0b;
       color: #000;
       font-weight: 900;
-      box-shadow: 0 0 8px #f59e0b;
+      box-shadow: 0 0 6px #f59e0b;
     }
 
     .step-badge.done {
@@ -305,24 +314,23 @@
 
     .step-arrow {
       color: #64748b;
-      font-size: 9px;
+      font-size: 8px;
       flex-shrink: 0;
     }
 
     .step-text {
-      font-size: 11px;
+      font-size: 10.5px;
       color: #ffea79;
       text-align: center;
       white-space: normal;
-      line-height: 1.2;
-      padding-top: 1px;
+      line-height: 1.15;
     }
 
-    /* Test Selector Grid */
+    /* Test Selector Grid（ボタンサイズ最適化・スリム化） */
     .tab-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 5px;
+      gap: 4px;
       width: 100%;
       flex-shrink: 0;
     }
@@ -331,7 +339,7 @@
       padding: 4px 2px;
       border-radius: 8px;
       border: 1.5px solid #000;
-      background: rgba(18, 29, 52, 0.75);
+      background: rgba(18, 29, 52, 0.8);
       backdrop-filter: blur(4px);
       -webkit-backdrop-filter: blur(4px);
       color: #94a3b8;
@@ -344,21 +352,71 @@
       justify-content: center;
       gap: 1px;
       box-shadow: 0 2px 0 #0b1424;
-      transition: all 0.15s ease;
+      transition: all 0.12s ease;
+      height: 38px;
     }
 
     .tab-btn.active {
       background: linear-gradient(180deg, #ff9400 0%, #e65100 100%);
       color: #fff;
       border-color: #fff;
-      box-shadow: 0 3px 0 #8c2500, 0 0 10px rgba(255, 120, 0, 0.6);
+      box-shadow: 0 2px 0 #8c2500, 0 0 8px rgba(255, 120, 0, 0.6);
       transform: translateY(-1px);
+    }
+
+    .tab-btn span.main-title {
+      font-size: 10.5px;
+      line-height: 1.1;
+      white-space: nowrap;
     }
 
     .tab-btn span.sub {
       font-size: 8px;
       opacity: 0.9;
       font-weight: 800;
+      white-space: nowrap;
+    }
+
+    /* 水準器（トップHUDグループ内に配置して被りを完全抑止） */
+    .gyro-indicator-container {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      margin-top: 1px;
+      flex-shrink: 0;
+    }
+
+    .gyro-indicator {
+      background: rgba(10, 16, 30, 0.88);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      border: 1.5px solid #334155;
+      padding: 2px 8px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 9.5px;
+      color: #cbd5e1;
+      white-space: nowrap;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    }
+
+    .gyro-indicator.valid {
+      border-color: var(--accent-emerald);
+      color: #a7f3d0;
+      box-shadow: 0 0 8px rgba(0, 210, 106, 0.4);
+    }
+
+    .gyro-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #64748b;
+    }
+    .gyro-indicator.valid .gyro-dot {
+      background: var(--accent-emerald);
+      box-shadow: 0 0 6px #00d26a;
     }
 
     /* カメラ全画面化 */
@@ -390,62 +448,24 @@
       z-index: 5;
     }
 
-    /* Gyro Spirit Level（位置調整：タブの下にすっきり配置） */
-    .gyro-indicator {
-      position: absolute;
-      top: 136px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 20;
-      background: rgba(10, 16, 30, 0.85);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
-      border: 1.5px solid #334155;
-      padding: 3px 10px;
-      border-radius: 16px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 10px;
-      color: #cbd5e1;
-      white-space: nowrap;
-    }
-
-    .gyro-indicator.valid {
-      border-color: var(--accent-emerald);
-      color: #a7f3d0;
-      box-shadow: 0 0 10px rgba(0, 210, 106, 0.4);
-    }
-
-    .gyro-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #64748b;
-    }
-    .gyro-indicator.valid .gyro-dot {
-      background: var(--accent-emerald);
-      box-shadow: 0 0 8px #00d26a;
-    }
-
-    /* Safe Boundary & Feet Lock Box */
+    /* Safe Boundary & Feet Lock Box（上部HUDの高さに合わせて動的に調整） */
     .safe-frame {
       position: absolute;
-      top: 126px;
-      bottom: 110px;
+      top: 156px;
+      bottom: 105px;
       left: 10px;
       right: 10px;
-      border: 2px dashed rgba(255, 255, 255, 0.25);
-      border-radius: 14px;
+      border: 2px dashed rgba(255, 255, 255, 0.22);
+      border-radius: 12px;
       pointer-events: none;
       z-index: 10;
     }
 
     .head-guideline {
       position: absolute;
-      top: 172px;
-      left: 15%;
-      right: 15%;
+      top: 180px;
+      left: 12%;
+      right: 12%;
       height: 2px;
       border-top: 2px dashed #facc15;
       z-index: 12;
@@ -456,41 +476,41 @@
     }
 
     .head-guideline span {
-      background: rgba(0,0,0,0.7);
+      background: rgba(0,0,0,0.75);
       padding: 1px 6px;
-      border-radius: 6px;
-      font-size: 9px;
+      border-radius: 5px;
+      font-size: 8.5px;
       color: #facc15;
       transform: translateY(-8px);
     }
 
     .foot-lock-box {
       position: absolute;
-      bottom: 102px;
+      bottom: 98px;
       left: 50%;
       transform: translateX(-50%);
-      width: 190px;
-      height: 62px;
-      border: 3px solid rgba(255, 200, 0, 0.85);
+      width: 185px;
+      height: 58px;
+      border: 2.5px solid rgba(255, 200, 0, 0.85);
       background: rgba(255, 200, 0, 0.12);
-      border-radius: 12px;
+      border-radius: 10px;
       z-index: 15;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-direction: column;
       color: #ffea79;
-      font-size: 10px;
+      font-size: 9.5px;
       text-align: center;
       pointer-events: none;
-      box-shadow: 0 0 14px rgba(255, 200, 0, 0.4);
+      box-shadow: 0 0 12px rgba(255, 200, 0, 0.4);
     }
 
     .foot-lock-box.locked {
       border-color: var(--accent-emerald);
       background: rgba(0, 210, 106, 0.2);
       color: #6ee7b7;
-      box-shadow: 0 0 18px rgba(0, 210, 106, 0.6);
+      box-shadow: 0 0 16px rgba(0, 210, 106, 0.6);
     }
 
     /* Calibrate Guide Overlay in Camera */
@@ -505,8 +525,8 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 12px;
-      padding: 24px;
+      gap: 10px;
+      padding: 20px;
       text-align: center;
     }
 
@@ -514,12 +534,12 @@
       display: none;
     }
 
-    /* HUD Metrics Badges */
+    /* HUD Metrics Badges（被りを避けて適正位置へ） */
     .hud-metrics {
       position: absolute;
-      top: 168px;
-      left: 10px;
-      right: 10px;
+      top: 172px;
+      left: 8px;
+      right: 8px;
       display: flex;
       justify-content: space-between;
       pointer-events: none;
@@ -527,31 +547,31 @@
     }
 
     .hud-card {
-      background: rgba(12, 20, 36, 0.78);
+      background: rgba(12, 20, 36, 0.8);
       backdrop-filter: blur(4px);
       -webkit-backdrop-filter: blur(4px);
       border: 1.5px solid #233556;
-      border-radius: 10px;
-      padding: 5px 8px;
-      min-width: 82px;
+      border-radius: 9px;
+      padding: 4px 7px;
+      min-width: 78px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.5);
     }
 
     .hud-card .hud-label {
-      font-size: 9px;
+      font-size: 8.5px;
       color: #94a3b8;
     }
 
     .hud-card .hud-value {
-      font-size: 18px;
+      font-size: 16px;
       color: #fff;
     }
 
     .hud-card .hud-unit {
-      font-size: 9px;
+      font-size: 8.5px;
       color: var(--accent-gold);
     }
 
@@ -567,7 +587,7 @@
     }
 
     .countdown-num {
-      font-size: 110px;
+      font-size: 100px;
       color: #fff;
       transform: scale(0.6);
       animation: countPop 0.8s cubic-bezier(0.18, 0.89, 0.32, 1.28) infinite;
@@ -581,27 +601,27 @@
 
     .state-banner {
       position: absolute;
-      bottom: 174px;
+      bottom: 166px;
       left: 50%;
       transform: translateX(-50%);
       background: rgba(230, 81, 0, 0.95);
-      border: 2px solid #ffcc80;
-      border-radius: 20px;
-      padding: 4px 16px;
-      font-size: 12px;
+      border: 1.5px solid #ffcc80;
+      border-radius: 18px;
+      padding: 3px 14px;
+      font-size: 11.5px;
       color: #fff;
       display: none;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       z-index: 25;
-      box-shadow: 0 4px 14px rgba(255, 102, 0, 0.6);
+      box-shadow: 0 3px 12px rgba(255, 102, 0, 0.6);
       white-space: nowrap;
     }
 
     /* 10s Ult Drill HUD */
     .drill-hud {
       position: absolute;
-      top: 112px;
+      top: 156px;
       right: 10px;
       left: 10px;
       display: none;
@@ -618,20 +638,20 @@
     }
 
     .combo-badge {
-      font-size: 15px;
+      font-size: 13.5px;
       color: #ffd000;
       background: rgba(0,0,0,0.7);
-      padding: 3px 8px;
-      border-radius: 8px;
+      padding: 2px 7px;
+      border-radius: 7px;
       border: 1px solid #ffd000;
     }
 
     .ult-bar-frame {
       width: 100%;
-      height: 12px;
+      height: 10px;
       background: rgba(0,0,0,0.6);
-      border: 2px solid #fff;
-      border-radius: 8px;
+      border: 1.5px solid #fff;
+      border-radius: 6px;
       overflow: hidden;
       position: relative;
     }
@@ -641,20 +661,20 @@
       width: 0%;
       background: linear-gradient(90deg, #ffea00, #ff0055);
       transition: width 0.15s ease-out;
-      box-shadow: 0 0 10px #ff3366;
+      box-shadow: 0 0 8px #ff3366;
     }
 
-    /* 下部フローティングHUDフッター（改修：画面最下部にピタッと密着） */
+    /* 下部フローティングHUDフッター */
     footer.brawl-footer {
       position: absolute;
       bottom: 0;
       left: 0;
       right: 0;
       z-index: 40;
-      padding: 10px 10px 6px 10px;
+      padding: 8px 8px calc(6px + env(safe-area-inset-bottom)) 8px;
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 4px;
       pointer-events: none;
       background: linear-gradient(0deg, rgba(7, 12, 24, 0.95) 0%, rgba(7, 12, 24, 0.6) 80%, transparent 100%);
     }
@@ -664,16 +684,16 @@
 
     .main-trigger-btn {
       width: 100%;
-      height: 44px;
-      font-size: 15px;
-      letter-spacing: 0.5px;
+      height: 42px;
+      font-size: 14px;
+      letter-spacing: 0.4px;
     }
 
     .footer-sub-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 6px;
-      height: 34px;
+      gap: 5px;
+      height: 32px;
     }
 
     .modal-backdrop {
@@ -686,7 +706,7 @@
       align-items: center;
       justify-content: center;
       z-index: 100;
-      padding: 16px;
+      padding: 14px;
     }
 
     .modal-backdrop.open {
@@ -704,10 +724,10 @@
       max-width: 380px;
       max-height: 90vh;
       overflow-y: auto;
-      padding: 18px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       position: relative;
     }
 
@@ -716,62 +736,62 @@
       align-items: center;
       justify-content: space-between;
       border-bottom: 2px solid #233556;
-      padding-bottom: 8px;
+      padding-bottom: 6px;
     }
 
     .modal-title {
-      font-size: 18px;
+      font-size: 16px;
       color: #fff;
     }
 
     .btn-close-modal {
-      width: 30px;
-      height: 30px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
       background: #e11d48;
-      border: 2px solid #000;
-      box-shadow: 0 3px 0 #881337;
+      border: 1.5px solid #000;
+      box-shadow: 0 2px 0 #881337;
       color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
+      font-size: 13px;
       cursor: pointer;
     }
 
     .form-group {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
     }
 
     .form-label {
-      font-size: 12px;
+      font-size: 11.5px;
       color: #cbd5e1;
     }
 
     .form-input-number {
       width: 100%;
       background: #0f172a;
-      border: 2px solid #334155;
-      border-radius: 10px;
+      border: 1.5px solid #334155;
+      border-radius: 9px;
       color: #f8fafc;
-      font-size: 24px;
-      padding: 8px 12px;
+      font-size: 22px;
+      padding: 6px 10px;
       text-align: center;
       outline: none;
     }
     .form-input-number:focus {
       border-color: var(--accent-orange);
-      box-shadow: 0 0 10px rgba(255, 120, 0, 0.5);
+      box-shadow: 0 0 8px rgba(255, 120, 0, 0.5);
     }
 
     .replay-player {
       width: 100%;
-      height: 180px;
+      height: 170px;
       background: #000;
-      border-radius: 12px;
-      border: 2px solid #334155;
+      border-radius: 10px;
+      border: 1.5px solid #334155;
       overflow: hidden;
       position: relative;
       display: flex;
@@ -788,40 +808,40 @@
     .report-stat-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 8px;
+      gap: 6px;
     }
 
     .report-stat-card {
       background: #0b1325;
       border: 1px solid #1f2f4e;
-      border-radius: 10px;
-      padding: 8px;
+      border-radius: 8px;
+      padding: 6px;
       text-align: center;
     }
 
     .star-player-banner {
       background: linear-gradient(90deg, #b45309, #f59e0b, #b45309);
-      border: 2px solid #fff;
-      border-radius: 12px;
-      padding: 8px;
+      border: 1.5px solid #fff;
+      border-radius: 10px;
+      padding: 6px;
       text-align: center;
       color: #fff;
-      font-size: 14px;
-      box-shadow: 0 0 16px rgba(245, 158, 11, 0.7);
+      font-size: 13px;
+      box-shadow: 0 0 14px rgba(245, 158, 11, 0.7);
     }
 
     #brawl-toast {
       position: fixed;
-      top: 50px;
+      top: calc(45px + env(safe-area-inset-top));
       left: 50%;
       transform: translateX(-50%) translateY(-20px);
       background: rgba(15, 23, 42, 0.96);
-      border: 2px solid var(--accent-gold);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.8), 0 0 12px rgba(255, 196, 0, 0.4);
+      border: 1.5px solid var(--accent-gold);
+      box-shadow: 0 5px 14px rgba(0,0,0,0.8), 0 0 10px rgba(255, 196, 0, 0.4);
       color: #fff;
-      padding: 8px 18px;
-      border-radius: 24px;
-      font-size: 13px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
       z-index: 1000;
       opacity: 0;
       pointer-events: none;
@@ -842,19 +862,13 @@
   <!-- Toast Notification Node -->
   <div id="brawl-toast" class="brawl-text">通知メッセージ</div>
 
-  <!-- Main Viewport (画面最下部まで隙間なく密着) -->
+  <!-- Main Viewport -->
   <div id="app-viewport">
     
     <!-- 全画面カメラスクリーン（最背面） -->
     <main id="screen-wrapper">
       <video id="camera-feed" playsinline autoplay muted></video>
       <canvas id="canvas-overlay"></canvas>
-
-      <!-- AI水準器（タブ下端と被らない最適位置） -->
-      <div id="gyro-indicator" class="gyro-indicator">
-        <div class="gyro-dot"></div>
-        <span id="gyro-text" class="brawl-text">📐 傾き 82° OK</span>
-      </div>
 
       <!-- ガイドライン＆枠 -->
       <div class="safe-frame"></div>
@@ -864,18 +878,18 @@
       </div>
 
       <div id="foot-lock-box" class="foot-lock-box">
-        <span class="brawl-text" style="font-size: 11px;">ここに両足を揃える</span>
-        <span id="foot-lock-status" style="font-size: 9px; opacity: 0.9;">立ち位置を探索中...</span>
+        <span class="brawl-text" style="font-size: 10.5px;">ここに両足を揃える</span>
+        <span id="foot-lock-status" style="font-size: 8.5px; opacity: 0.9;">立ち位置を探索中...</span>
       </div>
 
       <!-- 初回スキャン誘導オーバーレイ -->
       <div id="calib-guide-overlay" class="calib-guide-overlay">
-        <div style="font-size: 38px;">📏</div>
-        <div class="brawl-text-glow" style="font-size: 18px; color: #ffea79;">精密測定のための初期設定</div>
-        <p style="font-size: 12px; color: #cbd5e1; line-height: 1.5; font-weight: 800; max-width: 280px;">
+        <div style="font-size: 34px;">📏</div>
+        <div class="brawl-text-glow" style="font-size: 17px; color: #ffea79;">精密測定のための初期設定</div>
+        <p style="font-size: 11.5px; color: #cbd5e1; line-height: 1.45; font-weight: 800; max-width: 270px;">
           単眼カメラで反発力をミリ単位で測るため、最初に<span style="color: var(--accent-gold);">「身長」</span>と<span style="color: var(--accent-gold);">「立ち位置」</span>を登録する必要があります！
         </p>
-        <button id="btn-guide-start-calib" class="btn-brawl btn-gold btn-pulse-gold brawl-text" style="padding: 10px 24px; font-size: 15px;">
+        <button id="btn-guide-start-calib" class="btn-brawl btn-gold btn-pulse-gold brawl-text" style="padding: 8px 20px; font-size: 14px;">
           👉 身長を入力してスタート
         </button>
       </div>
@@ -902,7 +916,7 @@
       <div id="drill-hud" class="drill-hud">
         <div class="drill-top-row">
           <span class="combo-badge brawl-text" id="drill-combo-text">COMBO 0</span>
-          <span class="brawl-text" id="drill-timer-text" style="color: #ff3b30; font-size: 16px;">⏱️ 10.0s</span>
+          <span class="brawl-text" id="drill-timer-text" style="color: #ff3b30; font-size: 14px;">⏱️ 10.0s</span>
         </div>
         <div class="ult-bar-frame">
           <div id="ult-bar-fill" class="ult-bar-fill"></div>
@@ -921,7 +935,7 @@
       </div>
     </main>
 
-    <!-- 上部フローティングHUDグループ（ヘッダー＋ステップバー＋タブ） -->
+    <!-- 上部フローティングHUDグループ（ヘッダー＋ステップバー＋タブ＋水準器を一元化） -->
     <div class="top-hud-group">
       <header class="brawl-header">
         <div class="brand-title brawl-text">
@@ -929,19 +943,19 @@
           <span>瞬発力・爆発バネドック</span>
         </div>
         <div class="header-actions">
-          <button id="btn-open-scan" class="badge-brawl badge-attention brawl-text" style="cursor: pointer;">
-            <span id="badge-height-val">⚠️ 身長未設定</span>
+          <button id="btn-open-scan" class="badge-brawl badge-attention brawl-text" style="cursor: pointer; height: 26px;">
+            <span id="badge-height-val">⚠️ 未設定</span>
           </button>
-          <button id="btn-toggle-cam" class="btn-brawl btn-blue" style="padding: 4px 8px; font-size: 11px;">
+          <button id="btn-toggle-cam" class="btn-brawl btn-blue btn-header-compact">
             🔄 カメラ
           </button>
-          <button id="btn-open-records" class="btn-brawl btn-purple" style="padding: 4px 8px; font-size: 11px;">
+          <button id="btn-open-records" class="btn-brawl btn-purple btn-header-compact">
             📊 カルテ
           </button>
         </div>
       </header>
 
-      <!-- 3ステップ・ナビゲーションバー（改修：文字切れ防止レイアウト） -->
+      <!-- 3ステップ・ナビゲーションバー（コンパクト化） -->
       <div class="step-banner-bar" id="step-banner-bar">
         <div class="step-badges-row">
           <div class="step-badge active" id="step-badge-1">① 身長登録</div>
@@ -953,33 +967,41 @@
         <div class="step-text brawl-text" id="step-guide-text">まずは身長を入力してください</div>
       </div>
 
-      <!-- テスト選択タブ -->
+      <!-- テスト選択タブ（高さ38pxでコンパクトかつ押しやすく整理） -->
       <div class="tab-grid">
         <button class="tab-btn active" data-test="RJ">
-          <span class="brawl-text">🦘 ① 2連続RJ</span>
+          <span class="brawl-text main-title">🦘 ① 2連続RJ</span>
           <span class="sub">反発バネ＆接地速</span>
         </button>
         <button class="tab-btn" data-test="VERTICAL">
-          <span class="brawl-text">🦘 ② 単発垂直跳び</span>
+          <span class="brawl-text main-title">🦘 ② 単発垂直跳び</span>
           <span class="sub">最大カウンター</span>
         </button>
         <button class="tab-btn" data-test="BRAKE">
-          <span class="brawl-text">🛑 ③ 前足急停止</span>
+          <span class="brawl-text main-title">🛑 ③ 前足急停止</span>
           <span class="sub">着地エキセントリック</span>
         </button>
       </div>
+
+      <!-- AI水準器（上部HUD内の最下段に配置し、絶対被らない構造へ） -->
+      <div class="gyro-indicator-container">
+        <div id="gyro-indicator" class="gyro-indicator">
+          <div class="gyro-dot"></div>
+          <span id="gyro-text" class="brawl-text">📐 傾き 82° OK</span>
+        </div>
+      </div>
     </div>
 
-    <!-- 下部フローティングHUDフッター（下端に密着固定） -->
+    <!-- 下部フローティングHUDフッター -->
     <footer class="brawl-footer">
       <button id="btn-main-start" class="btn-brawl btn-gold btn-pulse-gold main-trigger-btn brawl-text">
         📏 STEP 1: 身長を登録してスキャン開始
       </button>
       <div class="footer-sub-actions">
-        <button id="btn-open-report" class="btn-brawl btn-emerald brawl-text" style="font-size: 12px;">
+        <button id="btn-open-report" class="btn-brawl btn-emerald brawl-text" style="font-size: 11.5px;">
           📋 診断レポート
         </button>
-        <button id="btn-start-drill" class="btn-brawl btn-purple brawl-text" style="font-size: 12px;">
+        <button id="btn-start-drill" class="btn-brawl btn-purple brawl-text" style="font-size: 11.5px;">
           🎮 10秒ウルトドリル
         </button>
       </div>
@@ -999,22 +1021,22 @@
       <div class="form-group">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <label class="form-label brawl-text">👤 登録済み選手から選ぶ:</label>
-          <span style="font-size: 10px; color: var(--accent-gold);">タップで即時適用</span>
+          <span style="font-size: 9.5px; color: var(--accent-gold);">タップで即時適用</span>
         </div>
-        <div id="profile-select-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto; padding-right: 2px;">
+        <div id="profile-select-list" style="display: flex; flex-direction: column; gap: 5px; max-height: 130px; overflow-y: auto; padding-right: 2px;">
         </div>
       </div>
 
-      <div style="display: flex; align-items: center; gap: 8px; margin: 4px 0;">
+      <div style="display: flex; align-items: center; gap: 6px; margin: 2px 0;">
         <div style="flex: 1; height: 1px; background: #334155;"></div>
-        <span style="font-size: 10px; color: #94a3b8;" class="brawl-text">または新規登録</span>
+        <span style="font-size: 9.5px; color: #94a3b8;" class="brawl-text">または新規登録</span>
         <div style="flex: 1; height: 1px; background: #334155;"></div>
       </div>
 
       <!-- 新規選手登録フォーム -->
       <div class="form-group">
         <label class="form-label brawl-text">選手名 (ニックネーム):</label>
-        <input type="text" id="input-player-name" class="form-input-number brawl-text" placeholder="例: はると" style="font-size: 16px; padding: 6px 10px; text-align: left;" maxlength="10">
+        <input type="text" id="input-player-name" class="form-input-number brawl-text" placeholder="例: はると" style="font-size: 15px; padding: 5px 8px; text-align: left;" maxlength="10">
       </div>
 
       <div class="form-group">
@@ -1022,14 +1044,14 @@
         <input type="number" id="input-height" class="form-input-number brawl-text" value="140" min="90" max="220">
       </div>
 
-      <div class="panel-brawl" style="padding: 10px; background: rgba(0,0,0,0.4); border-color: #334155; font-size: 11px; line-height: 1.4;">
+      <div class="panel-brawl" style="padding: 8px; background: rgba(0,0,0,0.4); border-color: #334155; font-size: 10.5px; line-height: 1.35;">
         <p class="brawl-text" style="color: var(--accent-gold);">⚠️ なぜ最初に設定が必要？</p>
-        <p style="color: #cbd5e1; margin-top: 4px; font-weight: 800;">
+        <p style="color: #cbd5e1; margin-top: 3px; font-weight: 800;">
           カメラ画面内の身長ピクセル数から「1cmあたりの比率」を算出し、ミリ秒単位のバネ弾性や跳躍高を割り出すためです。
         </p>
       </div>
 
-      <button id="btn-save-height" class="btn-brawl btn-emerald brawl-text" style="height: 44px; font-size: 15px;">
+      <button id="btn-save-height" class="btn-brawl btn-emerald brawl-text" style="height: 40px; font-size: 14px;">
         ➕ 新規保存して直立スキャンへ
       </button>
     </div>
@@ -1049,7 +1071,7 @@
 
       <div class="replay-player">
         <video id="replay-video" loop playsinline muted controls></video>
-        <div id="replay-placeholder" style="color: #64748b; font-size: 12px;" class="brawl-text">
+        <div id="replay-placeholder" style="color: #64748b; font-size: 11px;" class="brawl-text">
           📹 測定後にリプレイが生成されます
         </div>
       </div>
@@ -1057,11 +1079,11 @@
       <div class="report-stat-grid">
         <div class="report-stat-card">
           <div class="hud-label brawl-text">接地時間</div>
-          <div class="hud-value brawl-text" id="rep-contact-time" style="color: #38bdf8;">168<span style="font-size: 12px;">ms</span></div>
+          <div class="hud-value brawl-text" id="rep-contact-time" style="color: #38bdf8;">168<span style="font-size: 11px;">ms</span></div>
         </div>
         <div class="report-stat-card">
           <div class="hud-label brawl-text">跳躍高</div>
-          <div class="hud-value brawl-text" id="rep-jump-height" style="color: #4ade80;">34.2<span style="font-size: 12px;">cm</span></div>
+          <div class="hud-value brawl-text" id="rep-jump-height" style="color: #4ade80;">34.2<span style="font-size: 11px;">cm</span></div>
         </div>
         <div class="report-stat-card">
           <div class="hud-label brawl-text">バネ指数 (RSI)</div>
@@ -1073,14 +1095,14 @@
         </div>
       </div>
 
-      <div class="panel-brawl" style="padding: 10px; background: rgba(0,0,0,0.4); border-color: #334155; font-size: 11px; line-height: 1.4;">
+      <div class="panel-brawl" style="padding: 8px; background: rgba(0,0,0,0.4); border-color: #334155; font-size: 10.5px; line-height: 1.35;">
         <div class="brawl-text" style="color: #38bdf8; margin-bottom: 2px;">⚾ 野球パフォーマンス還元分析</div>
         <p id="rep-baseball-text" style="color: #e2e8f0; font-weight: 800;">
           接地時間が短く、腱の弾性を活かした鋭い反発が獲得できています。内野手の1歩目の出足、および投球の前足ブロッキング動作において大きな推進力・骨盤回旋速度を生み出せます。
         </p>
       </div>
 
-      <button class="btn-brawl btn-orange brawl-text" data-close="modal-report" style="height: 38px;">
+      <button class="btn-brawl btn-orange brawl-text" data-close="modal-report" style="height: 36px;">
         閉じて次の測定へ
       </button>
     </div>
@@ -1094,13 +1116,13 @@
         <button class="btn-close-modal brawl-text" data-close="modal-records">✕</button>
       </div>
 
-      <div id="history-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow-y: auto; padding-right: 2px;"></div>
+      <div id="history-list" style="display: flex; flex-direction: column; gap: 5px; max-height: 220px; overflow-y: auto; padding-right: 2px;"></div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-        <button id="btn-export-csv" class="btn-brawl btn-emerald brawl-text" style="font-size: 12px; padding: 6px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+        <button id="btn-export-csv" class="btn-brawl btn-emerald brawl-text" style="font-size: 11px; padding: 5px;">
           📥 CSV出力
         </button>
-        <button id="btn-clear-logs" class="btn-brawl btn-purple brawl-text" style="font-size: 12px; padding: 6px;">
+        <button id="btn-clear-logs" class="btn-brawl btn-purple brawl-text" style="font-size: 11px; padding: 5px;">
           🗑️ 履歴消去
         </button>
       </div>
@@ -1328,26 +1350,26 @@
           const profiles = App.Storage.loadProfiles();
           if (profiles.length === 0) {
             container.innerHTML = `
-              <div style="text-align: center; color: #64748b; font-size: 11px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px;" class="brawl-text">
+              <div style="text-align: center; color: #64748b; font-size: 10px; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 8px;" class="brawl-text">
                 登録済みの選手はいません。<br>下のフォームから登録してください。
               </div>`;
             return;
           }
 
           container.innerHTML = profiles.map(p => `
-            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(18, 29, 52, 0.9); border: 2px solid #233556; border-radius: 10px; padding: 6px 10px; cursor: pointer; transition: transform 0.1s ease;" class="profile-card" data-id="${p.id}" data-name="${p.name}" data-height="${p.heightCm}">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 16px;">👤</span>
+            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(18, 29, 52, 0.9); border: 1.5px solid #233556; border-radius: 8px; padding: 5px 8px; cursor: pointer;" class="profile-card" data-id="${p.id}" data-name="${p.name}" data-height="${p.heightCm}">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 14px;">👤</span>
                 <div>
-                  <div class="brawl-text" style="font-size: 13px; color: #fff;">${p.name}</div>
-                  <div class="brawl-text" style="font-size: 11px; color: var(--accent-gold);">${p.heightCm} cm</div>
+                  <div class="brawl-text" style="font-size: 12px; color: #fff;">${p.name}</div>
+                  <div class="brawl-text" style="font-size: 10px; color: var(--accent-gold);">${p.heightCm} cm</div>
                 </div>
               </div>
-              <div style="display: flex; align-items: center; gap: 6px;">
-                <button class="btn-brawl btn-gold btn-select-player brawl-text" data-id="${p.id}" data-name="${p.name}" data-height="${p.heightCm}" style="padding: 4px 10px; font-size: 11px;">
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <button class="btn-brawl btn-gold btn-select-player brawl-text" data-id="${p.id}" data-name="${p.name}" data-height="${p.heightCm}" style="padding: 3px 8px; font-size: 10px;">
                   選択
                 </button>
-                <button class="btn-brawl btn-delete-player" data-id="${p.id}" style="padding: 4px 6px; font-size: 10px; background: #dc2626; border-color: #000; box-shadow: 0 2px 0 #7f1d1d;">
+                <button class="btn-brawl btn-delete-player" data-id="${p.id}" style="padding: 3px 5px; font-size: 9px; background: #dc2626; border-color: #000; box-shadow: 0 1px 0 #7f1d1d;">
                   ✕
                 </button>
               </div>
@@ -1511,16 +1533,16 @@
           if (!listEl) return;
           const logs = this.loadLogs();
           if (logs.length === 0) {
-            listEl.innerHTML = '<div style="text-align:center; color:#64748b; font-size:12px; padding:16px;" class="brawl-text">履歴はありません</div>';
+            listEl.innerHTML = '<div style="text-align:center; color:#64748b; font-size:11px; padding:12px;" class="brawl-text">履歴はありません</div>';
             return;
           }
           listEl.innerHTML = logs.map(item => `
-            <div style="background:#0c1527; border:1px solid #1e293b; border-radius:8px; padding:8px; display:flex; justify-content:space-between; align-items:center;">
+            <div style="background:#0c1527; border:1px solid #1e293b; border-radius:8px; padding:6px; display:flex; justify-content:space-between; align-items:center;">
               <div>
-                <div class="brawl-text" style="font-size:11px; color:#94a3b8;">${item.date} [${item.playerName || '選手'}] - ${item.type}</div>
-                <div class="brawl-text" style="font-size:14px; color:#fff;">${item.mainMetric} / ${item.subMetric}</div>
+                <div class="brawl-text" style="font-size:10px; color:#94a3b8;">${item.date} [${item.playerName || '選手'}] - ${item.type}</div>
+                <div class="brawl-text" style="font-size:13px; color:#fff;">${item.mainMetric} / ${item.subMetric}</div>
               </div>
-              <div class="badge-brawl brawl-text" style="color:var(--accent-gold);">${item.rank}</div>
+              <div class="badge-brawl brawl-text" style="color:var(--accent-gold); font-size:9.5px;">${item.rank}</div>
             </div>
           `).join('');
         },
