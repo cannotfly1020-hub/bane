@@ -9,6 +9,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@800;900&display=swap" rel="stylesheet">
   
+  <!-- MediaPipe Pose CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+
   <style>
     :root {
       --bg-dark-1: #070c18;
@@ -40,7 +44,6 @@
       font-weight: 900;
     }
 
-    /* iOSブラウザのバー出現によるズレ・余白を完全抑止 */
     body, html {
       width: 100%;
       height: 100%;
@@ -74,7 +77,6 @@
       100% { transform: translate(-50%, -50%) rotate(360deg); }
     }
 
-    /* 画面全体に吸着するビューポート */
     #app-viewport {
       position: absolute;
       inset: 0;
@@ -230,7 +232,6 @@
       pointer-events: auto;
     }
 
-    /* ヘッダーのコンパクト化 */
     header.brawl-header {
       width: 100%;
       display: flex;
@@ -256,7 +257,6 @@
       gap: 4px;
     }
 
-    /* ヘッダー内ボタンスリム化 */
     .btn-header-compact {
       height: 28px;
       padding: 2px 7px;
@@ -265,7 +265,6 @@
       line-height: 1;
     }
 
-    /* 3ステップナビゲーションバー（コンパクト化） */
     .step-banner-bar {
       width: 100%;
       background: rgba(15, 23, 42, 0.85);
@@ -326,7 +325,6 @@
       line-height: 1.15;
     }
 
-    /* Test Selector Grid（ボタンサイズ最適化・スリム化） */
     .tab-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -377,7 +375,6 @@
       white-space: nowrap;
     }
 
-    /* 水準器（トップHUDグループ内に配置して被りを完全抑止） */
     .gyro-indicator-container {
       display: flex;
       justify-content: center;
@@ -419,7 +416,6 @@
       box-shadow: 0 0 6px #00d26a;
     }
 
-    /* カメラ全画面化 */
     #screen-wrapper {
       position: absolute;
       inset: 0;
@@ -448,7 +444,6 @@
       z-index: 5;
     }
 
-    /* Safe Boundary & Feet Lock Box（上部HUDの高さに合わせて動的に調整） */
     .safe-frame {
       position: absolute;
       top: 156px;
@@ -504,6 +499,7 @@
       text-align: center;
       pointer-events: none;
       box-shadow: 0 0 12px rgba(255, 200, 0, 0.4);
+      transition: all 0.2s ease;
     }
 
     .foot-lock-box.locked {
@@ -513,13 +509,20 @@
       box-shadow: 0 0 16px rgba(0, 210, 106, 0.6);
     }
 
-    /* Calibrate Guide Overlay in Camera */
+    .foot-lock-box.golden-ready {
+      border-color: #ffe033;
+      background: rgba(255, 224, 51, 0.3);
+      color: #ffffff;
+      box-shadow: 0 0 24px rgba(255, 215, 0, 0.9);
+      animation: buttonGoldPulse 0.8s infinite ease-in-out;
+    }
+
     .calib-guide-overlay {
       position: absolute;
       inset: 0;
-      background: rgba(7, 12, 24, 0.75);
-      backdrop-filter: blur(3px);
-      -webkit-backdrop-filter: blur(3px);
+      background: rgba(7, 12, 24, 0.82);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
       z-index: 25;
       display: flex;
       flex-direction: column;
@@ -534,7 +537,6 @@
       display: none;
     }
 
-    /* HUD Metrics Badges（被りを避けて適正位置へ） */
     .hud-metrics {
       position: absolute;
       top: 172px;
@@ -618,7 +620,6 @@
       white-space: nowrap;
     }
 
-    /* 10s Ult Drill HUD */
     .drill-hud {
       position: absolute;
       top: 156px;
@@ -664,7 +665,6 @@
       box-shadow: 0 0 8px #ff3366;
     }
 
-    /* 下部フローティングHUDフッター */
     footer.brawl-footer {
       position: absolute;
       bottom: 0;
@@ -865,13 +865,13 @@
   <!-- Main Viewport -->
   <div id="app-viewport">
     
-    <!-- 全画面カメラスクリーン（最背面） -->
+    <!-- 全画面カメラスクリーン -->
     <main id="screen-wrapper">
       <video id="camera-feed" playsinline autoplay muted></video>
       <canvas id="canvas-overlay"></canvas>
 
       <!-- ガイドライン＆枠 -->
-      <div class="safe-frame"></div>
+      <div class="safe-frame" id="safe-frame"></div>
       
       <div class="head-guideline" id="head-guideline">
         <span class="brawl-text">頭頂部ガイド</span>
@@ -935,7 +935,7 @@
       </div>
     </main>
 
-    <!-- 上部フローティングHUDグループ（ヘッダー＋ステップバー＋タブ＋水準器を一元化） -->
+    <!-- 上部フローティングHUDグループ -->
     <div class="top-hud-group">
       <header class="brawl-header">
         <div class="brand-title brawl-text">
@@ -955,7 +955,7 @@
         </div>
       </header>
 
-      <!-- 3ステップ・ナビゲーションバー（コンパクト化） -->
+      <!-- 3ステップ・ナビゲーションバー -->
       <div class="step-banner-bar" id="step-banner-bar">
         <div class="step-badges-row">
           <div class="step-badge active" id="step-badge-1">① 身長登録</div>
@@ -967,7 +967,7 @@
         <div class="step-text brawl-text" id="step-guide-text">まずは身長を入力してください</div>
       </div>
 
-      <!-- テスト選択タブ（高さ38pxでコンパクトかつ押しやすく整理） -->
+      <!-- テスト選択タブ -->
       <div class="tab-grid">
         <button class="tab-btn active" data-test="RJ">
           <span class="brawl-text main-title">🦘 ① 2連続RJ</span>
@@ -983,11 +983,11 @@
         </button>
       </div>
 
-      <!-- AI水準器（上部HUD内の最下段に配置し、絶対被らない構造へ） -->
+      <!-- AI水準器 -->
       <div class="gyro-indicator-container">
         <div id="gyro-indicator" class="gyro-indicator">
           <div class="gyro-dot"></div>
-          <span id="gyro-text" class="brawl-text">📐 傾き 82° OK</span>
+          <span id="gyro-text" class="brawl-text">📐 傾き --° 計算中</span>
         </div>
       </div>
     </div>
@@ -1078,27 +1078,27 @@
 
       <div class="report-stat-grid">
         <div class="report-stat-card">
-          <div class="hud-label brawl-text">接地時間</div>
-          <div class="hud-value brawl-text" id="rep-contact-time" style="color: #38bdf8;">168<span style="font-size: 11px;">ms</span></div>
+          <div class="hud-label brawl-text" id="card-main-title">接地時間</div>
+          <div class="hud-value brawl-text" id="rep-contact-time" style="color: #38bdf8;">--<span style="font-size: 11px;">ms</span></div>
         </div>
         <div class="report-stat-card">
-          <div class="hud-label brawl-text">跳躍高</div>
-          <div class="hud-value brawl-text" id="rep-jump-height" style="color: #4ade80;">34.2<span style="font-size: 11px;">cm</span></div>
+          <div class="hud-label brawl-text" id="card-sub-title">跳躍高</div>
+          <div class="hud-value brawl-text" id="rep-jump-height" style="color: #4ade80;">--<span style="font-size: 11px;">cm</span></div>
         </div>
         <div class="report-stat-card">
-          <div class="hud-label brawl-text">バネ指数 (RSI)</div>
-          <div class="hud-value brawl-text" id="rep-rsi-score" style="color: #facc15;">2.03</div>
+          <div class="hud-label brawl-text" id="card-rsi-title">バネ指数 (RSI)</div>
+          <div class="hud-value brawl-text" id="rep-rsi-score" style="color: #facc15;">--</div>
         </div>
         <div class="report-stat-card">
-          <div class="hud-label brawl-text">着地ブレーキ支持</div>
-          <div class="hud-value brawl-text" id="rep-brake-score" style="color: #fb923c;">A判定</div>
+          <div class="hud-label brawl-text" id="card-extra-title">判定ランク</div>
+          <div class="hud-value brawl-text" id="rep-brake-score" style="color: #fb923c;">--</div>
         </div>
       </div>
 
       <div class="panel-brawl" style="padding: 8px; background: rgba(0,0,0,0.4); border-color: #334155; font-size: 10.5px; line-height: 1.35;">
         <div class="brawl-text" style="color: #38bdf8; margin-bottom: 2px;">⚾ 野球パフォーマンス還元分析</div>
         <p id="rep-baseball-text" style="color: #e2e8f0; font-weight: 800;">
-          接地時間が短く、腱の弾性を活かした鋭い反発が獲得できています。内野手の1歩目の出足、および投球の前足ブロッキング動作において大きな推進力・骨盤回旋速度を生み出せます。
+          測定を実行すると、接地速度・反発弾性・ブロッキング支持力に応じた野球の走塁・守備・投球動作への直接的な還元アドバイスが生成されます。
         </p>
       </div>
 
@@ -1131,24 +1131,30 @@
 
   <script>
     /**
-     * 瞬発力・爆発バネドック
+     * 瞬発力・爆発バネドック 完全統合アーキテクチャ
      */
     const App = {
       State: {
-        mode: 'TEST_IDLE',
-        testType: 'RJ',
-        userHeightCm: null,
-        activePlayerName: '',
+        mode: 'TEST_IDLE', // 'TEST_IDLE' | 'SCANNING' | 'TEST_COUNTDOWN' | 'TEST_RUNNING' | 'DRILL_COUNTDOWN' | 'DRILL_ACTIVE'
+        testType: 'RJ',    // 'RJ' | 'VERTICAL' | 'BRAKE'
+        userHeightCm: 140,
+        activePlayerName: '選手A',
         step: 1,
         cameraFacing: 'user',
         isLocked: false,
         gyroAngle: 82,
+        isGyroValid: true,
         calibration: {
           isCalibrated: false,
           pxPerCm: 2.5,
           baselineHipY: 0,
-          baselineFootBox: null
-        }
+          baselineFootBox: null,
+          boxRect: null
+        },
+        currentLandmarks: null,
+        recordingChunks: [],
+        mediaRecorder: null,
+        lastRecordedBlobUrl: null
       },
 
       Audio: {
@@ -1189,9 +1195,9 @@
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.type = 'triangle';
-            osc.frequency.setValueAtTime(140, this.ctx.currentTime);
+            osc.frequency.setValueAtTime(160, this.ctx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.07);
-            gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+            gain.gain.setValueAtTime(0.45, this.ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.07);
             osc.connect(gain);
             gain.connect(this.ctx.destination);
@@ -1206,14 +1212,30 @@
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(220, this.ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.18);
-            gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.18);
+            osc.frequency.setValueAtTime(260, this.ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(900, this.ctx.currentTime + 0.16);
+            gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.16);
             osc.connect(gain);
             gain.connect(this.ctx.destination);
             osc.start();
-            osc.stop(this.ctx.currentTime + 0.18);
+            osc.stop(this.ctx.currentTime + 0.16);
+          } catch (e) {}
+        },
+        playBuzzer() {
+          try {
+            this.init();
+            if (!this.ctx) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(120, this.ctx.currentTime);
+            gain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.28);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.28);
           } catch (e) {}
         },
         playLock() {
@@ -1225,7 +1247,7 @@
             window.speechSynthesis.cancel();
             const utter = new SpeechSynthesisUtterance(text);
             utter.lang = 'ja-JP';
-            utter.rate = 1.1;
+            utter.rate = 1.15;
             utter.pitch = 1.05;
             window.speechSynthesis.speak(utter);
           }
@@ -1258,7 +1280,7 @@
             mainBtn.textContent = '🧍 足元枠に立って2秒静止（自動スキャン）';
           } else if (step === 3) {
             overlay.classList.add('hidden');
-            guideText.textContent = '準備完了！測定を始められます';
+            guideText.textContent = '準備完了！足元枠に立つと自動スタート';
             mainBtn.className = 'btn-brawl btn-orange main-trigger-btn brawl-text';
             mainBtn.textContent = '🚀 全身を映すと自動スタート！';
           }
@@ -1280,7 +1302,7 @@
             mainUnit.textContent = 'ms';
             subTitle.textContent = 'RSIバネ指数';
             subUnit.textContent = '指数';
-            this.showToast('🦘 2連続RJモード: 接地を最短にし高く跳べ！');
+            this.showToast('🦘 2連続RJ: 予備ジャンプ後、床を鋭く弾け！');
           } else if (type === 'VERTICAL') {
             mainTitle.textContent = '跳躍高';
             mainUnit.textContent = 'cm';
@@ -1294,6 +1316,7 @@
             subUnit.textContent = 'deg';
             this.showToast('🛑 前足急停止: 1歩踏み出してピタッと静止！');
           }
+          this.updateBadges('--', '--');
         },
 
         updateBadges(mainVal, subVal) {
@@ -1303,13 +1326,14 @@
           if (subEl) subEl.textContent = subVal !== undefined ? subVal : '--';
         },
 
-        setFootLockState(locked, message = '') {
+        setFootLockState(locked, isGolden = false, message = '') {
           App.State.isLocked = locked;
           const box = document.getElementById('foot-lock-box');
           const statusText = document.getElementById('foot-lock-status');
           if (box && statusText) {
-            box.classList.toggle('locked', locked);
-            statusText.textContent = message || (locked ? '✅ ロック完了！開始準備OK' : '立ち位置を探索中...');
+            box.classList.toggle('locked', locked && !isGolden);
+            box.classList.toggle('golden-ready', isGolden);
+            statusText.textContent = message || (locked ? '✅ ロック完了！' : '立ち位置を探索中...');
           }
         },
 
@@ -1318,10 +1342,53 @@
           const indicator = document.getElementById('gyro-indicator');
           const text = document.getElementById('gyro-text');
           const isValid = angle >= 75 && angle <= 88;
+          App.State.isGyroValid = isValid;
           if (indicator && text) {
             indicator.classList.toggle('valid', isValid);
             text.textContent = `📐 傾き ${Math.round(angle)}° ${isValid ? 'OK' : '(75~88°推奨)'}`;
           }
+        },
+
+        showStateBanner(icon, text) {
+          const banner = document.getElementById('state-banner');
+          const bannerIcon = document.getElementById('state-banner-icon');
+          const bannerText = document.getElementById('state-banner-text');
+          if (banner && bannerIcon && bannerText) {
+            bannerIcon.textContent = icon;
+            bannerText.textContent = text;
+            banner.style.display = 'inline-flex';
+          }
+        },
+
+        hideStateBanner() {
+          const banner = document.getElementById('state-banner');
+          if (banner) banner.style.display = 'none';
+        },
+
+        showCountdown(num, callback) {
+          const overlay = document.getElementById('countdown-overlay');
+          const numEl = document.getElementById('countdown-num');
+          if (!overlay || !numEl) return;
+          overlay.style.display = 'flex';
+
+          let current = num;
+          numEl.textContent = current;
+          App.Audio.playSE(440, 0.1, 'square', 0.3);
+
+          const interval = setInterval(() => {
+            current--;
+            if (current > 0) {
+              numEl.textContent = current;
+              App.Audio.playSE(440, 0.1, 'square', 0.3);
+            } else if (current === 0) {
+              numEl.textContent = 'GO!';
+              App.Audio.playExplosion();
+            } else {
+              clearInterval(interval);
+              overlay.style.display = 'none';
+              if (callback) callback();
+            }
+          }, 850);
         },
 
         openModal(id) {
@@ -1339,9 +1406,7 @@
 
         closeModal(id) {
           const modal = document.getElementById(id);
-          if (modal) {
-            modal.classList.remove('open');
-          }
+          if (modal) modal.classList.remove('open');
         },
 
         renderProfileList() {
@@ -1416,42 +1481,761 @@
         }
       },
 
+      /**
+       * 【スロット1】：センサー・姿勢推定・3重ロック・水準器
+       */
       Sensor: {
-        initCamera() {},
+        videoElement: null,
+        canvasElement: null,
+        canvasCtx: null,
+        pose: null,
+        cameraStream: null,
+        stableStartTime: null,
+        lastHipY: null,
+        hasSpokenGyro: false,
+
+        async init() {
+          this.videoElement = document.getElementById('camera-feed');
+          this.canvasElement = document.getElementById('canvas-overlay');
+          this.canvasCtx = this.canvasElement.getContext('2d');
+
+          this.initGyro();
+          await this.startCamera();
+          this.initMediaPipe();
+        },
+
+        initGyro() {
+          window.addEventListener('deviceorientation', (event) => {
+            let beta = event.beta;
+            if (beta === null) return;
+            // 縦持ちでの垂直角度（82°前後が適正）
+            App.UI.setGyroAngle(beta);
+            if (beta >= 75 && beta <= 88) {
+              if (!this.hasSpokenGyro) {
+                this.hasSpokenGyro = true;
+                App.Audio.speak('設置オッケー！カメラから約2.5メートル離れてね');
+              }
+            } else {
+              this.hasSpokenGyro = false;
+            }
+          });
+        },
+
+        async startCamera() {
+          if (this.cameraStream) {
+            this.cameraStream.getTracks().forEach(t => t.stop());
+          }
+          const constraints = {
+            video: {
+              facingMode: App.State.cameraFacing,
+              width: { ideal: 1280 },
+              height: { ideal: 720 }
+            },
+            audio: false
+          };
+          try {
+            this.cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+            this.videoElement.srcObject = this.cameraStream;
+            await new Promise(res => { this.videoElement.onloadedmetadata = () => res(); });
+            this.videoElement.play();
+            App.Drill.initMediaRecorder(this.cameraStream);
+          } catch (e) {
+            console.error('Camera Init Error:', e);
+            App.UI.showToast('カメラへのアクセスを許可してください');
+          }
+        },
+
         switchCamera() {
           App.State.cameraFacing = App.State.cameraFacing === 'user' ? 'environment' : 'user';
-          const video = document.getElementById('camera-feed');
-          if (video) {
-            video.style.transform = App.State.cameraFacing === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
-          }
+          this.videoElement.style.transform = App.State.cameraFacing === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+          this.startCamera();
           App.UI.showToast(`カメラ切替: ${App.State.cameraFacing === 'user' ? 'インカメラ' : '外カメラ'}`);
+        },
+
+        initMediaPipe() {
+          if (!window.Pose) {
+            console.warn('MediaPipe Pose library is loading or blocked');
+            return;
+          }
+          this.pose = new Pose({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+          });
+          this.pose.setOptions({
+            modelComplexity: 1,
+            smoothLandmarks: true,
+            enableSegmentation: false,
+            smoothSegmentation: false,
+            minDetectionConfidence: 0.55,
+            minTrackingConfidence: 0.55
+          });
+          this.pose.onResults((results) => this.onPoseResults(results));
+
+          const sendFrame = async () => {
+            if (this.videoElement.readyState >= 2) {
+              await this.pose.send({ image: this.videoElement });
+            }
+            requestAnimationFrame(sendFrame);
+          };
+          requestAnimationFrame(sendFrame);
+        },
+
+        onPoseResults(results) {
+          const w = this.canvasElement.width;
+          const h = this.canvasElement.height;
+          this.canvasCtx.clearRect(0, 0, w, h);
+
+          if (!results.poseLandmarks) {
+            App.State.currentLandmarks = null;
+            if (App.State.mode === 'TEST_IDLE' && App.State.step >= 2) {
+              App.UI.setFootLockState(false, false, '立ち位置を探索中...');
+            }
+            return;
+          }
+
+          const lm = results.poseLandmarks;
+          App.State.currentLandmarks = lm;
+
+          // ミラーリング補正を考慮して描画
+          this.drawSkeletalOverlay(lm, w, h);
+
+          // 骨格座標のピクセル化
+          const nose = { x: lm[0].x * w, y: lm[0].y * h };
+          const leftShoulder = { x: lm[11].x * w, y: lm[11].y * h };
+          const rightShoulder = { x: lm[12].x * w, y: lm[12].y * h };
+          const leftHip = { x: lm[23].x * w, y: lm[23].y * h };
+          const rightHip = { x: lm[24].x * w, y: lm[24].y * h };
+          const leftAnkle = { x: lm[27].x * w, y: lm[27].y * h };
+          const rightAnkle = { x: lm[28].x * w, y: lm[28].y * h };
+          const leftHeel = { x: lm[29].x * w, y: lm[29].y * h };
+          const rightHeel = { x: lm[30].x * w, y: lm[30].y * h };
+
+          const hipCenterY = (leftHip.y + rightHip.y) / 2;
+          const hipCenterX = (leftHip.x + rightHip.x) / 2;
+          const footY = Math.max(leftAnkle.y, rightAnkle.y, leftHeel.y, rightHeel.y);
+          const footX = (leftAnkle.x + rightAnkle.x) / 2;
+
+          // 足元枠のDOM座標取得
+          const footBoxEl = document.getElementById('foot-lock-box');
+          const boxRect = footBoxEl.getBoundingClientRect();
+          const screenRect = document.getElementById('screen-wrapper').getBoundingClientRect();
+          const targetBox = {
+            left: boxRect.left - screenRect.left,
+            right: boxRect.right - screenRect.left,
+            top: boxRect.top - screenRect.top,
+            bottom: boxRect.bottom - screenRect.top
+          };
+          App.State.calibration.boxRect = targetBox;
+
+          // 1. 足元枠（バッターボックス）判定
+          const isFeetInBox = (footX >= targetBox.left - 20 && footX <= targetBox.right + 20 &&
+                               footY >= targetBox.top - 20 && footY <= targetBox.bottom + 45);
+
+          // 2. 幾何アライメント検知（傾き・肩幅）
+          const shoulderSlope = Math.abs(leftShoulder.y - rightShoulder.y);
+          const hipSlope = Math.abs(leftHip.y - rightHip.y);
+          const shoulderWidth = Math.hypot(leftShoulder.x - rightShoulder.x, leftShoulder.y - rightShoulder.y);
+          const ankleWidth = Math.hypot(leftAnkle.x - rightAnkle.x, leftAnkle.y - rightAnkle.y);
+          const isAlignmentOk = shoulderSlope < 22 && hipSlope < 20 && ankleWidth <= (shoulderWidth * 1.35);
+
+          // 3. 重心動揺収束判定（±1.5cm以内の静止）
+          let isStable = false;
+          if (this.lastHipY !== null) {
+            const dy = Math.abs(hipCenterY - this.lastHipY);
+            const maxPixelTremor = (App.State.calibration.pxPerCm || 2.5) * 1.5;
+            if (dy < maxPixelTremor) {
+              isStable = true;
+            }
+          }
+          this.lastHipY = hipCenterY;
+
+          // 【STEP 2】直立スキャン（pxPerCmの算出）
+          if (App.State.step === 2 && App.State.mode === 'TEST_IDLE') {
+            if (isFeetInBox && isAlignmentOk && isStable) {
+              if (!this.stableStartTime) {
+                this.stableStartTime = performance.now();
+                App.UI.setFootLockState(true, false, '⏳ 静止中... スキャン中');
+              } else if (performance.now() - this.stableStartTime > 1600) {
+                // スキャン完了
+                const pixelHeight = footY - (nose.y - (shoulderWidth * 0.5));
+                if (pixelHeight > 150) {
+                  App.State.calibration.pxPerCm = pixelHeight / (App.State.userHeightCm || 140);
+                  App.State.calibration.baselineHipY = hipCenterY;
+                  App.State.calibration.isCalibrated = true;
+                  App.UI.setFootLockState(true, true, '✅ 直立スキャン完了！');
+                  App.UI.setStep(3);
+                  App.Audio.playLock();
+                  App.Audio.speak('スキャン完了！測定を開始できます');
+                  App.UI.showToast('🎉 スキャン成功！全身を枠内に維持してね');
+                }
+                this.stableStartTime = null;
+              }
+            } else {
+              this.stableStartTime = null;
+              App.UI.setFootLockState(false, false, '足元枠に立って2秒静止してね');
+            }
+            return;
+          }
+
+          // 【STEP 3】3重ロック式ゲートイン・オートトリガー
+          if (App.State.step === 3 && App.State.mode === 'TEST_IDLE') {
+            // 全身がセーフフレーム内に収まっているか
+            const isFullBodyIn = (nose.y > 60 && footY < targetBox.bottom + 40);
+
+            if (isFeetInBox && isAlignmentOk && isStable && isFullBodyIn) {
+              if (!this.stableStartTime) {
+                this.stableStartTime = performance.now();
+                App.Audio.playLock();
+                App.UI.setFootLockState(true, true, '🔥 GOLDEN READY (維持中)');
+              } else if (performance.now() - this.stableStartTime > 1200) {
+                // オートトリガー発動！
+                this.stableStartTime = null;
+                App.Engine.triggerTestStart();
+              }
+            } else {
+              if (this.stableStartTime) {
+                this.stableStartTime = null;
+                App.UI.setFootLockState(true, false, '枠内に足を揃えてね');
+              }
+            }
+          }
+
+          // 測定中のリアルタイム骨格・FSM更新
+          if (App.State.mode === 'TEST_RUNNING') {
+            App.Engine.updateFSM(lm, hipCenterY, footY, targetBox);
+          } else if (App.State.mode === 'DRILL_ACTIVE') {
+            App.Drill.updateDrillFrame(lm, hipCenterY, footY);
+          }
+        },
+
+        drawSkeletalOverlay(lm, w, h) {
+          const ctx = this.canvasCtx;
+          ctx.save();
+          if (App.State.cameraFacing === 'user') {
+            ctx.translate(w, 0);
+            ctx.scale(-1, 1);
+          }
+
+          const pairs = [
+            [11, 12], [11, 23], [12, 24], [23, 24],
+            [11, 13], [13, 15], [12, 14], [14, 16],
+            [23, 25], [25, 27], [24, 26], [26, 28],
+            [27, 29], [28, 30], [29, 31], [30, 32]
+          ];
+
+          ctx.strokeStyle = App.State.isLocked ? '#00d26a' : '#ffc400';
+          ctx.lineWidth = 3;
+          ctx.shadowBlur = 8;
+          ctx.shadowColor = App.State.isLocked ? 'rgba(0, 210, 106, 0.8)' : 'rgba(255, 196, 0, 0.8)';
+
+          pairs.forEach(([i, j]) => {
+            const p1 = lm[i];
+            const p2 = lm[j];
+            if (p1.visibility > 0.5 && p2.visibility > 0.5) {
+              ctx.beginPath();
+              ctx.moveTo(p1.x * w, p1.y * h);
+              ctx.lineTo(p2.x * w, p2.y * h);
+              ctx.stroke();
+            }
+          });
+
+          // 骨盤センターのターゲットマーカー
+          const hipX = ((lm[23].x + lm[24].x) / 2) * w;
+          const hipY = ((lm[23].y + lm[24].y) / 2) * h;
+          ctx.beginPath();
+          ctx.arc(hipX, hipY, 7, 0, Math.PI * 2);
+          ctx.fillStyle = '#ff7700';
+          ctx.fill();
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = '#fff';
+          ctx.stroke();
+
+          ctx.restore();
         }
       },
 
+      /**
+       * 【スロット2】：物理ハイブリッド二重計算 ＆ FSMステートマシン
+       */
       Engine: {
-        startTest() {
-          if (App.State.step === 1) {
-            App.UI.openModal('modal-scan');
+        RJ_PHASE: {
+          STANDBY: 0,
+          DROP_1:  1,
+          GROUND:  2,
+          AIR_2:   3,
+          LANDED:  4
+        },
+        currentPhase: 0,
+        timestamps: {
+          testStart: 0,
+          contactStart: 0,
+          takeoff: 0,
+          peakAir: 0,
+          landed: 0
+        },
+        hipTracking: {
+          baselineY: 0,
+          takeoffHipY: 0,
+          minHipY: 999999, // 最高到達点（y座標最小）
+          deepestSquatY: 0
+        },
+        calculated: {
+          contactTimeMs: 0,
+          airTimeSec: 0,
+          jumpHeightCm: 0,
+          rsi: 0,
+          kneeAngleMin: 180
+        },
+
+        triggerTestStart() {
+          App.State.mode = 'TEST_COUNTDOWN';
+          App.UI.showStateBanner('⏳', '準備... 3秒後スタート！');
+          App.Drill.startLocalRecording();
+
+          App.UI.showCountdown(3, () => {
+            App.State.mode = 'TEST_RUNNING';
+            this.currentPhase = this.RJ_PHASE.STANDBY;
+            this.timestamps.testStart = performance.now();
+            this.hipTracking.baselineY = App.Sensor.lastHipY || 0;
+            this.hipTracking.minHipY = 999999;
+            this.hipTracking.deepestSquatY = 0;
+
+            if (App.State.testType === 'RJ') {
+              App.UI.showStateBanner('🦘', '1回目ジャンプして素早く反発！');
+              App.Audio.speak('1回目、軽く跳んで、床を弾け！');
+            } else if (App.State.testType === 'VERTICAL') {
+              App.UI.showStateBanner('🦘', '沈み込んで最大ジャンプ！');
+              App.Audio.speak('沈み込んで、全力ジャンプ！');
+            } else if (App.State.testType === 'BRAKE') {
+              App.UI.showStateBanner('🛑', '前足を踏み出してピタッと静止！');
+              App.Audio.speak('一歩踏み込んで、ピタッとブレーキ！');
+            }
+          });
+        },
+
+        updateFSM(lm, hipY, footY, targetBox) {
+          const now = performance.now();
+          const pxPerCm = App.State.calibration.pxPerCm || 2.5;
+
+          // 空中での頭部見切れ（フレームアウト検出）
+          if (lm[0].y * App.Sensor.canvasElement.height < 30) {
+            this.abortTrial('頭が枠外に見切れました！カメラから少し下がってね');
             return;
           }
-          if (App.State.step === 2) {
-            App.UI.showToast('足元枠内に立って2秒静止してください');
-            App.Audio.speak('足元枠に入って静止してください');
+
+          // 2連続RJのステートマシン処理
+          if (App.State.testType === 'RJ') {
+            const footLiftThreshold = 18; // 足元浮遊の判定閾値(px)
+            const isFeetOnFloor = (footY >= targetBox.top - 15);
+
+            switch (this.currentPhase) {
+              case this.RJ_PHASE.STANDBY:
+                // 1回目の予備ジャンプ開始待ち
+                if (footY < targetBox.top - footLiftThreshold) {
+                  this.currentPhase = this.RJ_PHASE.DROP_1;
+                  App.Audio.playSE(500, 0.05, 'sine', 0.15);
+                }
+                break;
+
+              case this.RJ_PHASE.DROP_1:
+                // 1回目の下降〜接地を待つ
+                if (isFeetOnFloor) {
+                  this.currentPhase = this.RJ_PHASE.GROUND;
+                  this.timestamps.contactStart = now;
+                  App.Audio.playImpact();
+                  App.UI.showStateBanner('⚡', '接地中！ミリ秒反発せよ！');
+                }
+                break;
+
+              case this.RJ_PHASE.GROUND:
+                // 接地〜2回目の爆発的離地
+                if (hipY > this.hipTracking.deepestSquatY) {
+                  this.hipTracking.deepestSquatY = hipY;
+                }
+                if (!isFeetOnFloor || (footY < targetBox.top - footLiftThreshold)) {
+                  this.currentPhase = this.RJ_PHASE.AIR_2;
+                  this.timestamps.takeoff = now;
+                  this.hipTracking.takeoffHipY = hipY;
+                  this.hipTracking.minHipY = hipY;
+                  this.calculated.contactTimeMs = Math.max(80, Math.round(now - this.timestamps.contactStart));
+                  App.Audio.playExplosion();
+                  App.UI.showStateBanner('🚀', '最大爆発跳躍！');
+                  App.UI.updateBadges(this.calculated.contactTimeMs, '--');
+                }
+                break;
+
+              case this.RJ_PHASE.AIR_2:
+                // 2回目の最大空中滞空（ピーク骨盤追従）
+                if (hipY < this.hipTracking.minHipY) {
+                  this.hipTracking.minHipY = hipY;
+                }
+
+                // 再着地の瞬間
+                if (isFeetOnFloor && (now - this.timestamps.takeoff > 150)) {
+                  this.currentPhase = this.RJ_PHASE.LANDED;
+                  this.timestamps.landed = now;
+                  App.Audio.playImpact();
+
+                  // 二重計算（ハイブリッド算出）
+                  this.finalizeRJMeasurement(lm, pxPerCm, targetBox, footY);
+                }
+                break;
+            }
+          }
+          // 単発垂直跳びモード
+          else if (App.State.testType === 'VERTICAL') {
+            const footLiftThreshold = 18;
+            const isFeetOnFloor = (footY >= targetBox.top - 15);
+
+            if (!this.timestamps.takeoff) {
+              // 沈み込み検出
+              if (hipY > this.hipTracking.baselineY + (pxPerCm * 4)) {
+                if (hipY > this.hipTracking.deepestSquatY) {
+                  this.hipTracking.deepestSquatY = hipY;
+                  const squatCm = Math.round((this.hipTracking.deepestSquatY - this.hipTracking.baselineY) / pxPerCm);
+                  App.UI.updateBadges('--', squatCm);
+                }
+              }
+              // 離地検出
+              if (!isFeetOnFloor || (footY < targetBox.top - footLiftThreshold)) {
+                this.timestamps.takeoff = now;
+                this.hipTracking.takeoffHipY = hipY;
+                this.hipTracking.minHipY = hipY;
+                App.Audio.playExplosion();
+                App.UI.showStateBanner('🚀', '最大跳躍！');
+              }
+            } else if (!this.timestamps.landed) {
+              if (hipY < this.hipTracking.minHipY) {
+                this.hipTracking.minHipY = hipY;
+              }
+              if (isFeetOnFloor && (now - this.timestamps.takeoff > 160)) {
+                this.timestamps.landed = now;
+                App.Audio.playImpact();
+                this.finalizeVerticalMeasurement(lm, pxPerCm);
+              }
+            }
+          }
+          // 前足急停止ブレーキモード
+          else if (App.State.testType === 'BRAKE') {
+            if (!this.timestamps.contactStart) {
+              // 踏み込み着地
+              if (footY >= targetBox.top - 10) {
+                this.timestamps.contactStart = now;
+                App.Audio.playImpact();
+                App.UI.showStateBanner('🛑', '耐えろ！膝を固めてブレーキ！');
+              }
+            } else if (!this.timestamps.landed) {
+              // 膝角度の計測（股関節-膝-足首）
+              const angle = this.calculateKneeAngle(lm);
+              if (angle < this.calculated.kneeAngleMin) {
+                this.calculated.kneeAngleMin = angle;
+              }
+              // 1秒間の静止確認
+              if (now - this.timestamps.contactStart > 900) {
+                this.timestamps.landed = now;
+                this.finalizeBrakeMeasurement();
+              }
+            }
+          }
+        },
+
+        calculateKneeAngle(lm) {
+          // 右足基準で膝角度を算出（24:股関節, 26:膝, 28:足首）
+          const hip = lm[24];
+          const knee = lm[26];
+          const ankle = lm[28];
+          const radians = Math.atan2(ankle.y - knee.y, ankle.x - knee.x) -
+                          Math.atan2(hip.y - knee.y, hip.x - knee.x);
+          let angle = Math.abs((radians * 180.0) / Math.PI);
+          if (angle > 180.0) angle = 360 - angle;
+          return Math.round(angle);
+        },
+
+        finalizeRJMeasurement(lm, pxPerCm, targetBox, footY) {
+          // 着地枠はみ出し（距離ブレ防止）
+          const leftAnkleX = lm[27].x * App.Sensor.canvasElement.width;
+          const rightAnkleX = lm[28].x * App.Sensor.canvasElement.width;
+          const footX = (leftAnkleX + rightAnkleX) / 2;
+          if (footX < targetBox.left - 40 || footX > targetBox.right + 40) {
+            this.abortTrial('着地で枠から横に逸れました！枠内に着地してね');
             return;
           }
-          App.Audio.speak('スタートします');
-          App.UI.showToast('全身が枠内に入ると自動でカウントダウンします');
+
+          // 1. 滞空時間公式: h_air = (1/8) * g * t^2
+          const airTimeSec = (this.timestamps.landed - this.timestamps.takeoff) / 1000.0;
+          const g = 9.80665;
+          const hAirCm = (0.125 * g * (airTimeSec ** 2)) * 100;
+
+          // 2. 骨盤ピクセル法
+          const hPixelRaw = Math.max(0, (this.hipTracking.takeoffHipY - this.hipTracking.minHipY)) / pxPerCm;
+
+          // 3. くの字カンニング補正（空中屈曲の幾何補正）
+          const kneeAngle = this.calculateKneeAngle(lm);
+          let cheatFactor = 1.0;
+          if (kneeAngle < 120) {
+            // 過度な引きつけ・抱え込み
+            cheatFactor = Math.max(0.75, (kneeAngle / 120));
+          }
+          const hPixelCorrected = hPixelRaw * cheatFactor;
+
+          // 4. ハイブリッド二重クロス検証
+          // 滞空時間を基礎としつつ、骨盤移動との乖離（詐称）を抑制
+          const finalHeightCm = Math.round(((hAirCm * 0.6) + (hPixelCorrected * 0.4)) * 10) / 10;
+          const contactTimeMs = this.calculated.contactTimeMs;
+          const rsi = Math.round(((finalHeightCm / 100) / (contactTimeMs / 1000)) * 100) / 100;
+
+          this.calculated.airTimeSec = airTimeSec;
+          this.calculated.jumpHeightCm = finalHeightCm;
+          this.calculated.rsi = rsi;
+
+          App.UI.updateBadges(contactTimeMs, rsi);
+          App.UI.hideStateBanner();
+          App.State.mode = 'TEST_IDLE';
+          App.Drill.stopLocalRecording();
+
+          // 診断レポートの表示＆保存
+          this.showReportAndSave('RJ', contactTimeMs, finalHeightCm, rsi);
+        },
+
+        finalizeVerticalMeasurement(lm, pxPerCm) {
+          const airTimeSec = (this.timestamps.landed - this.timestamps.takeoff) / 1000.0;
+          const g = 9.80665;
+          const hAirCm = (0.125 * g * (airTimeSec ** 2)) * 100;
+          const hPixelRaw = Math.max(0, (this.hipTracking.takeoffHipY - this.hipTracking.minHipY)) / pxPerCm;
+          const finalHeightCm = Math.round(((hAirCm * 0.65) + (hPixelRaw * 0.35)) * 10) / 10;
+          const squatCm = Math.round((this.hipTracking.deepestSquatY - this.hipTracking.baselineY) / pxPerCm);
+
+          App.UI.updateBadges(finalHeightCm, squatCm);
+          App.UI.hideStateBanner();
+          App.State.mode = 'TEST_IDLE';
+          App.Drill.stopLocalRecording();
+
+          this.showReportAndSave('VERTICAL', finalHeightCm, squatCm, finalHeightCm);
+        },
+
+        finalizeBrakeMeasurement() {
+          const stopDurationMs = Math.round(this.timestamps.landed - this.timestamps.contactStart);
+          const kneeAngle = this.calculated.kneeAngleMin;
+
+          App.UI.updateBadges(stopDurationMs, kneeAngle);
+          App.UI.hideStateBanner();
+          App.State.mode = 'TEST_IDLE';
+          App.Drill.stopLocalRecording();
+
+          this.showReportAndSave('BRAKE', stopDurationMs, kneeAngle, '--');
+        },
+
+        abortTrial(message) {
+          App.Audio.playBuzzer();
+          App.UI.showToast(`⚠️ 無効試行: ${message}`);
+          App.Audio.speak('やり直しです。もう一度立ち位置を揃えてね');
+          App.UI.hideStateBanner();
+          App.State.mode = 'TEST_IDLE';
+          this.timestamps.takeoff = 0;
+          this.timestamps.contactStart = 0;
+          this.currentPhase = this.RJ_PHASE.STANDBY;
+          App.Drill.discardRecording();
+        },
+
+        showReportAndSave(type, val1, val2, rsiVal) {
+          let rank = 'PRO';
+          let baseballAdv = '';
+
+          if (type === 'RJ') {
+            if (val1 < 170 && val2 > 30) {
+              rank = 'Sランク (STAR PLAYER)';
+              baseballAdv = 'プロ級の鋭い腱バネです！内野手の1歩目の加速や、投球の鋭い骨盤回旋にダイレクトに還元されます。';
+            } else if (val1 < 210) {
+              rank = 'Aランク (ADVANCED)';
+              baseballAdv = '優れた反発力です。接地の瞬間に足首を固める意識を持つと、さらに走塁のトップスピードが向上します。';
+            } else {
+              rank = 'Bランク (DEVELOPING)';
+              baseballAdv = '地面に力が吸収されやすい状態です。縄跳びやアンクルホップでアキレス腱のバネ剛性を高めましょう。';
+            }
+          } else if (type === 'VERTICAL') {
+            rank = val1 > 45 ? 'Sランク' : (val1 > 35 ? 'Aランク' : 'Bランク');
+            baseballAdv = '下半身の最大筋出力を示しています。打撃のタメから前足への体重移動を力強く支える土台になります。';
+          } else {
+            rank = val1 < 450 ? 'Sランク' : 'Aランク';
+            baseballAdv = '投球の前足ブロッキング動作や、外野フェンス際での急停止に必要なエキセントリック筋力が確認できました。';
+          }
+
+          // レポートモーダルの書き換え
+          document.getElementById('report-rank-banner').textContent = `⭐ STAR PLAYER: ${rank}`;
+          document.getElementById('card-main-title').textContent = type === 'RJ' ? '接地時間' : (type === 'VERTICAL' ? '跳躍高' : '停止時間');
+          document.getElementById('rep-contact-time').innerHTML = `${val1}<span style="font-size: 11px;">${type === 'VERTICAL' ? 'cm' : 'ms'}</span>`;
+          
+          document.getElementById('card-sub-title').textContent = type === 'RJ' ? '跳躍高' : (type === 'VERTICAL' ? '沈み込み' : '膝角度');
+          document.getElementById('rep-jump-height').innerHTML = `${val2}<span style="font-size: 11px;">${type === 'BRAKE' ? 'deg' : 'cm'}</span>`;
+
+          document.getElementById('card-rsi-title').textContent = type === 'RJ' ? 'バネ指数 (RSI)' : '総合指標';
+          document.getElementById('rep-rsi-score').textContent = rsiVal;
+
+          document.getElementById('card-extra-title').textContent = '判定評価';
+          document.getElementById('rep-brake-score').textContent = rank.split(' ')[0];
+
+          document.getElementById('rep-baseball-text').textContent = baseballAdv;
+
+          // ストレージに保存
+          App.Storage.saveLog({
+            type: type,
+            mainMetric: `${val1}${type === 'VERTICAL' ? 'cm' : 'ms'}`,
+            subMetric: `${val2}${type === 'BRAKE' ? 'deg' : 'cm'}`,
+            rsi: rsiVal,
+            rank: rank.split(' ')[0]
+          });
+
+          // リプレイ動画の反映
+          setTimeout(() => {
+            const videoEl = document.getElementById('replay-video');
+            const placeholder = document.getElementById('replay-placeholder');
+            if (App.State.lastRecordedBlobUrl && videoEl) {
+              videoEl.src = App.State.lastRecordedBlobUrl;
+              videoEl.style.display = 'block';
+              if (placeholder) placeholder.style.display = 'none';
+              videoEl.playbackRate = 0.5; // スロー再生
+              videoEl.play().catch(() => {});
+            }
+            App.UI.openModal('modal-report');
+          }, 400);
         }
       },
 
+      /**
+       * 【スロット3】：10秒ウルトドリル ＆ MediaRecorder録画再生
+       */
       Drill: {
+        timerInterval: null,
+        remainingSec: 10.0,
+        comboCount: 0,
+        ultGauge: 0,
+        isDrillAir: false,
+        takeoffHipY: 0,
+
+        initMediaRecorder(stream) {
+          try {
+            if (window.MediaRecorder) {
+              App.State.mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp8,opus' });
+              App.State.mediaRecorder.ondataavailable = (e) => {
+                if (e.data && e.data.size > 0) {
+                  App.State.recordingChunks.push(e.data);
+                }
+              };
+              App.State.mediaRecorder.onstop = () => {
+                const blob = new Blob(App.State.recordingChunks, { type: 'video/webm' });
+                if (App.State.lastRecordedBlobUrl) {
+                  URL.revokeObjectURL(App.State.lastRecordedBlobUrl);
+                }
+                App.State.lastRecordedBlobUrl = URL.createObjectURL(blob);
+              };
+            }
+          } catch (e) {
+            console.warn('MediaRecorder not supported or codecs missing:', e);
+          }
+        },
+
+        startLocalRecording() {
+          App.State.recordingChunks = [];
+          if (App.State.mediaRecorder && App.State.mediaRecorder.state === 'inactive') {
+            try {
+              App.State.mediaRecorder.start(100);
+            } catch (e) {}
+          }
+        },
+
+        stopLocalRecording() {
+          if (App.State.mediaRecorder && App.State.mediaRecorder.state === 'recording') {
+            try {
+              App.State.mediaRecorder.stop();
+            } catch (e) {}
+          }
+        },
+
+        discardRecording() {
+          this.stopLocalRecording();
+          App.State.recordingChunks = [];
+        },
+
         startDrill() {
           if (App.State.step < 3) {
             App.UI.showToast('⚠️ 先に身長設定と直立スキャンを完了してください');
             App.UI.openModal('modal-scan');
             return;
           }
-          App.UI.showToast('🎮 10秒ウルトドリル準備中（第2便で始動）');
+          App.State.mode = 'DRILL_COUNTDOWN';
+          const drillHud = document.getElementById('drill-hud');
+          if (drillHud) drillHud.style.display = 'flex';
+
+          this.comboCount = 0;
+          this.ultGauge = 0;
+          this.remainingSec = 10.0;
+          this.updateDrillHud();
+          this.startLocalRecording();
+
+          App.UI.showCountdown(3, () => {
+            App.State.mode = 'DRILL_ACTIVE';
+            App.Audio.speak('10秒間、連続で床を弾きまくれ！');
+            App.UI.showStateBanner('🔥', '10秒ウルトドリル爆発中！');
+
+            const startT = performance.now();
+            this.timerInterval = setInterval(() => {
+              const elapsed = (performance.now() - startT) / 1000;
+              this.remainingSec = Math.max(0, 10.0 - elapsed);
+              this.updateDrillHud();
+
+              if (this.remainingSec <= 0) {
+                clearInterval(this.timerInterval);
+                this.finishDrill();
+              }
+            }, 100);
+          });
+        },
+
+        updateDrillFrame(lm, hipY, footY) {
+          const targetBox = App.State.calibration.boxRect;
+          if (!targetBox) return;
+          const isFeetOnFloor = (footY >= targetBox.top - 15);
+
+          if (!this.isDrillAir) {
+            if (!isFeetOnFloor) {
+              this.isDrillAir = true;
+              this.takeoffHipY = hipY;
+              App.Audio.playExplosion();
+            }
+          } else {
+            if (isFeetOnFloor) {
+              this.isDrillAir = false;
+              App.Audio.playImpact();
+              this.comboCount++;
+              this.ultGauge = Math.min(100, this.ultGauge + 14);
+              this.updateDrillHud();
+
+              if (this.ultGauge >= 100) {
+                App.Audio.playLock();
+                App.UI.showToast('🔥 ULTRA MAX ACTIVATED!!');
+              }
+            }
+          }
+        },
+
+        updateDrillHud() {
+          const comboText = document.getElementById('drill-combo-text');
+          const timerText = document.getElementById('drill-timer-text');
+          const ultFill = document.getElementById('ult-bar-fill');
+          if (comboText) comboText.textContent = `COMBO ${this.comboCount}`;
+          if (timerText) timerText.textContent = `⏱️ ${this.remainingSec.toFixed(1)}s`;
+          if (ultFill) ultFill.style.width = `${this.ultGauge}%`;
+        },
+
+        finishDrill() {
+          App.State.mode = 'TEST_IDLE';
+          App.UI.hideStateBanner();
+          this.stopLocalRecording();
+          App.Audio.speak(`終了！${this.comboCount}コンボ達成！`);
+
+          const drillHud = document.getElementById('drill-hud');
+          if (drillHud) drillHud.style.display = 'none';
+
+          App.Engine.showReportAndSave('RJ', Math.round(10000 / Math.max(1, this.comboCount)), this.comboCount, (this.comboCount / 5).toFixed(2));
         }
       },
 
@@ -1509,7 +2293,7 @@
             const record = {
               id: Date.now(),
               date: new Date().toLocaleString('ja-JP'),
-              playerName: App.State.activePlayerName || '未登録',
+              playerName: App.State.activePlayerName || '選手',
               type: data.type || App.State.testType,
               mainMetric: data.mainMetric || '--',
               subMetric: data.subMetric || '--',
@@ -1581,17 +2365,7 @@
 
         App.UI.setStep(2);
         App.UI.showToast(`「${name}」(${heightCm}cm) を選択！枠内に立ってください`);
-
-        setTimeout(() => {
-          if (App.State.step === 2) {
-            App.State.calibration.isCalibrated = true;
-            App.UI.setFootLockState(true, '✅ スキャン＆ロック完了！');
-            App.UI.setStep(3);
-            App.Audio.playLock();
-            App.Audio.speak(`${name}選手、スキャン完了です。測定できます`);
-            App.UI.showToast(`🎉 ${name}選手の準備完了！測定OK`);
-          }
-        }, 2200);
+        App.Audio.speak('足元枠内に立って直立静止してください');
       },
 
       init() {
@@ -1623,7 +2397,14 @@
 
         document.getElementById('btn-main-start').addEventListener('click', () => {
           App.Audio.playExplosion();
-          App.Engine.startTest();
+          if (App.State.step === 1) {
+            App.UI.openModal('modal-scan');
+          } else if (App.State.step === 2) {
+            App.UI.showToast('足元枠内に立って2秒静止してください');
+            App.Audio.speak('足元枠に入って静止してください');
+          } else {
+            App.Engine.triggerTestStart();
+          }
         });
 
         document.getElementById('btn-open-report').addEventListener('click', () => {
@@ -1677,7 +2458,7 @@
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        App.UI.setGyroAngle(82);
+        App.Sensor.init();
         App.UI.setStep(1);
       }
     };
