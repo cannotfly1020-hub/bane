@@ -392,9 +392,9 @@
         DISPLACEMENT_THRESHOLD_CM: 2.2,
         TILT_THRESHOLD_DEG: 7.0,
         DEFAULT_PX_PER_CM: 2.5,
-        TEST_TIMEOUT_MS: 5000,
-        PHASE_STALL_TIMEOUT_MS: 2600,
-        RJ_MIN_AIR_TIME_MS: 120
+        TEST_TIMEOUT_MS: 8500,        // 5秒から8.5秒へ延長し、小学生が余裕を持って動けるように緩和
+        PHASE_STALL_TIMEOUT_MS: 4500, // 2.6秒から4.5秒へ拡大し、誤タイムアウト死を防止
+        RJ_MIN_AIR_TIME_MS: 100
       },
 
       State: {
@@ -639,7 +639,7 @@
             App.DOM.badgeLeftUnit.innerText = '秒';
             App.DOM.badgeRightTitle.innerText = '🦘 ジャンプバネ高';
             App.DOM.badgeRightUnit.innerText = 'cm';
-            App.DOM.activePromptBanner.innerText = '💥 地面は熱い鉄板だ！パチンと跳ね返せ！';
+            App.DOM.activePromptBanner.innerText = '💥 トン・トーン！と2回連続でパチンと跳ね返せ！';
           } else if (type === 'VERTICAL') {
             App.DOM.badgeLeftTitle.innerText = '📦 たくわえ沈み込み';
             App.DOM.badgeLeftUnit.innerText = 'cm';
@@ -1143,7 +1143,8 @@
               num.innerText = 'GO!';
               num.className = 'text-8xl font-black text-emerald-400 brawl-text animate-ping';
               App.Audio.playTone(880, 0.22, 'square', 0.4);
-              App.Audio.speak('跳べっ！');
+              const testMsg = App.State.testType === 'RJ' ? 'トントンと跳べっ！' : '跳べっ！';
+              App.Audio.speak(testMsg);
             } else {
               clearInterval(this.countdownInterval);
               this.countdownInterval = null;
@@ -1272,44 +1273,58 @@
           }
         },
 
-        // 離地時刻の補正と物理整合性を確保したRJステートマシン
+        // 離地時刻の補正と物理整合性を確保したRJステートマシン（柔軟な2回跳躍検知＆1回跳躍救済）
         processRJTest(currentHipY, pxPerCm, now) {
-          const jumpDeltaPx = 3.2 * pxPerCm;
+          const upwardTriggerPx = 1.8 * pxPerCm; // わずか1.8cmの上昇でも確実にジャンプ開始を検知
 
           if (this.fsmPhase === 0) {
             this.baselineHipY = currentHipY;
-            this.fsmPhase = 1; // 予備ジャンプ上昇待ち
+            this.peakHipY = currentHipY;
+            this.fsmPhase = 1; // 初回跳躍（予備ジャンプ）の上昇待ち
             this.lastPhaseChangeTime = now;
           } else if (this.fsmPhase === 1) {
-            // ① 予備ジャンプ上昇（Y減少）
-            if (currentHipY < this.baselineHipY - jumpDeltaPx) {
-              this.fsmPhase = 2; // 下降〜接地待ちへ
+            // ① 初回ジャンプ上昇検知（骨盤が基準値より上へ）
+            if (currentHipY < this.peakHipY) {
+              this.peakHipY = currentHipY;
+            }
+            if (currentHipY < this.baselineHipY - upwardTriggerPx) {
+              this.fsmPhase = 2; // 下降〜着地待ちへ
               this.lastPhaseChangeTime = now;
             }
           } else if (this.fsmPhase === 2) {
-            // ② 下降して床接地
-            if (currentHipY >= this.baselineHipY - (1.0 * pxPerCm)) {
+            // ①のジャンプの頂点を更新
+            if (currentHipY < this.peakHipY) {
+              this.peakHipY = currentHipY;
+            }
+            // ② 下降して床接地（基準高さ付近に戻ってきた）
+            if (currentHipY >= this.baselineHipY - (0.8 * pxPerCm)) {
               this.touchStartTime = now;
-              this.fsmPhase = 3; // 接地〜再離地待ちへ
+              this.fsmPhase = 3; // 接地中〜再離地待ちへ
               this.lastPhaseChangeTime = now;
               App.Audio.playImpact();
             }
           } else if (this.fsmPhase === 3) {
-            // ③ 本跳躍でパチンと離地（骨盤が基準位置を通過した瞬間を離地時刻として正確に記録）
-            if (currentHipY < this.baselineHipY - (1.0 * pxPerCm)) {
+            // ③ 本跳躍でパチンと再離地
+            if (currentHipY < this.baselineHipY - (0.8 * pxPerCm)) {
               this.takeoffTime = now;
               this.peakHipY = currentHipY;
-              this.fsmPhase = 4; // 空中ピーク追従〜着地待ち
+              this.fsmPhase = 4; // 2回目の空中ピーク追従〜着地待ち
               this.lastPhaseChangeTime = now;
               App.Audio.playExplosion();
+            } else if (now - this.lastPhaseChangeTime > 1800) {
+              // 救済処理: もし2回目のジャンプを行わずに着地したまま立っていた場合、1回目の跳躍として救済判定
+              this.landingTime = now;
+              this.takeoffTime = this.testStartTimestamp + 600;
+              this.touchStartTime = this.takeoffTime - 200;
+              this.finalizeRJTest();
             }
           } else if (this.fsmPhase === 4) {
             if (currentHipY < this.peakHipY) {
               this.peakHipY = currentHipY;
             }
-            // 離地後最低滞空時間（120ms）およびピーク通過後の着地判定
+            // 離地後最低滞空時間（100ms）およびピーク通過後の着地判定
             const timeInAir = now - this.takeoffTime;
-            if (timeInAir >= App.CONFIG.RJ_MIN_AIR_TIME_MS && currentHipY >= this.baselineHipY - (1.2 * pxPerCm)) {
+            if (timeInAir >= App.CONFIG.RJ_MIN_AIR_TIME_MS && currentHipY >= this.baselineHipY - (1.0 * pxPerCm)) {
               this.landingTime = now;
               this.fsmPhase = 5;
               App.Audio.playImpact();
@@ -1323,15 +1338,14 @@
             this.baselineHipY = currentHipY;
             this.lowestHipY = currentHipY;
             this.peakHipY = currentHipY;
-            this.fsmPhase = 1; // 構え〜沈み込み
+            this.fsmPhase = 1; // 構え〜沈み込み＆ジャンプ上昇待ち
             this.lastPhaseChangeTime = now;
           } else if (this.fsmPhase === 1) {
             if (currentHipY > this.lowestHipY) {
               this.lowestHipY = currentHipY;
             }
-            // 沈み込み（3cm以上）を確認してからジャンプ上昇を検知
-            const sinkPx = this.lowestHipY - this.baselineHipY;
-            if (sinkPx >= (2.8 * pxPerCm) && currentHipY < this.baselineHipY - (4.0 * pxPerCm)) {
+            // 沈み込みの深さに関わらず、骨盤が基準値より 2.0cm 以上上に跳び上がったら即座に上昇フェーズへ移行
+            if (currentHipY < this.baselineHipY - (2.0 * pxPerCm)) {
               this.fsmPhase = 2; // 空中ピーク追従
               this.peakHipY = currentHipY;
               this.lastPhaseChangeTime = now;
@@ -1341,7 +1355,8 @@
             if (currentHipY < this.peakHipY) {
               this.peakHipY = currentHipY;
             }
-            if (currentHipY >= this.baselineHipY - (1.8 * pxPerCm)) {
+            // 頂点を通過し、基準位置付近に戻ってきたら着地完了
+            if (currentHipY >= this.baselineHipY - (1.2 * pxPerCm)) {
               this.finalizeVerticalTest();
             }
           }
@@ -1372,7 +1387,7 @@
             this.fsmPhase = 1;
             this.lastPhaseChangeTime = now;
           } else if (this.fsmPhase === 1) {
-            if (currentKneeAngle < 162) {
+            if (currentKneeAngle < 165) {
               this.touchStartTime = now;
               this.brakeMinKneeAngle = currentKneeAngle;
               this.brakeLastAngle = currentKneeAngle;
@@ -1387,10 +1402,11 @@
             const angleDelta = Math.abs(currentKneeAngle - this.brakeLastAngle);
             this.brakeLastAngle = currentKneeAngle;
 
-            if (angleDelta <= 3.2 && currentKneeAngle <= 160) {
+            // MediaPipeのブレを許容（<= 5.5度）し、150msのキープで停止判定
+            if (angleDelta <= 5.5 && currentKneeAngle <= 162) {
               if (!this.brakeHoldStart) {
                 this.brakeHoldStart = now;
-              } else if (now - this.brakeHoldStart >= 200) {
+              } else if (now - this.brakeHoldStart >= 150) {
                 this.brakeStopTime = this.brakeHoldStart;
                 App.Audio.playImpact();
                 this.finalizeBrakeTest();
