@@ -1769,6 +1769,11 @@
         },
 
         checkAutoReadyCountdown(lm) {
+          // レポート表示中やREADYモード以外は一切判定しない
+          if (App.State.mode !== 'READY') return;
+          const reportModal = document.getElementById('modal-report');
+          if (reportModal && reportModal.classList.contains('open')) return;
+
           const check = this.validateAnklesInFootBox(lm);
           const fTextTop = document.getElementById('foot-lock-text-top');
           const fTextSub = document.getElementById('foot-lock-text-sub');
@@ -1807,6 +1812,7 @@
         jumpHeightCm: 0,
         jump1StartTime: 0,
         hasJumpedOnce: false,
+        safetyTimerId: null,
 
         startMeasurement(testType) {
           App.State.mode = 'RUNNING';
@@ -1815,6 +1821,8 @@
           this.contactDurationMs = 0;
           this.jumpHeightCm = 0;
           this.hasJumpedOnce = false;
+
+          if (this.safetyTimerId) clearTimeout(this.safetyTimerId);
 
           const fBox = document.getElementById('foot-lock-box');
           const fTextTop = document.getElementById('foot-lock-text-top');
@@ -1839,8 +1847,8 @@
             if (fTextSub) fTextSub.textContent = '全力で跳ぼう！';
           }
 
-          // 1回しか跳ばずに立っていた場合の安全ガード（6秒タイマー）
-          setTimeout(() => {
+          // 1回しか跳ばずに立っていた場合の安全ガード（8秒タイマー）
+          this.safetyTimerId = setTimeout(() => {
             if (App.State.mode === 'RUNNING' && this.fsmState !== 'IDLE') {
               if (!this.hasJumpedOnce || this.fsmState === 'WAIT_JUMP1' || this.fsmState === 'CONTACT_PHASE') {
                 this.triggerRetry('おしい！2回続けてポンポン跳んでね！');
@@ -1947,6 +1955,10 @@
         },
 
         triggerRetry(reasonText) {
+          if (this.safetyTimerId) {
+            clearTimeout(this.safetyTimerId);
+            this.safetyTimerId = null;
+          }
           App.Audio.playBuzzer();
           App.Audio.speak(reasonText);
           App.UI.showToast(reasonText);
@@ -1967,7 +1979,12 @@
         },
 
         finalizeMeasurement() {
-          App.State.mode = 'READY';
+          if (this.safetyTimerId) {
+            clearTimeout(this.safetyTimerId);
+            this.safetyTimerId = null;
+          }
+          // レポート表示中は測定やカウントダウンを完全に停止
+          App.State.mode = 'REPORT';
           this.fsmState = 'IDLE';
 
           const rjHud = document.getElementById('rj-step-badge-container');
@@ -1980,8 +1997,6 @@
           App.Audio.playFanfare();
           App.Audio.speak(`すごい！測定完了！接地スピードは${ms}ミリ秒、高さ${cm}センチです！`);
           this.showReport(App.State.testType, ms, cm, rsi);
-
-          App.UI.setStep(3);
         },
 
         showReport(type, val1, val2, rsiVal) {
@@ -2256,7 +2271,12 @@
         // モーダル閉じる
         document.querySelectorAll('[data-close]').forEach(btn => {
           btn.addEventListener('click', () => {
-            this.UI.closeModal(btn.dataset.close);
+            const modalId = btn.dataset.close;
+            this.UI.closeModal(modalId);
+            // レポートモーダルを閉じた時に初めて次の測定待機（READY）へ復帰
+            if (modalId === 'modal-report') {
+              this.UI.setStep(3);
+            }
           });
         });
 
