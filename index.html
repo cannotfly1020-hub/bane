@@ -140,11 +140,6 @@
       align-items: center;
       gap: 0.25rem;
     }
-
-    /* 鏡像反転用（インカメラ時にVideoとCanvasを両方GPU反転） */
-    .mirror-flip {
-      transform: scaleX(-1);
-    }
   </style>
 </head>
 
@@ -188,9 +183,10 @@
   <!-- 3. 中央カメラ＆キャンバススクリーン -->
   <main class="relative flex-1 w-full overflow-hidden flex items-center justify-center bg-black/40">
     <div id="screen-wrapper" class="relative w-full h-full flex items-center justify-center overflow-hidden">
-      <!-- カメラ＆骨格描画（mirror-flipクラスで統一制御） -->
-      <video id="webcam-video" playsinline muted autoplay class="absolute w-full h-full object-cover mirror-flip"></video>
-      <canvas id="output-canvas" class="absolute w-full h-full object-cover z-10 mirror-flip"></canvas>
+      <!-- 内部処理用ビデオ（非表示：Canvasに直接描画して完全録画を実現） -->
+      <video id="webcam-video" playsinline muted autoplay class="hidden"></video>
+      <!-- メイン描画キャンバス（カメラ映像＋スケルトンを一体化して描画） -->
+      <canvas id="output-canvas" class="absolute w-full h-full object-cover z-10"></canvas>
 
       <!-- スマホ角度水準インジケーター -->
       <div id="gyro-badge" class="absolute top-2.5 z-20 px-3 py-1 rounded-full bg-slate-950/85 border border-slate-700 backdrop-blur-md flex items-center gap-1.5 shadow-lg cursor-pointer" onclick="App.Sensor.requestGyroPermission()">
@@ -383,7 +379,7 @@
 
   <script>
     /**
-     * 💥 瞬発力・爆発バネドック 完全堅牢アーキテクチャ
+     * 💥 瞬発力・爆発バネドック 完全堅牢アーキテクチャ v5
      */
     const App = {
       CONFIG: {
@@ -393,12 +389,12 @@
         HOLD_TIME_MS: 1400,
         SCAN_HOLD_TIME_MS: 1500,
         DRILL_DURATION_SEC: 10,
-        DISPLACEMENT_THRESHOLD_CM: 2.0,
+        DISPLACEMENT_THRESHOLD_CM: 2.2,
         TILT_THRESHOLD_DEG: 7.0,
         DEFAULT_PX_PER_CM: 2.5,
         TEST_TIMEOUT_MS: 5000,
-        PHASE_STALL_TIMEOUT_MS: 2500,
-        RJ_MIN_AIR_TIME_MS: 120 // [Critical 2対策] 離地後最低滞空時間
+        PHASE_STALL_TIMEOUT_MS: 2600,
+        RJ_MIN_AIR_TIME_MS: 120
       },
 
       State: {
@@ -444,7 +440,7 @@
         isAudioUnlocked: false,
         speechQueueTimer: null,
         keepAliveInterval: null,
-        activeUtterance: null, // GC回収による読み上げ中断防止
+        activeUtterance: null,
 
         init() {
           if (!this.ctx) {
@@ -452,7 +448,7 @@
             if (AudioCtx) this.ctx = new AudioCtx();
           }
           if (this.ctx && this.ctx.state === 'suspended') {
-            this.ctx.resume();
+            this.ctx.resume().catch(() => {});
           }
           this.isAudioUnlocked = true;
 
@@ -461,16 +457,23 @@
               if (window.speechSynthesis && window.speechSynthesis.paused) {
                 window.speechSynthesis.resume();
               }
-            }, 1500);
+            }, 1200);
           }
         },
 
         unlockAudioOnFirstTouch() {
           this.init();
           if ('speechSynthesis' in window) {
-            window.speechSynthesis.resume();
-            window.speechSynthesis.cancel();
+            try {
+              window.speechSynthesis.resume();
+              // iOS WebKit用の無音ダミー発話
+              const dummyUtter = new SpeechSynthesisUtterance('');
+              dummyUtter.volume = 0;
+              window.speechSynthesis.speak(dummyUtter);
+            } catch (e) {}
           }
+          // iOSジャイロ許可の自動チェーン要求
+          App.Sensor.requestGyroPermission();
         },
 
         playTone(freq, duration = 0.08, type = 'sine', volume = 0.25) {
@@ -497,14 +500,14 @@
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.type = 'triangle';
-            osc.frequency.setValueAtTime(340, this.ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(60, this.ctx.currentTime + 0.08);
+            osc.frequency.setValueAtTime(320, this.ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(50, this.ctx.currentTime + 0.09);
             gain.gain.setValueAtTime(0.55, this.ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.09);
             osc.connect(gain);
             gain.connect(this.ctx.destination);
             osc.start();
-            osc.stop(this.ctx.currentTime + 0.08);
+            osc.stop(this.ctx.currentTime + 0.09);
           } catch (e) {}
         },
 
@@ -515,14 +518,14 @@
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(200, this.ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(850, this.ctx.currentTime + 0.14);
+            osc.frequency.setValueAtTime(180, this.ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(920, this.ctx.currentTime + 0.15);
             gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.14);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.15);
             osc.connect(gain);
             gain.connect(this.ctx.destination);
             osc.start();
-            osc.stop(this.ctx.currentTime + 0.14);
+            osc.stop(this.ctx.currentTime + 0.15);
           } catch (e) {}
         },
 
@@ -541,12 +544,13 @@
         speak(text) {
           if (!('speechSynthesis' in window)) return;
           try {
-            window.speechSynthesis.cancel();
             window.speechSynthesis.resume();
 
             clearTimeout(this.speechQueueTimer);
+            // WebKitのキャンセル直後フリーズ対策（安全な遅延インターバル）
             this.speechQueueTimer = setTimeout(() => {
               try {
+                window.speechSynthesis.cancel();
                 const utter = new SpeechSynthesisUtterance(text);
                 utter.lang = 'ja-JP';
                 utter.rate = 1.15;
@@ -562,7 +566,7 @@
 
                 window.speechSynthesis.speak(utter);
               } catch (err) {}
-            }, 40);
+            }, 60);
           } catch (e) {}
         }
       },
@@ -742,6 +746,8 @@
             if (this.cameraStream) {
               this.cameraStream.getTracks().forEach(t => t.stop());
               this.videoElem.srcObject = null;
+              // カメラ解放の安全遅延
+              await new Promise(r => setTimeout(r, 90));
             }
             const constraints = {
               video: {
@@ -774,15 +780,6 @@
 
         async toggleCamera() {
           App.State.cameraFacing = (App.State.cameraFacing === 'user') ? 'environment' : 'user';
-          const isUser = App.State.cameraFacing === 'user';
-          
-          if (isUser) {
-            this.videoElem.classList.add('mirror-flip');
-            this.canvasElem.classList.add('mirror-flip');
-          } else {
-            this.videoElem.classList.remove('mirror-flip');
-            this.canvasElem.classList.remove('mirror-flip');
-          }
           await this.setupCamera();
         },
 
@@ -798,12 +795,11 @@
         },
 
         async requestGyroPermission() {
-          App.Audio.unlockAudioOnFirstTouch();
           if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
             try {
               const res = await DeviceOrientationEvent.requestPermission();
               if (res === 'granted') {
-                App.UI.showToast('ジャイロセンサーをONにしました！');
+                this.updateGyroUI();
               }
             } catch (e) {}
           }
@@ -828,7 +824,6 @@
           }
         },
 
-        // [Critical 3対策] MediaPipeスクリプト未ロード時の自動リトライ機能
         setupPoseInstanceWithRetry(attempts = 0) {
           if (typeof Pose === 'undefined') {
             if (attempts < 30) {
@@ -869,29 +864,49 @@
           requestAnimationFrame(sendFrame);
         },
 
+        // カメラ背景描画＋スケルトン描画の一体化（録画・表示完全一致）
         onPoseResults(results) {
           if (!this.ctx || !this.canvasElem) return;
-          this.ctx.clearRect(0, 0, this.canvasElem.width, this.canvasElem.height);
+          const w = this.canvasElem.width;
+          const h = this.canvasElem.height;
+          const isUser = App.State.cameraFacing === 'user';
 
+          this.ctx.save();
+          if (isUser) {
+            // インカメラ時はCanvasコンテキスト内で左右鏡像描画
+            this.ctx.translate(w, 0);
+            this.ctx.scale(-1, 1);
+          }
+
+          // ① カメラ映像をCanvas背景に焼き込み（リプレイ録画の完全可視化）
+          if (this.videoElem && this.videoElem.readyState >= 2) {
+            this.ctx.drawImage(this.videoElem, 0, 0, w, h);
+          } else {
+            this.ctx.clearRect(0, 0, w, h);
+          }
+
+          // ② 骨格描画
           if (results.poseLandmarks && results.poseLandmarks.length >= 33) {
             const lms = results.poseLandmarks;
-            this.drawSkeleton(lms);
+            this.drawSkeleton(lms, w, h);
+
+            this.ctx.restore(); // 判定ロジックは実座標系で行うためコンテキスト復帰
 
             if (App.State.mode === 'CALIB_SCANNING') {
-              App.Calibration.processFrame(lms, this.canvasElem.width, this.canvasElem.height);
+              App.Calibration.processFrame(lms, w, h);
             } else if (App.State.mode === 'TEST_IDLE' && App.State.calibration.isCalibrated) {
-              this.checkTriLockGate(lms, this.canvasElem.width, this.canvasElem.height);
+              this.checkTriLockGate(lms, w, h);
             } else if (App.State.mode === 'TEST_RUNNING') {
-              App.Engine.processTestFrame(lms, this.canvasElem.width, this.canvasElem.height);
+              App.Engine.processTestFrame(lms, w, h);
             } else if (App.State.mode === 'DRILL_ACTIVE') {
-              App.Drill.processFrame(lms, this.canvasElem.width, this.canvasElem.height);
+              App.Drill.processFrame(lms, w, h);
             }
+          } else {
+            this.ctx.restore();
           }
         },
 
-        drawSkeleton(landmarks) {
-          const w = this.canvasElem.width;
-          const h = this.canvasElem.height;
+        drawSkeleton(landmarks, w, h) {
           const points = [11, 12, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
 
           this.ctx.fillStyle = '#38bdf8';
@@ -925,7 +940,6 @@
           drawBone(27, 31, '#10b981'); drawBone(28, 32, '#10b981');
         },
 
-        // [Warning 2対策] 肩・腰の全点信頼度を検証する3重ロックゲート
         checkTriLockGate(landmarks, w, h) {
           const nose = landmarks[0];
           const lAnkle = landmarks[27];
@@ -996,7 +1010,6 @@
           App.Audio.speak('カメラから2.5メートル離れて、頭から足先まで映してね！');
         },
 
-        // [Warning 3対策] landmarks[11] の存在および信頼度を事前検証
         processFrame(landmarks, w, h) {
           const nose = landmarks[0];
           const lHeel = landmarks[29];
@@ -1259,9 +1272,9 @@
           }
         },
 
-        // [Critical 2対策] 離地後最低滞空時間・ピーク通過ガードを設けたRJステートマシン
+        // 離地時刻の補正と物理整合性を確保したRJステートマシン
         processRJTest(currentHipY, pxPerCm, now) {
-          const jumpDeltaPx = 3.5 * pxPerCm;
+          const jumpDeltaPx = 3.2 * pxPerCm;
 
           if (this.fsmPhase === 0) {
             this.baselineHipY = currentHipY;
@@ -1282,8 +1295,8 @@
               App.Audio.playImpact();
             }
           } else if (this.fsmPhase === 3) {
-            // ③ 本跳躍でパチンと離地
-            if (currentHipY < this.baselineHipY - jumpDeltaPx) {
+            // ③ 本跳躍でパチンと離地（骨盤が基準位置を通過した瞬間を離地時刻として正確に記録）
+            if (currentHipY < this.baselineHipY - (1.0 * pxPerCm)) {
               this.takeoffTime = now;
               this.peakHipY = currentHipY;
               this.fsmPhase = 4; // 空中ピーク追従〜着地待ち
@@ -1296,7 +1309,7 @@
             }
             // 離地後最低滞空時間（120ms）およびピーク通過後の着地判定
             const timeInAir = now - this.takeoffTime;
-            if (timeInAir >= App.CONFIG.RJ_MIN_AIR_TIME_MS && currentHipY >= this.baselineHipY - (1.5 * pxPerCm)) {
+            if (timeInAir >= App.CONFIG.RJ_MIN_AIR_TIME_MS && currentHipY >= this.baselineHipY - (1.2 * pxPerCm)) {
               this.landingTime = now;
               this.fsmPhase = 5;
               App.Audio.playImpact();
@@ -1316,7 +1329,9 @@
             if (currentHipY > this.lowestHipY) {
               this.lowestHipY = currentHipY;
             }
-            if (currentHipY < this.baselineHipY - (5.0 * pxPerCm)) {
+            // 沈み込み（3cm以上）を確認してからジャンプ上昇を検知
+            const sinkPx = this.lowestHipY - this.baselineHipY;
+            if (sinkPx >= (2.8 * pxPerCm) && currentHipY < this.baselineHipY - (4.0 * pxPerCm)) {
               this.fsmPhase = 2; // 空中ピーク追従
               this.peakHipY = currentHipY;
               this.lastPhaseChangeTime = now;
@@ -1326,13 +1341,12 @@
             if (currentHipY < this.peakHipY) {
               this.peakHipY = currentHipY;
             }
-            if (currentHipY >= this.baselineHipY - (2.0 * pxPerCm)) {
+            if (currentHipY >= this.baselineHipY - (1.8 * pxPerCm)) {
               this.finalizeVerticalTest();
             }
           }
         },
 
-        // [Critical 1対策] 膝ランドマークのNull安全チェック付きBRAKE判定
         processBrakeTest(landmarks, currentHipY, pxPerCm, now) {
           const lKnee = landmarks[25];
           const rKnee = landmarks[26];
@@ -1343,7 +1357,7 @@
 
           if (!lKnee || !rKnee || !lHip || !rHip || !lAnkle || !rAnkle ||
               lKnee.visibility < 0.4 || rKnee.visibility < 0.4) {
-            return; // 膝が一時的に未検出の場合は安全にスキップ
+            return;
           }
 
           const leftAngle = this.calculateKneeAngle(lHip, lKnee, lAnkle);
@@ -1373,7 +1387,7 @@
             const angleDelta = Math.abs(currentKneeAngle - this.brakeLastAngle);
             this.brakeLastAngle = currentKneeAngle;
 
-            if (angleDelta <= 3.0 && currentKneeAngle <= 160) {
+            if (angleDelta <= 3.2 && currentKneeAngle <= 160) {
               if (!this.brakeHoldStart) {
                 this.brakeHoldStart = now;
               } else if (now - this.brakeHoldStart >= 200) {
@@ -1387,7 +1401,6 @@
           }
         },
 
-        // [Warning 1対策] 負数防止と安全クランプを備えたRJ終了処理
         async finalizeRJTest() {
           App.setMode('TEST_IDLE');
 
@@ -1433,7 +1446,6 @@
           App.UI.showToast(speechMsg);
         },
 
-        // [Refactor 2対策] 動画再生エラー捕捉と安全フォールバック
         showResultModal(type, metric1, metric2, videoUrl) {
           const videoElem = App.DOM.reportVideo;
           const placeholder = App.DOM.reportPlaceholder;
@@ -1615,7 +1627,7 @@
       },
 
       Storage: {
-        KEY: 'brawl_jump_logs_v4',
+        KEY: 'brawl_jump_logs_v5',
 
         saveLog(entry) {
           try {
