@@ -455,14 +455,14 @@
       top: -9px;
     }
 
-    /* 足元ロック枠 */
+    /* 足元ロック枠（スリム化されたバーチャル枠） */
     #foot-lock-box {
       position: absolute;
       bottom: 108px;
       left: 50%;
       transform: translateX(-50%);
       width: 250px;
-      height: 50px;
+      height: 52px;
       border: 2.5px solid #10b981;
       border-radius: 12px;
       background: rgba(16, 185, 129, 0.14);
@@ -531,13 +531,13 @@
     }
 
     #foot-lock-text-top {
-      font-size: 11.5px;
+      font-size: 11px;
       color: #ffffff;
       text-align: center;
       padding: 0 4px;
     }
     #foot-lock-text-sub {
-      font-size: 9.5px;
+      font-size: 9px;
       color: #34d399;
       margin-top: 1px;
       text-align: center;
@@ -1341,7 +1341,7 @@
               if (lblEl) {
                 if (App.State.testType === 'RJ') lblEl.textContent = '小さくトンッ、パチンと大ジャンプ！';
                 else if (App.State.testType === 'VERTICAL') lblEl.textContent = 'グッとタメて、真上へ全力爆発！';
-                else lblEl.textContent = 'ドンッと踏み込み、ピタッと静止！';
+                else lblEl.textContent = 'ドンッと踏み込み、ピタッと止まれ！';
               }
               if (fTextSub) fTextSub.textContent = `カウント ${c}`;
               App.Audio.playCount(c);
@@ -1400,7 +1400,6 @@
         }
       },
 
-      /* 3種目（RJ・垂直跳び・前足急停止）完全独立ステートマシンエンジン */
       Engine: {
         fsmState: 'IDLE',
         testType: 'RJ',
@@ -1716,7 +1715,7 @@
         showReportVertical(cm, dip, powerRatio) {
           let charIcon = '🦅', charTitle = '大空の王者・スカイイーグル級', charTag = '天高く舞い上がる圧倒的爆発パワー！', stars = '★★★★★', rankLabel = 'S';
           let baseballAdv = '外野の大飛球をフェンス際でスーパーキャッチ！打撃でも下半身の爆発パワーをバットに100%伝えて特大ホームランだ！';
-          let trainingAdv = '【ボックスジャンプ 5回】少し高めの台に向かって、腕を大きく振って一気に飛び乗ろう！';
+          let trainingAdv = '【ボックスジャンプ 5回】少し高めの台に向かって、腕を大きく振して一気に飛び乗ろう！';
           let parentAdv = `【最大下肢筋力】跳躍高${cm}cmは極めて優秀です。沈み込み（${dip}cm）で蓄えた弾性エネルギーを垂直方向に無駄なく爆発させています。`;
 
           if (cm < 40 && cm >= 30) {
@@ -2047,14 +2046,14 @@
           const rHip = lm[24];
           const nose = lm[0];
 
-          const minVis = 0.60;
+          const minVis = 0.50; // グラウンド等の環境に配慮し適度な許容感に調整
           const isFootVisible = (
             (lAnkle.visibility >= minVis || lHeel.visibility >= minVis) &&
             (rAnkle.visibility >= minVis || rHeel.visibility >= minVis)
           );
 
           if (!isFootVisible) {
-            return { ok: false, reason: '足元が見えません。2.5m離れてね', isWarning: true };
+            return { ok: false, reason: '足元が見えません。カメラから2.5m離れてね', isWarning: true };
           }
 
           const avgHipY = (lHip.y + rHip.y) / 2;
@@ -2067,7 +2066,7 @@
 
           const totalBodyH = avgAnkleY - nose.y;
           const shinH = avgAnkleY - avgKneeY;
-          if (shinH / totalBodyH < 0.15) {
+          if (shinH / totalBodyH < 0.12) {
             return { ok: false, reason: 'カメラに近すぎます。下がってね', isWarning: true };
           }
 
@@ -2075,11 +2074,11 @@
           if (!footBoxEl) return { ok: false, reason: '枠が見つかりません' };
 
           const boxRect = footBoxEl.getBoundingClientRect();
-          // 前後・左右の許容マージンを引き締め
-          const boxLeft = boxRect.left - 10;
-          const boxRight = boxRect.right + 10;
-          const boxTop = boxRect.top - 6;
-          const boxBottom = boxRect.bottom + 8;
+          // 適度な許容マージン（±15px〜20px）を持たせて子どもが少し揺れてもエラーが出ないように調整
+          const boxLeft = boxRect.left - 18;
+          const boxRight = boxRect.right + 18;
+          const boxTop = boxRect.top - 12;
+          const boxBottom = boxRect.bottom + 15;
 
           const lAnkleP = this.toScreenCoords(lAnkle.x, lAnkle.y);
           const rAnkleP = this.toScreenCoords(rAnkle.x, rAnkle.y);
@@ -2101,7 +2100,6 @@
           }
 
           const totalPx = totalBodyH * this.canvasEl.height;
-          // 左右のすね（膝〜足首）の画面ピクセル長を計算
           const lShinPx = Math.abs(lAnkle.y - lKnee.y) * this.canvasEl.height;
           const rShinPx = Math.abs(rAnkle.y - rKnee.y) * this.canvasEl.height;
           const avgShinPx = (lShinPx + rShinPx) / 2;
@@ -2155,7 +2153,7 @@
             if (App.State.currentUser.heightCm > 0) {
               App.State.calib.pxPerCm = check.totalPx / App.State.currentUser.heightCm;
               App.State.calib.baselineHipY = ((lm[23].y + lm[24].y) / 2) * this.canvasEl.height;
-              // スキャン位置での基準すね長を保存
+              // 基準となるすね長を保存
               App.State.calib.baselineShinPx = check.avgShinPx;
               App.State.calib.isDone = true;
 
@@ -2189,7 +2187,6 @@
           const fTextSub = document.getElementById('foot-lock-text-sub');
           const now = performance.now();
 
-          // 枠内に足首がない場合
           if (!check.ok) {
             App.State.readyAlignTime = 0;
             if (fBox) {
@@ -2201,34 +2198,32 @@
             return;
           }
 
-          // --- 立ち位置ズレ（前後距離）チェック（直立待機時のみ） ---
+          // --- 許容マージン付きの前後ズレ（すね長比率）チェック ---
           const baseShin = App.State.calib.baselineShinPx;
           if (baseShin > 20) {
             const currentShin = check.avgShinPx;
             const ratio = currentShin / baseShin;
             const hipY = ((lm[23].y + lm[24].y) / 2) * this.canvasEl.height;
-            const isHipTooLow = (hipY - App.State.calib.baselineHipY) > 28; // すでにしゃがみ込んでいる
+            const isHipTooLow = (hipY - App.State.calib.baselineHipY) > 35; // 既にしゃがみ込んでいるか
 
-            // 音声警告クールダウン（3秒に1回）
             const speakWarning = (text) => {
-              if (now - App.State.calib.lastWarningSpokenTime > 3000) {
+              if (now - App.State.calib.lastWarningSpokenTime > 4000) {
                 App.State.calib.lastWarningSpokenTime = now;
                 App.Audio.speak(text);
               }
             };
 
-            // ① カメラに近づきすぎ（すねが10%以上長い）
-            if (ratio > 1.10) {
+            // 許容範囲（マージン）を±15%（0.85〜1.15）に設定し、わずかな揺らぎや5cm程度の微小ズレでのイライラを防ぐ
+            if (ratio > 1.15) {
               App.State.readyAlignTime = 0;
               if (fBox) fBox.className = 'warning';
               if (fTextTop) fTextTop.textContent = '⚠️ 前に出すぎです！';
-              if (fTextSub) fTextSub.textContent = 'スキャン位置より1歩下がってね';
-              speakWarning('前に出すぎだよ。一歩下がってね');
+              if (fTextSub) fTextSub.textContent = 'スキャン位置より少し下がってね';
+              speakWarning('前に出すぎだよ。少し下がってね');
               return;
             }
 
-            // ② カメラから離れすぎ（すねが10%以上短く、かつ直立している）
-            if (ratio < 0.90 && !isHipTooLow) {
+            if (ratio < 0.85 && !isHipTooLow) {
               App.State.readyAlignTime = 0;
               if (fBox) fBox.className = 'warning';
               if (fTextTop) fTextTop.textContent = '⚠️ 下がりすぎです！';
@@ -2238,7 +2233,6 @@
             }
           }
 
-          // 立ち位置ピッタリ・姿勢OK
           if (fBox) fBox.className = 'active-green';
           if (!App.State.readyAlignTime) {
             App.State.readyAlignTime = now;
