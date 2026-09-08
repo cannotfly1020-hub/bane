@@ -369,6 +369,46 @@
       box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
     }
 
+    /* 2段ジャンプ・ステップ進行HUDバッジ */
+    #rj-step-badge-container {
+      position: absolute;
+      top: 152px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      align-items: center;
+      gap: 8px;
+      z-index: 25;
+      pointer-events: none;
+      background: rgba(10, 16, 32, 0.9);
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 2px solid #3b82f6;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+    }
+    .rj-jump-pill {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background: rgba(30, 41, 59, 0.85);
+      color: #94a3b8;
+      border: 1px solid #475569;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .rj-jump-pill.active {
+      background: linear-gradient(180deg, #ff8c00 0%, #ea580c 100%);
+      color: #ffffff;
+      border-color: #ffd000;
+      transform: scale(1.1);
+      box-shadow: 0 0 12px rgba(255, 140, 0, 0.8);
+    }
+    .rj-jump-pill.completed {
+      background: rgba(16, 185, 129, 0.35);
+      color: #6ee7b7;
+      border-color: #10b981;
+    }
+
     .realtime-badge-box {
       position: absolute;
       top: 154px;
@@ -432,7 +472,7 @@
       align-items: center;
       justify-content: center;
       pointer-events: none;
-      transition: all 0.2s ease;
+      transition: all 0.15s ease;
       box-shadow: 0 0 16px rgba(16, 185, 129, 0.35);
       overflow: hidden;
     }
@@ -459,7 +499,19 @@
       border-color: #22c55e;
       background: rgba(34, 197, 94, 0.25);
       box-shadow: 0 0 25px rgba(34, 197, 94, 0.85);
-      animation: alertPulseAnim 0.6s infinite alternate;
+    }
+
+    /* アツアツ鉄板（炎エフェクト） */
+    #foot-lock-box.lava-hot {
+      border-color: #ff3b30 !important;
+      background: radial-gradient(circle, rgba(255, 69, 0, 0.6) 0%, rgba(220, 20, 60, 0.3) 100%) !important;
+      box-shadow: 0 0 35px #ff4500, inset 0 0 20px #ffd000 !important;
+      animation: lavaFlicker 0.1s infinite alternate;
+    }
+
+    @keyframes lavaFlicker {
+      0% { transform: translateX(-50%) scale(1.0); }
+      100% { transform: translateX(-50%) scale(1.04); }
     }
 
     #scan-progress-bar-wrap {
@@ -479,13 +531,13 @@
     }
 
     #foot-lock-text-top {
-      font-size: 11px;
+      font-size: 11.5px;
       color: #ffffff;
       text-align: center;
       padding: 0 4px;
     }
     #foot-lock-text-sub {
-      font-size: 9px;
+      font-size: 9.5px;
       color: #34d399;
       margin-top: 1px;
       text-align: center;
@@ -501,24 +553,25 @@
       align-items: center;
       justify-content: center;
       pointer-events: none;
-      background: rgba(7, 12, 24, 0.4);
+      background: rgba(7, 12, 24, 0.45);
     }
 
     #countdown-big-number {
-      font-size: 100px;
+      font-size: 92px;
       color: #ffd000;
       text-shadow: 0 0 30px rgba(255, 208, 0, 0.9), 0 5px 0 #000;
       animation: popInAnim 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     #countdown-big-label {
-      font-size: 22px;
+      font-size: 19px;
       color: #ffffff;
       margin-top: 6px;
-      background: rgba(15, 23, 42, 0.85);
-      padding: 4px 18px;
+      background: rgba(15, 23, 42, 0.88);
+      padding: 6px 20px;
       border-radius: 20px;
       border: 2px solid #ffd000;
+      text-align: center;
     }
 
     @keyframes popInAnim {
@@ -542,7 +595,7 @@
     .main-trigger-btn {
       width: 100%;
       height: 46px;
-      font-size: 13.5px;
+      font-size: 13px;
     }
 
     .sub-actions-row {
@@ -784,6 +837,12 @@
 
       <div id="head-guide-line">
         <span class="brawl-text">頭頂部ガイド</span>
+      </div>
+
+      <!-- 2段ジャンプ進行HUD -->
+      <div id="rj-step-badge-container">
+        <div class="rj-jump-pill brawl-text" id="rj-step-pill-1">① 小さくトンッ 👣</div>
+        <div class="rj-jump-pill brawl-text" id="rj-step-pill-2">② 高くパチンッ！ 🚀</div>
       </div>
 
       <!-- 足元枠 ＆ 3秒静止ゲージ -->
@@ -1044,7 +1103,7 @@
           requiredHoldMs: 3000,
           lastSecondBeep: 0
         },
-        readyAlignTime: 0,     // READY状態で足元枠に安定して立っている時間
+        readyAlignTime: 0,
         countdown: {
           timerId: null,
           count: 3
@@ -1087,11 +1146,18 @@
         playGo() {
           this.playTone(880, 0.25, 'triangle', 0.45);
         },
-        playImpact() {
-          this.playTone(180, 0.08, 'sawtooth', 0.3);
+        // トンッ（低音の鋭い打音）
+        playTon() {
+          this.playTone(220, 0.07, 'triangle', 0.4);
         },
-        playTakeoff() {
-          this.playTone(520, 0.12, 'sine', 0.35);
+        // パチンッ！（鋭く高い金属的な衝撃音）
+        playPachin() {
+          this.playTone(920, 0.09, 'sawtooth', 0.45);
+          setTimeout(() => this.playTone(1280, 0.08, 'triangle', 0.35), 40);
+        },
+        playBuzzer() {
+          this.playTone(180, 0.25, 'sawtooth', 0.3);
+          setTimeout(() => this.playTone(140, 0.3, 'sawtooth', 0.3), 150);
         },
         playLock() {
           this.playTone(523.25, 0.09, 'triangle', 0.3);
@@ -1110,7 +1176,7 @@
             window.speechSynthesis.cancel();
             const ut = new SpeechSynthesisUtterance(text);
             ut.lang = 'ja-JP';
-            ut.rate = 1.05;
+            ut.rate = 1.1;
             window.speechSynthesis.speak(ut);
           } catch(e) {}
         }
@@ -1134,12 +1200,14 @@
           const fBox = document.getElementById('foot-lock-box');
           const fTextTop = document.getElementById('foot-lock-text-top');
           const fTextSub = document.getElementById('foot-lock-text-sub');
+          const rjHud = document.getElementById('rj-step-badge-container');
 
           if (!pill1 || !pill2 || !pill3 || !guide || !btnMain) return;
 
           pill1.className = 'step-badge-pill brawl-text';
           pill2.className = 'step-badge-pill brawl-text';
           pill3.className = 'step-badge-pill brawl-text';
+          if (rjHud) rjHud.style.display = 'none';
 
           if (stepNum === 1) {
             pill1.classList.add('active');
@@ -1178,6 +1246,23 @@
           }
         },
 
+        updateRjBadge(step) {
+          const pill1 = document.getElementById('rj-step-pill-1');
+          const pill2 = document.getElementById('rj-step-pill-2');
+          if (!pill1 || !pill2) return;
+
+          if (step === 1) {
+            pill1.className = 'rj-jump-pill brawl-text active';
+            pill2.className = 'rj-jump-pill brawl-text';
+          } else if (step === 2) {
+            pill1.className = 'rj-jump-pill brawl-text completed';
+            pill2.className = 'rj-jump-pill brawl-text active';
+          } else {
+            pill1.className = 'rj-jump-pill brawl-text completed';
+            pill2.className = 'rj-jump-pill brawl-text completed';
+          }
+        },
+
         startCountdown() {
           if (App.State.mode === 'COUNTDOWN' || App.State.mode === 'RUNNING') return;
           App.State.mode = 'COUNTDOWN';
@@ -1194,6 +1279,9 @@
           if (fBox) fBox.className = 'active-green';
           if (fTextTop) fTextTop.textContent = 'ジャンプの準備！';
 
+          // 事前ガイダンス発声
+          App.Audio.speak('小さくトン、パチンと大ジャンプ！');
+
           const tick = () => {
             const c = App.State.countdown.count;
             if (c > 0) {
@@ -1203,7 +1291,7 @@
                 void numEl.offsetWidth;
                 numEl.style.animation = 'popInAnim 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
               }
-              if (lblEl) lblEl.textContent = 'その場で跳ぶ準備！';
+              if (lblEl) lblEl.textContent = '小さくトンッ、パチンと大ジャンプ！';
               if (fTextSub) fTextSub.textContent = `カウント ${c}`;
               App.Audio.playCount(c);
               App.State.countdown.count--;
@@ -1214,16 +1302,15 @@
                 numEl.textContent = 'GO!';
                 numEl.style.color = '#34d399';
               }
-              if (lblEl) lblEl.textContent = '🦘 パチンと弾んでジャンプ！';
+              if (lblEl) lblEl.textContent = '① 小さくトンッ！';
               App.Audio.playGo();
-              App.Audio.speak('ゴー！跳べ！');
 
               setTimeout(() => {
                 if (overlay) overlay.style.display = 'none';
                 if (numEl) numEl.style.color = '#ffd000';
-              }, 700);
+              }, 600);
 
-              // リアルタイム測定エンジンを起動
+              // 2段階RJステートマシンを起動
               App.Engine.startMeasurement(App.State.testType);
             }
           };
@@ -1614,7 +1701,6 @@
           return { ok: true, totalPx };
         },
 
-        /* 3秒静止スキャン＆縮尺ロック処理 */
         processThreeSecondHold(lm) {
           const now = performance.now();
           const check = this.validateAnklesInFootBox(lm);
@@ -1682,7 +1768,6 @@
           if (fTextSub) fTextSub.textContent = reasonText || '足首を緑枠の中に入れてね';
         },
 
-        /* 縮尺ロック後の自動カウントダウン判定（1秒静止でスタート） */
         checkAutoReadyCountdown(lm) {
           const check = this.validateAnklesInFootBox(lm);
           const fTextTop = document.getElementById('foot-lock-text-top');
@@ -1697,7 +1782,7 @@
             if (fTextTop) fTextTop.textContent = '🧍 姿勢OK！測定スタート準備...';
             if (fTextSub) fTextSub.textContent = 'そのまま静止してね！';
 
-            if (duration > 900) { // 枠内で1秒安定したら発動！
+            if (duration > 900) {
               App.State.readyAlignTime = 0;
               App.UI.startCountdown();
             }
@@ -1709,14 +1794,19 @@
         }
       },
 
+      /* 改善版：トン・パチン式2段階RJ FSMエンジン */
       Engine: {
-        fsmState: 'IDLE', // IDLE | WAIT_FIRST_DROP | ON_GROUND | IN_AIR | COMPLETED
+        // FSMフェーズ：
+        // IDLE | WAIT_JUMP1 | JUMP1_AIR | CONTACT_PHASE | JUMP2_AIR | FINAL_LANDED
+        fsmState: 'IDLE',
         groundTouchTime: 0,
         takeoffTime: 0,
         contactDurationMs: 0,
         jumpApexHipY: 0,
         baselineHipY: 0,
         jumpHeightCm: 0,
+        jump1StartTime: 0,
+        hasJumpedOnce: false,
 
         startMeasurement(testType) {
           App.State.mode = 'RUNNING';
@@ -1724,84 +1814,126 @@
           this.jumpApexHipY = this.baselineHipY;
           this.contactDurationMs = 0;
           this.jumpHeightCm = 0;
+          this.hasJumpedOnce = false;
 
           const fBox = document.getElementById('foot-lock-box');
           const fTextTop = document.getElementById('foot-lock-text-top');
           const fTextSub = document.getElementById('foot-lock-text-sub');
+          const rjHud = document.getElementById('rj-step-badge-container');
 
-          if (fBox) fBox.className = 'active-green';
-          if (fTextTop) fTextTop.textContent = '🦘 パチンと跳べ！';
-          if (fTextSub) fTextSub.textContent = 'AIリアルタイム計測中...';
-
-          if (testType === 'RJ') {
-            this.fsmState = 'WAIT_FIRST_DROP';
-          } else {
-            this.fsmState = 'IN_AIR';
-            this.takeoffTime = performance.now();
+          if (fBox) {
+            fBox.className = 'active-green';
           }
 
-          // 12秒タイムアウト安全装置
+          if (testType === 'RJ') {
+            this.fsmState = 'WAIT_JUMP1';
+            if (rjHud) rjHud.style.display = 'flex';
+            App.UI.updateRjBadge(1);
+
+            if (fTextTop) fTextTop.textContent = '① 小さくトンッ！';
+            if (fTextSub) fTextSub.textContent = '予備ジャンプをしてね';
+          } else {
+            this.fsmState = 'JUMP2_AIR';
+            this.takeoffTime = performance.now();
+            if (fTextTop) fTextTop.textContent = '🚀 一気に大ジャンプ！';
+            if (fTextSub) fTextSub.textContent = '全力で跳ぼう！';
+          }
+
+          // 1回しか跳ばずに立っていた場合の安全ガード（6秒タイマー）
           setTimeout(() => {
-            if (App.State.mode === 'RUNNING') {
-              this.finalizeMeasurement();
+            if (App.State.mode === 'RUNNING' && this.fsmState !== 'IDLE') {
+              if (!this.hasJumpedOnce || this.fsmState === 'WAIT_JUMP1' || this.fsmState === 'CONTACT_PHASE') {
+                this.triggerRetry('おしい！2回続けてポンポン跳んでね！');
+              } else {
+                this.finalizeMeasurement();
+              }
             }
-          }, 12000);
+          }, 8000);
         },
 
         updateFSM(lm) {
           const now = performance.now();
           const canvasH = App.Sensor.canvasEl ? App.Sensor.canvasEl.height : 600;
           const currentHipY = ((lm[23].y + lm[24].y) / 2) * canvasH;
-          const avgAnkleY = ((lm[27].y + lm[28].y) / 2) * canvasH;
           const pxPerCm = App.State.calib.pxPerCm || 2.5;
 
-          // リアルタイムの骨盤変位からジャンプ高さを即座に表示
+          const fBox = document.getElementById('foot-lock-box');
+          const fTextTop = document.getElementById('foot-lock-text-top');
+          const fTextSub = document.getElementById('foot-lock-text-sub');
+
+          // リアルタイム骨盤変位
           const deltaY = this.baselineHipY - currentHipY;
           const liveHeight = Math.max(0, Math.round(deltaY / pxPerCm));
           const val2El = document.getElementById('hud-badge2-val');
           if (val2El && liveHeight > 0) val2El.textContent = `${liveHeight} cm`;
 
-          // RJのステートマシン
-          if (this.fsmState === 'WAIT_FIRST_DROP') {
-            // 予備ジャンプからの着地（接地）を捉える
-            if (currentHipY >= this.baselineHipY - 10) {
-              this.fsmState = 'ON_GROUND';
-              this.groundTouchTime = now;
-              App.Audio.playImpact();
-              const fTextSub = document.getElementById('foot-lock-text-sub');
-              if (fTextSub) fTextSub.textContent = '⚡ 接地！すぐ跳ね返れ！';
+          // --- 2連続RJステートマシン ---
+          if (this.fsmState === 'WAIT_JUMP1') {
+            // 骨盤がベースラインより浮き上がったら「第1ジャンプ離地」
+            if (currentHipY < this.baselineHipY - 14) {
+              this.fsmState = 'JUMP1_AIR';
+              this.jump1StartTime = now;
+              this.hasJumpedOnce = true;
+              App.Audio.playTon();
+              if (fTextTop) fTextTop.textContent = '床についたらすぐ弾く！';
+              if (fTextSub) fTextSub.textContent = '床はアツアツ鉄板！🔥';
             }
-          } else if (this.fsmState === 'ON_GROUND') {
+          } 
+          else if (this.fsmState === 'JUMP1_AIR') {
+            // 第1ジャンプからの着地（接地）の瞬間
+            if (currentHipY >= this.baselineHipY - 8 && (now - this.jump1StartTime) > 120) {
+              this.fsmState = 'CONTACT_PHASE';
+              this.groundTouchTime = now;
+
+              // アツアツ鉄板・炎エフェクト発動！
+              if (fBox) fBox.className = 'lava-hot';
+              App.UI.updateRjBadge(2);
+
+              if (fTextTop) fTextTop.textContent = '⚡ アチッ！すぐ跳べ！';
+              if (fTextSub) fTextSub.textContent = 'パチンと大ジャンプ！🚀';
+
+              App.Audio.playPachin(); // 鋭いSE
+            }
+          } 
+          else if (this.fsmState === 'CONTACT_PHASE') {
             const currentContact = Math.round(now - this.groundTouchTime);
             const val1El = document.getElementById('hud-badge1-val');
             if (val1El) val1El.textContent = `${currentContact} ms`;
 
-            // 離地（足が跳ね上がった瞬間）
-            if (currentHipY < this.baselineHipY - 14 && (now - this.groundTouchTime) > 70) {
+            // 第2ジャンプ（爆発離地）の瞬間
+            if (currentHipY < this.baselineHipY - 14 && (now - this.groundTouchTime) > 65) {
               this.contactDurationMs = Math.round(now - this.groundTouchTime);
               this.takeoffTime = now;
-              this.fsmState = 'IN_AIR';
-              App.Audio.playTakeoff();
-              const fTextSub = document.getElementById('foot-lock-text-sub');
-              if (fTextSub) fTextSub.textContent = '🚀 爆発ジャンプ中！';
+              this.jumpApexHipY = currentHipY;
+              this.fsmState = 'JUMP2_AIR';
+
+              if (fBox) fBox.className = 'active-green';
+              if (fTextTop) fTextTop.textContent = '🚀 爆発大ジャンプ！';
+              if (fTextSub) fTextSub.textContent = '高くパチンッと跳べ！';
             }
-          } else if (this.fsmState === 'IN_AIR') {
-            // 空中ピークの更新
+
+            // 接地したまま450ms以上止まってしまったら「連続ジャンプ失敗」としてリトライ
+            if (now - this.groundTouchTime > 550) {
+              this.triggerRetry('深くしゃがまず「パチン！」と一瞬で跳ね返ろう！');
+            }
+          } 
+          else if (this.fsmState === 'JUMP2_AIR') {
+            // 空中最高点の更新
             if (currentHipY < this.jumpApexHipY) {
               this.jumpApexHipY = currentHipY;
             }
 
-            // 最終着地判定
             const timeInAir = now - this.takeoffTime;
+
+            // 最終着地判定（ここで初めて完了とする！）
             if (currentHipY >= this.baselineHipY - 8 && timeInAir > 220) {
-              this.fsmState = 'COMPLETED';
-              // 骨盤ストロークと滞空時間のハイブリッド計算
+              this.fsmState = 'FINAL_LANDED';
+
               const peakDeltaPx = Math.max(0, this.baselineHipY - this.jumpApexHipY);
               const heightFromPx = peakDeltaPx / pxPerCm;
               const tAirSec = timeInAir / 1000;
               const heightFromAir = 0.5 * 9.80665 * Math.pow(tAirSec / 2, 2) * 100;
 
-              // 信頼性の高いブレ補正平均
               this.jumpHeightCm = Math.round((heightFromPx * 0.5) + (heightFromAir * 0.5));
               if (this.jumpHeightCm < 15) this.jumpHeightCm = Math.round(heightFromPx);
 
@@ -1814,19 +1946,41 @@
           }
         },
 
+        triggerRetry(reasonText) {
+          App.Audio.playBuzzer();
+          App.Audio.speak(reasonText);
+          App.UI.showToast(reasonText);
+
+          this.fsmState = 'IDLE';
+          App.State.mode = 'READY';
+          App.State.readyAlignTime = 0;
+
+          const fBox = document.getElementById('foot-lock-box');
+          const rjHud = document.getElementById('rj-step-badge-container');
+          if (fBox) fBox.className = 'ready-blue';
+          if (rjHud) rjHud.style.display = 'none';
+
+          const fTextTop = document.getElementById('foot-lock-text-top');
+          const fTextSub = document.getElementById('foot-lock-text-sub');
+          if (fTextTop) fTextTop.textContent = 'もう一回チャレンジ！';
+          if (fTextSub) fTextSub.textContent = '足元枠に入ると自動リトライ';
+        },
+
         finalizeMeasurement() {
           App.State.mode = 'READY';
           this.fsmState = 'IDLE';
+
+          const rjHud = document.getElementById('rj-step-badge-container');
+          if (rjHud) rjHud.style.display = 'none';
 
           const ms = this.contactDurationMs || 195;
           const cm = Math.max(18, this.jumpHeightCm || 32);
           const rsi = ((cm / 100) / (ms / 1000)).toFixed(2);
 
           App.Audio.playFanfare();
-          App.Audio.speak(`測定完了！接地スピードは${ms}ミリ秒、高さ${cm}センチです`);
+          App.Audio.speak(`すごい！測定完了！接地スピードは${ms}ミリ秒、高さ${cm}センチです！`);
           this.showReport(App.State.testType, ms, cm, rsi);
 
-          // UIを準備完了に戻す
           App.UI.setStep(3);
         },
 
@@ -2086,7 +2240,6 @@
             } else if (this.State.mode === 'STEP2_SCAN') {
               this.UI.showToast('足元の枠に足首を揃えて3秒静止してね');
             } else if (this.State.mode === 'READY') {
-              // ボタンを押しても即カウントダウン開始できる！
               this.UI.startCountdown();
             }
           });
