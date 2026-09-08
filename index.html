@@ -323,29 +323,29 @@
 
       <!-- 足元セーフ枠（バッターボックス風エリア：カメラの床面に合わせて下端へ調整） -->
       <div id="foot-safe-zone"
-           class="foot-box absolute bottom-2.5 w-[64%] h-16 pointer-events-none flex flex-col items-center justify-center z-10 transition-colors duration-300">
+           class="foot-box absolute bottom-1 w-[68%] h-14 pointer-events-none flex flex-col items-center justify-center z-10 transition-colors duration-300">
         <span class="text-emerald-300 text-[11px] brawl-stroke tracking-wider">
           👟 ここに両足を合わせてね！
         </span>
       </div>
 
-      <!-- 左右のリアルタイム数値バッジ（小学生直感数値） -->
-      <div class="absolute inset-x-2 bottom-2 flex justify-between pointer-events-none z-20">
+      <!-- 左右のリアルタイム数値バッジ（足元を塞がないよう中下段へ配置） -->
+      <div class="absolute inset-x-2 bottom-16 flex justify-between pointer-events-none z-20">
         <!-- 左バッジ：接地時間（足裏タッチスピード） -->
-        <div class="panel-brawl px-3 py-1.5 border-orange-500/80 text-left min-w-[100px]">
-          <div id="label-stat-left" class="text-[10px] text-amber-300 tracking-wider">⚡ 足裏タッチ速度</div>
+        <div class="panel-brawl px-2.5 py-1 border-orange-500/80 text-left min-w-[85px] bg-slate-950/80 backdrop-blur-sm">
+          <div id="label-stat-left" class="text-[9px] text-amber-300 tracking-wider">⚡ 足裏タッチ速度</div>
           <div class="flex items-baseline gap-1">
-            <span id="val-stat-left" class="text-2xl text-white font-black brawl-stroke">--</span>
-            <span id="unit-stat-left" class="text-xs text-amber-200">秒</span>
+            <span id="val-stat-left" class="text-xl text-white font-black brawl-stroke">--</span>
+            <span id="unit-stat-left" class="text-[10px] text-amber-200">秒</span>
           </div>
         </div>
 
         <!-- 右バッジ：ジャンプ高（ロケットバネ高） -->
-        <div class="panel-brawl px-3 py-1.5 border-emerald-500/80 text-right min-w-[100px]">
-          <div id="label-stat-right" class="text-[10px] text-emerald-300 tracking-wider">🦘 ジャンプバネ高</div>
+        <div class="panel-brawl px-2.5 py-1 border-emerald-500/80 text-right min-w-[85px] bg-slate-950/80 backdrop-blur-sm">
+          <div id="label-stat-right" class="text-[9px] text-emerald-300 tracking-wider">🦘 ジャンプバネ高</div>
           <div class="flex items-baseline justify-end gap-1">
-            <span id="val-stat-right" class="text-2xl text-white font-black brawl-stroke">--</span>
-            <span id="unit-stat-right" class="text-xs text-emerald-200">cm</span>
+            <span id="val-stat-right" class="text-xl text-white font-black brawl-stroke">--</span>
+            <span id="unit-stat-right" class="text-[10px] text-emerald-200">cm</span>
           </div>
         </div>
       </div>
@@ -381,28 +381,32 @@
 
     </main>
 
-    <!-- 4. フッター操作部（強制身長ゲート付き巨大ボタン） -->
-    <footer class="shrink-0 mt-2 flex flex-col gap-2">
-      <!-- 巨大アクションボタン（身長未設定時はロック解除ボタン） -->
+    <!-- 4. フッター操作部（下部カメラ視界を最大化する横1行スリムレイアウト） -->
+    <footer class="shrink-0 mt-1.5 flex items-stretch gap-1.5 h-11">
+      <!-- 診断レポートボタン -->
+      <button id="btn-show-report"
+              onclick="App.UI.openModal('modal-report')"
+              class="btn-brawl btn-dark px-3 py-1 text-xs shrink-0 flex items-center justify-center gap-1"
+              title="診断レポートを見る">
+        <span>📋</span>
+        <span class="text-[11px]">レポート</span>
+      </button>
+
+      <!-- 巨大アクションボタン（横いっぱいに広げつつ高さを抑えてカメラ面積を確保） -->
       <button id="btn-main-action"
               onclick="App.UI.handleMainAction()"
-              class="btn-brawl btn-locked w-full py-3.5 text-base sm:text-lg alert-pulse">
+              class="btn-brawl btn-locked flex-1 py-1 px-2 text-xs sm:text-sm alert-pulse truncate">
         🔒 まずは身長をピシッと測ろう！
       </button>
 
-      <!-- サブボタングリッド -->
-      <div class="grid grid-cols-2 gap-2">
-        <button id="btn-show-report"
-                onclick="App.UI.openModal('modal-report')"
-                class="btn-brawl btn-dark py-2 text-xs">
-          📋 診断レポートを見る
-        </button>
-        <button id="btn-start-drill"
-                onclick="App.UI.handleDrillStart()"
-                class="btn-brawl btn-gold py-2 text-xs">
-          🎮 10秒ウルトドリルへ
-        </button>
-      </div>
+      <!-- 10秒ウルトドリルボタン -->
+      <button id="btn-start-drill"
+              onclick="App.UI.handleDrillStart()"
+              class="btn-brawl btn-gold px-3 py-1 text-xs shrink-0 flex items-center justify-center gap-1"
+              title="10秒ウルトドリルへ">
+        <span>🎮</span>
+        <span class="text-[11px]">ドリル</span>
+      </button>
     </footer>
   </div>
 
