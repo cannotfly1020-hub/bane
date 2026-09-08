@@ -829,6 +829,139 @@
     }
 
     .star-player-banner {
+       background: linear-gradient(90deg, #b45309, #f59e0b, #b45309);
+      border: 1.5px solid #fff;
+      border-radius: 10px;
+      padding: 6px;
+      text-align: center;
+      color: #fff;
+      font-size: 13px;
+      box-shadow: 0 0 14px rgba(245, 158, 11, 0.7);
+    }
+
+    /* 小学生＆保護者向け診断レポート用スタイル */
+    .character-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
+      border: 2px solid #ffd000;
+      border-radius: 12px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 12px rgba(255, 208, 0, 0.35);
+    }
+
+    .character-avatar {
+      font-size: 42px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 50%;
+      width: 58px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #ffd000;
+      flex-shrink: 0;
+    }
+
+    .character-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .star-rating {
+      color: #ffd000;
+      font-size: 14px;
+      letter-spacing: 2px;
+    }
+
+    .kids-stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .kids-stat-card {
+      background: #0b1325;
+      border: 1.5px solid #22355b;
+      border-radius: 9px;
+      padding: 6px 4px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .kids-stat-card .card-badge {
+      font-size: 9px;
+      color: #94a3b8;
+      margin-bottom: 2px;
+    }
+
+    .kids-stat-card .card-main-num {
+      font-size: 16px;
+      color: #fff;
+    }
+
+    .kids-stat-card .card-sub-hint {
+      font-size: 8px;
+      color: #38bdf8;
+      margin-top: 2px;
+      line-height: 1.1;
+    }
+
+    .kids-feature-box {
+      background: rgba(18, 30, 56, 0.9);
+      border: 1.5px solid #3b82f6;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .kids-training-box {
+      background: rgba(20, 36, 30, 0.9);
+      border: 1.5px solid #10b981;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .parent-details-toggle {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px dashed #64748b;
+      border-radius: 8px;
+      padding: 6px 8px;
+      cursor: pointer;
+      font-size: 10.5px;
+      color: #cbd5e1;
+      text-align: center;
+      transition: all 0.15s ease;
+    }
+    .parent-details-toggle:active {
+      background: rgba(30, 41, 59, 0.9);
+    }
+
+    .parent-details-content {
+      display: none;
+      background: rgba(10, 16, 30, 0.95);
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 10px;
+      color: #94a3b8;
+      line-height: 1.45;
+    }
+    .parent-details-content.open {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    #brawl-toast {
       background: linear-gradient(90deg, #b45309, #f59e0b, #b45309);
       border: 1.5px solid #fff;
       border-radius: 10px;
@@ -1051,51 +1184,90 @@
   </div>
 
   <!-- 診断レポートモーダル -->
-  <div id="modal-report" class="modal-backdrop">
-    <div class="panel-brawl modal-box">
+ <div id="modal-report" class="modal-backdrop">
+    <div class="panel-brawl modal-box" style="max-width: 390px; gap: 8px;">
       <div class="modal-header">
-        <div class="modal-title brawl-text">📋 爆発バネ診断カルテ</div>
+        <div class="modal-title brawl-text">📋 爆発バネ・カルテ診断</div>
         <button class="btn-close-modal brawl-text" data-close="modal-report">✕</button>
       </div>
       
-      <div class="star-player-banner brawl-text" id="report-rank-banner">
-        ⭐ STAR PLAYER: 爆発的バネマスター
+      <!-- 小学生向けキャラクター＆称号カード -->
+      <div class="character-card">
+        <div class="character-avatar" id="rep-char-icon">🦘</div>
+        <div class="character-info">
+          <div class="star-rating" id="rep-star-rating">★★★★★</div>
+          <div class="brawl-text" id="rep-character-title" style="font-size: 13.5px; color: #ffea79; line-height: 1.2;">
+            超スーパーボール・カンガルー級
+          </div>
+          <div style="font-size: 9.5px; color: #cbd5e1;" id="rep-character-tag">
+            地面をまばたきより速く弾く天才バネ！
+          </div>
+        </div>
       </div>
 
-      <div class="replay-player">
+      <!-- スローリプレイ動画 -->
+      <div class="replay-player" style="height: 140px;">
         <video id="replay-video" loop playsinline muted controls></video>
         <div id="replay-placeholder" style="color: #64748b; font-size: 11px;" class="brawl-text">
-          📹 測定後にリプレイが生成されます
+          📹 測定後にスローリプレイが生成されます
         </div>
       </div>
 
-      <div class="report-stat-grid">
-        <div class="report-stat-card">
-          <div class="hud-label brawl-text" id="card-main-title">接地時間</div>
-          <div class="hud-value brawl-text" id="rep-contact-time" style="color: #38bdf8;">--<span style="font-size: 11px;">ms</span></div>
+      <!-- 3大ステータス（小学生が直感でわかる表現） -->
+      <div class="kids-stat-grid">
+        <div class="kids-stat-card">
+          <div class="card-badge brawl-text" id="kids-stat1-title">⚡ 足のすばやさ</div>
+          <div class="card-main-num brawl-text" id="kids-stat1-val" style="color: #38bdf8;">--</div>
+          <div class="card-sub-hint brawl-text" id="kids-stat1-hint">床にいた時間</div>
         </div>
-        <div class="report-stat-card">
-          <div class="hud-label brawl-text" id="card-sub-title">跳躍高</div>
-          <div class="hud-value brawl-text" id="rep-jump-height" style="color: #4ade80;">--<span style="font-size: 11px;">cm</span></div>
+        <div class="kids-stat-card">
+          <div class="card-badge brawl-text" id="kids-stat2-title">🚀 ジャンプりょく</div>
+          <div class="card-main-num brawl-text" id="kids-stat2-val" style="color: #4ade80;">--</div>
+          <div class="card-sub-hint brawl-text" id="kids-stat2-hint">跳んだ高さ</div>
         </div>
-        <div class="report-stat-card">
-          <div class="hud-label brawl-text" id="card-rsi-title">バネ指数 (RSI)</div>
-          <div class="hud-value brawl-text" id="rep-rsi-score" style="color: #facc15;">--</div>
-        </div>
-        <div class="report-stat-card">
-          <div class="hud-label brawl-text" id="card-extra-title">判定ランク</div>
-          <div class="hud-value brawl-text" id="rep-brake-score" style="color: #fb923c;">--</div>
+        <div class="kids-stat-card">
+          <div class="card-badge brawl-text" id="kids-stat3-title">💥 バネレベル</div>
+          <div class="card-main-num brawl-text" id="kids-stat3-val" style="color: #ffd000;">--</div>
+          <div class="card-sub-hint brawl-text" id="kids-stat3-hint">スーパーボール度</div>
         </div>
       </div>
 
-      <div class="panel-brawl" style="padding: 8px; background: rgba(0,0,0,0.4); border-color: #334155; font-size: 10.5px; line-height: 1.35;">
-        <div class="brawl-text" style="color: #38bdf8; margin-bottom: 2px;">⚾ 野球パフォーマンス還元分析</div>
-        <p id="rep-baseball-text" style="color: #e2e8f0; font-weight: 800;">
-          測定を実行すると、接地速度・反発弾性・ブロッキング支持力に応じた野球の走塁・守備・投球動作への直接的な還元アドバイスが生成されます。
+      <!-- 野球スーパープレー解説 -->
+      <div class="kids-feature-box">
+        <div class="brawl-text" style="color: #60a5fa; display: flex; align-items: center; gap: 4px; margin-bottom: 2px;">
+          <span>⚾</span><span>きみのバネで野球が大活躍！</span>
+        </div>
+        <p id="rep-baseball-text" style="color: #f1f5f9; font-weight: 800;">
+          きみのバネは走塁のスタートダッシュで大活躍！一歩目の飛び出しがロケット並みに速いから、盗塁セーフを連発できるぞ！
         </p>
       </div>
 
-      <button class="btn-brawl btn-orange brawl-text" data-close="modal-report" style="height: 36px;">
+      <!-- レベルアップ特訓 -->
+      <div class="kids-training-box">
+        <div class="brawl-text" style="color: #34d399; display: flex; align-items: center; gap: 4px; margin-bottom: 2px;">
+          <span>🎯</span><span>もっと強くなる！レベルアップ特訓</span>
+        </div>
+        <p id="rep-training-text" style="color: #ecfdf5; font-weight: 800;">
+          【なわとび・ピンピン跳び 20回×2セット】かかとを地面につけずに、足首を固めて床を「パチン！」と弾くように素早く跳ぼう！
+        </p>
+      </div>
+
+      <!-- 保護者・コーチ向けアコーディオン -->
+      <div class="parent-details-toggle brawl-text" id="btn-toggle-parent">
+        ▼ 保護者・指導者の方へ（詳細な科学的データを見る）
+      </div>
+      <div class="parent-details-content" id="parent-details-content">
+        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #1e293b; padding-bottom: 4px;">
+          <span>接地時間: <strong id="parent-val-contact" style="color: #38bdf8;">--ms</strong></span>
+          <span>跳躍高: <strong id="parent-val-height" style="color: #4ade80;">--cm</strong></span>
+          <span>RSI指数: <strong id="parent-val-rsi" style="color: #ffd000;">--</strong></span>
+        </div>
+        <div id="parent-advice-text" style="color: #cbd5e1; font-weight: normal; margin-top: 3px;">
+          ※RSI（反応性筋力指数）は、アキレス腱が伸張反射を利用して床反力を弾性エネルギーに変換する効率を示します。成長期には無理なウエイトを避け、接地時間の短いプライオメトリクス（なわとびやケンケン）で足首剛性を高めることが怪我予防とスプリント力向上に最適です。
+        </div>
+      </div>
+
+      <button class="btn-brawl btn-orange brawl-text" data-close="modal-report" style="height: 38px; margin-top: 2px;">
         閉じて次の測定へ
       </button>
     </div>
@@ -2152,48 +2324,173 @@
         },
 
         showReportAndSave(type, val1, val2, rsiVal) {
-          let rank = 'PRO';
+          abortTrial(message) {
+          App.Audio.playBuzzer();
+          App.UI.showToast(`⚠️ 無効試行: ${message}`);
+          App.Audio.speak('やり直しです。もう一度立ち位置を揃えてね');
+          App.UI.hideStateBanner();
+          App.State.mode = 'TEST_IDLE';
+          this.timestamps.takeoff = 0;
+          this.timestamps.contactStart = 0;
+          this.currentPhase = this.RJ_PHASE.STANDBY;
+          App.Drill.discardRecording();
+        },
+
+        showReportAndSave(type, val1, val2, rsiVal) {
+          let charIcon = '🦘';
+          let charTitle = '超スーパーボール・カンガルー級';
+          let charTag = '地面をまばたきより速く弾く天才バネ！';
+          let stars = '★★★★★';
           let baseballAdv = '';
+          let trainingAdv = '';
+          let parentAdv = '';
+          let rankLabel = 'S';
 
           if (type === 'RJ') {
-            if (val1 < 175 && val2 > 28) {
-              rank = 'Sランク (STAR PLAYER)';
-              baseballAdv = 'プロ級の鋭い腱バネです！内野手の1歩目の加速や、投球の鋭い骨盤回旋にダイレクトに還元されます。';
-            } else if (val1 < 215) {
-              rank = 'Aランク (ADVANCED)';
-              baseballAdv = '優れた反発力です。接地の瞬間に足首を固める意識を持つと、さらに走塁のトップスピードが向上します。';
+            const contactMs = val1;
+            const heightCm = val2;
+            const rsi = typeof rsiVal === 'number' ? rsiVal : parseFloat(rsiVal) || 0;
+
+            if (contactMs < 185 && rsi >= 1.6) {
+              charIcon = '🦘';
+              charTitle = '超スーパーボール・カンガルー級';
+              charTag = '床をまばたきより速く弾く！プロ級の爆発バネ！';
+              stars = '★★★★★';
+              rankLabel = 'S (カンガルー)';
+              baseballAdv = 'きみの足は床をロケットみたいに蹴り出せるぞ！一歩目の加速が超速いから「盗塁セーフ連発」＆「内野ゴロにパッと追いつく俊足」になれる！';
+              trainingAdv = '【足首固めケンケンパ 10m×2本】いまの最高バネを保つため、足首をピンと固めて着地した瞬間にパチンと前へ跳び進もう！';
+              parentAdv = `【プロ級の腱バネ】接地時間${contactMs}msは非常に短く、地面からの衝撃を効率よく反発力に変換できています。投球の骨盤回旋やベースランニングのトップスピードにおいて大きな武器になります。`;
+            } else if (contactMs < 225 || rsi >= 1.25) {
+              charIcon = '🐆';
+              charTitle = '電光石火・チーター級';
+              charTag = 'すばやい反発力！ぐんぐんスピードに乗れる！';
+              stars = '★★★★☆';
+              rankLabel = 'A (チーター)';
+              baseballAdv = '足の入れ替えがスムーズで走塁スピードがとても速い！守備でも打球に素早く反応して回り込める俊敏さがあるぞ！';
+              trainingAdv = '【なわとび二重跳び or ピンピン跳び 30回】地面につく時間を「ポン！」と短くする意識で跳ぶと、カンガルー級にレベルアップ！';
+              parentAdv = `【優れた反発力】接地時間${contactMs}msと安定した腱反発を持っています。足首（距骨まわり）の剛性をさらに高めると、1歩目の接地ロスが減り加速力が向上します。`;
+            } else if (heightCm > 26) {
+              charIcon = '🐸';
+              charTitle = 'パワーロケット・フロッグ級';
+              charTag = 'ぐっとタメてドカンと跳ぶ！筋肉パワー型！';
+              stars = '★★★☆☆';
+              rankLabel = 'B+ (フロッグ)';
+              baseballAdv = '下半身の筋肉パワーが強いぞ！バッティングで地面をグッと踏ん張って、外野を越える長打を打つパワーの持ち主だ！';
+              trainingAdv = '【あし首パチン跳び 15回】深くしゃがまずに、足首と膝を固めて「地面を熱い鉄板だと思って」一瞬で跳ね返る練習をしてみよう！';
+              parentAdv = `【筋力主導型】ジャンプ高（${heightCm}cm）は出ていますが、接地時間（${contactMs}ms）でやや力を吸収しています。アキレス腱の伸張反射を使うリズムジャンプを取り入れると、スピードへの還元が加速します。`;
             } else {
-              rank = 'Bランク (DEVELOPING)';
-              baseballAdv = '地面に力が吸収されやすい状態です。アンクルホップでアキレス腱のバネ剛性を高めましょう。';
+              charIcon = '🐰';
+              charTitle = 'ぴょんぴょん・ラビット級';
+              charTag = 'リズム感ばっちり！バネがぐんぐん育つ時期！';
+              stars = '★★★☆☆';
+              rankLabel = 'B (ラビット)';
+              baseballAdv = '足腰の柔軟性とリズム感がバッチリ！正しいステップを覚えると、走塁も守備もどんどん上手くなるぞ！';
+              trainingAdv = '【なわとび前跳び 50回連続】かかとを浮かせたまま、テンポよく「タン・タン・タン」と軽やかに跳ぶ習慣をつけよう！';
+              parentAdv = `【成長期・発達中】筋腱の弾性がこれから急激に発達する段階です。ウエイトトレーニングではなく、なわとびやケンケン遊びで腱に弾性を覚えさせることが最も効果的です。`;
             }
+
+            document.getElementById('kids-stat1-title').textContent = '⚡ 足のすばやさ';
+            document.getElementById('kids-stat1-val').innerHTML = `${contactMs}<span style="font-size:10px;">ms</span>`;
+            document.getElementById('kids-stat1-hint').textContent = contactMs < 200 ? '⚡ まばたき級！' : '👣 床にいた時間';
+
+            document.getElementById('kids-stat2-title').textContent = '🚀 ジャンプりょく';
+            document.getElementById('kids-stat2-val').innerHTML = `${heightCm}<span style="font-size:10px;">cm</span>`;
+            document.getElementById('kids-stat2-hint').textContent = heightCm > 30 ? '🔥 超ハイジャンプ' : '跳んだ高さ';
+
+            document.getElementById('kids-stat3-title').textContent = '💥 バネレベル';
+            document.getElementById('kids-stat3-val').textContent = rsi;
+            document.getElementById('kids-stat3-hint').textContent = 'スーパーボール度';
+
+            document.getElementById('parent-val-contact').textContent = `${contactMs}ms`;
+            document.getElementById('parent-val-height').textContent = `${heightCm}cm`;
+            document.getElementById('parent-val-rsi').textContent = rsi;
+
           } else if (type === 'VERTICAL') {
-            rank = val1 > 45 ? 'Sランク' : (val1 > 35 ? 'Aランク' : 'Bランク');
-            baseballAdv = '下半身の最大筋出力を示しています。打撃のタメから前足への体重移動を力強く支える土台になります。';
-          } else {
-            rank = val1 < 450 ? 'Sランク' : 'Aランク';
-            baseballAdv = '投球の前足ブロッキング動作や外野急停止に必要なエキセントリック筋力が確認できました。';
+            const h = val1;
+            const squat = val2;
+            if (h > 42) {
+              charIcon = '🦅';
+              charTitle = '大空フライト・イーグル級';
+              charTag = '天空まで届く最大カウンター跳躍！';
+              stars = '★★★★★';
+              rankLabel = 'S (イーグル)';
+            } else if (h > 32) {
+              charIcon = '🐆';
+              charTitle = '疾風ジャンプ・パンサー級';
+              charTag = '力強いタメからの高打点ジャンプ！';
+              stars = '★★★★☆';
+              rankLabel = 'A (パンサー)';
+            } else {
+              charIcon = '🐻';
+              charTitle = 'どっしりベア級';
+              charTag = '力強いタメ！パワーを爆発させよう！';
+              stars = '★★★☆☆';
+              rankLabel = 'B (ベア)';
+            }
+            baseballAdv = '下半身でしっかり地面をつかむパワーが証明されたぞ！バッティングで軸足に体重をためて、強い打球を飛ばす土台が完成している！';
+            trainingAdv = '【スクワットジャンプ 10回】しっかりお尻を引いて沈み込み、腕を振り上げて天井にタッチするイメージで跳ぼう！';
+            parentAdv = `垂直跳び${h}cm。沈み込み（${squat}cm）からのエキセントリック〜コンセントリック筋力発揮が良好です。スイング時の並進運動から回転運動への変換を力強く支えます。`;
+
+            document.getElementById('kids-stat1-title').textContent = '🚀 跳躍の高さ';
+            document.getElementById('kids-stat1-val').innerHTML = `${h}<span style="font-size:10px;">cm</span>`;
+            document.getElementById('kids-stat1-hint').textContent = '最大ジャンプ';
+
+            document.getElementById('kids-stat2-title').textContent = '🧱 タメの深さ';
+            document.getElementById('kids-stat2-val').innerHTML = `${squat}<span style="font-size:10px;">cm</span>`;
+            document.getElementById('kids-stat2-hint').textContent = '沈み込み';
+
+            document.getElementById('kids-stat3-title').textContent = '⭐ 総合評価';
+            document.getElementById('kids-stat3-val').textContent = rankLabel.split(' ')[0];
+            document.getElementById('kids-stat3-hint').textContent = 'パワーランク';
+
+            document.getElementById('parent-val-contact').textContent = '--';
+            document.getElementById('parent-val-height').textContent = `${h}cm`;
+            document.getElementById('parent-val-rsi').textContent = `沈み込み ${squat}cm`;
+
+          } else { // BRAKE
+            const stopMs = val1;
+            const kneeAngle = val2;
+            charIcon = '🦏';
+            charTitle = '鉄壁ブレーキ・サイ級';
+            charTag = '一歩でピタッと止まる強力ストッパー！';
+            stars = stopMs < 450 ? '★★★★★' : '★★★★☆';
+            rankLabel = stopMs < 450 ? 'S (サイ)' : 'A (サイ)';
+            baseballAdv = '走ってきてから「ピタッ」と止まれる力があるぞ！外野フェンス前での急停止や、ピッチングで前足をガチッと固めて剛速球を投げるのに直結する！';
+            trainingAdv = '【ラン＆ストップ 5回】軽くダッシュして合図でピタッと前足で止まり、グラつかずに2秒キープする練習をしよう！';
+            parentAdv = `停止減速時間${stopMs}ms、膝角度${kneeAngle}°。投球動作の「ストライド脚のブロッキング（並進運動を急停止させて体幹回旋に変換する力）」や、外野手の打球処理における減速能力を示します。`;
+
+            document.getElementById('kids-stat1-title').textContent = '🛑 止まる速さ';
+            document.getElementById('kids-stat1-val').innerHTML = `${stopMs}<span style="font-size:10px;">ms</span>`;
+            document.getElementById('kids-stat1-hint').textContent = '減速タイム';
+
+            document.getElementById('kids-stat2-title').textContent = '📐 ひざの強さ';
+            document.getElementById('kids-stat2-val').innerHTML = `${kneeAngle}<span style="font-size:10px;">°</span>`;
+            document.getElementById('kids-stat2-hint').textContent = 'ブレーキ角度';
+
+            document.getElementById('kids-stat3-title').textContent = '⭐ 総合判定';
+            document.getElementById('kids-stat3-val').textContent = rankLabel.split(' ')[0];
+            document.getElementById('kids-stat3-hint').textContent = 'ストップ力';
+
+            document.getElementById('parent-val-contact').textContent = `${stopMs}ms`;
+            document.getElementById('parent-val-height').textContent = `${kneeAngle}°`;
+            document.getElementById('parent-val-rsi').textContent = '--';
           }
 
-          document.getElementById('report-rank-banner').textContent = `⭐ STAR PLAYER: ${rank}`;
-          document.getElementById('card-main-title').textContent = type === 'RJ' ? '接地時間' : (type === 'VERTICAL' ? '跳躍高' : '停止時間');
-          document.getElementById('rep-contact-time').innerHTML = `${val1}<span style="font-size: 11px;">${type === 'VERTICAL' ? 'cm' : 'ms'}</span>`;
-          
-          document.getElementById('card-sub-title').textContent = type === 'RJ' ? '跳躍高' : (type === 'VERTICAL' ? '沈み込み' : '膝角度');
-          document.getElementById('rep-jump-height').innerHTML = `${val2}<span style="font-size: 11px;">${type === 'BRAKE' ? 'deg' : 'cm'}</span>`;
-
-          document.getElementById('card-rsi-title').textContent = type === 'RJ' ? 'バネ指数 (RSI)' : '総合指標';
-          document.getElementById('rep-rsi-score').textContent = rsiVal;
-
-          document.getElementById('card-extra-title').textContent = '判定評価';
-          document.getElementById('rep-brake-score').textContent = rank.split(' ')[0];
+          // UIへ反映
+          document.getElementById('rep-char-icon').textContent = charIcon;
+          document.getElementById('rep-character-title').textContent = charTitle;
+          document.getElementById('rep-character-tag').textContent = charTag;
+          document.getElementById('rep-star-rating').textContent = stars;
           document.getElementById('rep-baseball-text').textContent = baseballAdv;
+          document.getElementById('rep-training-text').textContent = trainingAdv;
+          document.getElementById('parent-advice-text').textContent = parentAdv;
 
           App.Storage.saveLog({
             type: type,
             mainMetric: `${val1}${type === 'VERTICAL' ? 'cm' : 'ms'}`,
             subMetric: `${val2}${type === 'BRAKE' ? 'deg' : 'cm'}`,
             rsi: rsiVal,
-            rank: rank.split(' ')[0]
+            rank: rankLabel
           });
 
           setTimeout(() => {
@@ -2213,356 +2510,11 @@
 
       /**
        * 【スロット3】：10秒ウルトドリル ＆ MediaRecorder
-       */
-      Drill: {
-        timerInterval: null,
-        remainingSec: 10.0,
-        comboCount: 0,
-        ultGauge: 0,
-        isDrillAir: false,
+<!-- ... existing code ... -->
+```
 
-        initMediaRecorder(stream) {
-          try {
-            if (!window.MediaRecorder) return;
-
-            let mimeType = 'video/mp4';
-            if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1')) {
-              mimeType = 'video/mp4;codecs=avc1';
-            } else if (MediaRecorder.isTypeSupported('video/mp4')) {
-              mimeType = 'video/mp4';
-            } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
-              mimeType = 'video/webm;codecs=vp8';
-            } else if (MediaRecorder.isTypeSupported('video/webm')) {
-              mimeType = 'video/webm';
-            }
-
-            App.State.mediaRecorder = new MediaRecorder(stream, { mimeType });
-            App.State.mediaRecorder.ondataavailable = (e) => {
-              if (e.data && e.data.size > 0) App.State.recordingChunks.push(e.data);
-            };
-            App.State.mediaRecorder.onstop = () => {
-              const blob = new Blob(App.State.recordingChunks, { type: mimeType });
-              if (App.State.lastRecordedBlobUrl) {
-                URL.revokeObjectURL(App.State.lastRecordedBlobUrl);
-              }
-              App.State.lastRecordedBlobUrl = URL.createObjectURL(blob);
-            };
-          } catch (e) {
-            console.warn('MediaRecorder unsupported or restricted:', e);
-          }
-        },
-
-        startLocalRecording() {
-          App.State.recordingChunks = [];
-          if (App.State.mediaRecorder && App.State.mediaRecorder.state === 'inactive') {
-            try {
-              App.State.mediaRecorder.start(100);
-            } catch (e) {}
-          }
-        },
-
-        stopLocalRecording() {
-          if (App.State.mediaRecorder && App.State.mediaRecorder.state === 'recording') {
-            try {
-              App.State.mediaRecorder.stop();
-            } catch (e) {}
-          }
-        },
-
-        discardRecording() {
-          this.stopLocalRecording();
-          App.State.recordingChunks = [];
-        },
-
-        startDrill() {
-          if (App.State.step < 3) {
-            App.UI.showToast('⚠️ 先に身長設定と直立スキャンを完了してください');
-            App.UI.openModal('modal-scan');
-            return;
-          }
-          if (this.timerInterval) clearInterval(this.timerInterval);
-
-          App.State.mode = 'DRILL_COUNTDOWN';
-          const drillHud = document.getElementById('drill-hud');
-          if (drillHud) drillHud.style.display = 'flex';
-
-          this.comboCount = 0;
-          this.ultGauge = 0;
-          this.remainingSec = 10.0;
-          this.updateDrillHud();
-          this.startLocalRecording();
-
-          App.UI.showCountdown(3, () => {
-            App.State.mode = 'DRILL_ACTIVE';
-            App.Audio.speak('10秒間、連続で床を弾きまくれ！');
-            App.UI.showStateBanner('🔥', '10秒ウルトドリル爆発中！');
-
-            const startT = performance.now();
-            this.timerInterval = setInterval(() => {
-              const elapsed = (performance.now() - startT) / 1000;
-              this.remainingSec = Math.max(0, 10.0 - elapsed);
-              this.updateDrillHud();
-
-              if (this.remainingSec <= 0) {
-                clearInterval(this.timerInterval);
-                this.timerInterval = null;
-                this.finishDrill();
-              }
-            }, 100);
-          });
-        },
-
-        updateDrillFrame(pts, hipY, footY) {
-          const targetBox = App.State.calibration.boxRect;
-          if (!targetBox) return;
-          const isFeetOnFloor = (footY >= targetBox.top - 15);
-
-          if (!this.isDrillAir) {
-            if (!isFeetOnFloor) {
-              this.isDrillAir = true;
-              App.Audio.playExplosion();
-            }
-          } else {
-            if (isFeetOnFloor) {
-              this.isDrillAir = false;
-              App.Audio.playImpact();
-              this.comboCount++;
-              this.ultGauge = Math.min(100, this.ultGauge + 14);
-              this.updateDrillHud();
-
-              if (this.ultGauge >= 100) {
-                App.Audio.playLock();
-                App.UI.showToast('🔥 ULTRA MAX ACTIVATED!!');
-              }
-            }
-          }
-        },
-
-        updateDrillHud() {
-          const comboText = document.getElementById('drill-combo-text');
-          const timerText = document.getElementById('drill-timer-text');
-          const ultFill = document.getElementById('ult-bar-fill');
-          if (comboText) comboText.textContent = `COMBO ${this.comboCount}`;
-          if (timerText) timerText.textContent = `⏱️ ${this.remainingSec.toFixed(1)}s`;
-          if (ultFill) ultFill.style.width = `${this.ultGauge}%`;
-        },
-
-        finishDrill() {
-          App.State.mode = 'TEST_IDLE';
-          App.UI.hideStateBanner();
-          this.stopLocalRecording();
-          App.Audio.speak(`終了！${this.comboCount}コンボ達成！`);
-
-          const drillHud = document.getElementById('drill-hud');
-          if (drillHud) drillHud.style.display = 'none';
-
-          App.Engine.showReportAndSave('RJ', Math.round(10000 / Math.max(1, this.comboCount)), this.comboCount, (this.comboCount / 5).toFixed(2));
-        }
-      },
-
-      Storage: {
-        STORAGE_KEY: 'BRAWL_SPRING_DOCK_LOGS_V2',
-        PROFILE_KEY: 'BRAWL_SPRING_DOCK_PROFILES_V2',
-
-        loadProfiles() {
-          try {
-            const raw = localStorage.getItem(this.PROFILE_KEY);
-            return raw ? JSON.parse(raw) : [
-              { id: 'default_1', name: '選手A', heightCm: 142 },
-              { id: 'default_2', name: '選手B', heightCm: 155 }
-            ];
-          } catch (e) {
-            return [];
-          }
-        },
-        saveProfile(name, heightCm) {
-          try {
-            const profiles = this.loadProfiles();
-            const newProfile = { id: 'p_' + Date.now(), name: name || `選手${profiles.length + 1}`, heightCm };
-            profiles.unshift(newProfile);
-            localStorage.setItem(this.PROFILE_KEY, JSON.stringify(profiles.slice(0, 15)));
-            return newProfile;
-          } catch (e) {
-            console.error('Save profile error:', e);
-          }
-        },
-        deleteProfile(id) {
-          try {
-            let profiles = this.loadProfiles();
-            profiles = profiles.filter(p => p.id !== id);
-            localStorage.setItem(this.PROFILE_KEY, JSON.stringify(profiles));
-          } catch (e) {
-            console.error('Delete profile error:', e);
-          }
-        },
-
-        loadLogs() {
-          try {
-            const raw = localStorage.getItem(this.STORAGE_KEY);
-            return raw ? JSON.parse(raw) : [];
-          } catch (e) {
-            return [];
-          }
-        },
-        saveLog(data) {
-          try {
-            const logs = this.loadLogs();
-            const record = {
-              id: Date.now(),
-              date: new Date().toLocaleString('ja-JP'),
-              playerName: App.State.activePlayerName || '選手',
-              type: data.type || App.State.testType,
-              mainMetric: data.mainMetric || '--',
-              subMetric: data.subMetric || '--',
-              rsi: data.rsi || '--',
-              rank: data.rank || 'PRO'
-            };
-            logs.unshift(record);
-            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(logs.slice(0, 30)));
-            return record;
-          } catch (e) {
-            console.error('Save log error:', e);
-          }
-        },
-        clearLogs() {
-          localStorage.removeItem(this.STORAGE_KEY);
-          this.renderHistoryList();
-          App.UI.showToast('履歴カルテを消去しました');
-        },
-        renderHistoryList() {
-          const listEl = document.getElementById('history-list');
-          if (!listEl) return;
-          const logs = this.loadLogs();
-          if (logs.length === 0) {
-            listEl.innerHTML = '<div style="text-align:center; color:#64748b; font-size:11px; padding:12px;" class="brawl-text">履歴はありません</div>';
-            return;
-          }
-          listEl.innerHTML = logs.map(item => `
-            <div style="background:#0c1527; border:1px solid #1e293b; border-radius:8px; padding:6px; display:flex; justify-content:space-between; align-items:center;">
-              <div>
-                <div class="brawl-text" style="font-size:10px; color:#94a3b8;">${item.date} [${item.playerName || '選手'}] - ${item.type}</div>
-                <div class="brawl-text" style="font-size:13px; color:#fff;">${item.mainMetric} / ${item.subMetric}</div>
-              </div>
-              <div class="badge-brawl brawl-text" style="color:var(--accent-gold); font-size:9.5px;">${item.rank}</div>
-            </div>
-          `).join('');
-        },
-        exportCSV() {
-          const logs = this.loadLogs();
-          if (logs.length === 0) {
-            App.UI.showToast('エクスポートするデータがありません');
-            return;
-          }
-          let csvContent = 'ID,日時,選手名,テスト種別,主指標,副指標,RSI,ランク\n';
-          logs.forEach(l => {
-            csvContent += `"${l.id}","${l.date}","${l.playerName || ''}","${l.type}","${l.mainMetric}","${l.subMetric}","${l.rsi}","${l.rank}"\n`;
-          });
-          const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.setAttribute('href', url);
-          link.setAttribute('download', `爆発バネカルテ_${Date.now()}.csv`);
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          App.UI.showToast('CSVファイルを書き出しました');
-        }
-      },
-
-      applySelectedPlayer(name, heightCm) {
-        App.State.activePlayerName = name;
-        App.State.userHeightCm = heightCm;
-
-        const badge = document.getElementById('badge-height-val');
-        badge.textContent = `👤 ${name} (${heightCm}cm)`;
-        document.getElementById('btn-open-scan').classList.remove('badge-attention');
-
-        App.Audio.playLock();
-        App.UI.closeModal('modal-scan');
-        App.UI.setStep(2);
-        App.UI.showToast(`「${name}」(${heightCm}cm) を選択！枠内に立ってください`);
-        App.Audio.speak('足元枠内に立って直立静止してください');
-      },
-
-      init() {
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
-            App.Audio.playSE(440, 0.05, 'square', 0.15);
-            App.Sensor.requestGyroPermission();
-            const type = btn.getAttribute('data-test');
-            App.UI.selectTest(type);
-          });
-        });
-
-        document.getElementById('btn-open-scan').addEventListener('click', () => {
-          App.UI.openModal('modal-scan');
-        });
-
-        document.getElementById('btn-toggle-cam').addEventListener('click', () => {
-          App.Audio.playSE(520, 0.06, 'sine', 0.2);
-          App.Sensor.switchCamera();
-        });
-
-        document.getElementById('btn-open-records').addEventListener('click', () => {
-          App.UI.openModal('modal-records');
-        });
-
-        document.getElementById('btn-guide-start-calib').addEventListener('click', () => {
-          App.Audio.playLock();
-          App.UI.openModal('modal-scan');
-        });
-
-        document.getElementById('btn-retry-camera').addEventListener('click', () => {
-          App.Audio.playSE(440, 0.05, 'square', 0.2);
-          App.Sensor.startCamera();
-        });
-
-        document.getElementById('btn-main-start').addEventListener('click', () => {
-          App.Audio.playExplosion();
-          App.Sensor.requestGyroPermission();
-          if (App.State.step === 1) {
-            App.UI.openModal('modal-scan');
-          } else if (App.State.step === 2) {
-            App.UI.showToast('足元枠内に立って2秒静止してください');
-            App.Audio.speak('足元枠に入って静止してください');
-          } else {
-            App.Engine.triggerTestStart();
-          }
-        });
-
-        document.getElementById('btn-open-report').addEventListener('click', () => {
-          App.UI.openModal('modal-report');
-        });
-
-        document.getElementById('btn-start-drill').addEventListener('click', () => {
-          App.Audio.playLock();
-          App.Sensor.requestGyroPermission();
-          App.Drill.startDrill();
-        });
-
-        document.querySelectorAll('[data-close]').forEach(btn => {
-          btn.addEventListener('click', () => {
-            App.Audio.playSE(330, 0.05, 'triangle', 0.2);
-            const targetId = btn.getAttribute('data-close');
-            App.UI.closeModal(targetId);
-          });
-        });
-
-        document.getElementById('btn-save-height').addEventListener('click', () => {
-          const nameInput = document.getElementById('input-player-name');
-          const heightInput = document.getElementById('input-height');
-          const name = nameInput.value.trim() || '選手';
-          const val = parseInt(heightInput.value, 10);
-
-          if (val >= 90 && val <= 220) {
-            App.Storage.saveProfile(name, val);
-            nameInput.value = '';
-            App.applySelectedPlayer(name, val);
-          } else {
-            App.UI.showToast('適正な身長を入力してください (90~220cm)');
-          }
-        });
-
+```html:瞬発力・爆発バネドック 小学生・保護者向けわかりやすい診断版:index.html
+<!-- ... existing code ... -->
         document.getElementById('btn-export-csv').addEventListener('click', () => {
           App.Storage.exportCSV();
         });
@@ -2570,6 +2522,18 @@
         document.getElementById('btn-clear-logs').addEventListener('click', () => {
           App.Storage.clearLogs();
         });
+
+        // 保護者向けアコーディオンの開閉リスナー
+        const btnParent = document.getElementById('btn-toggle-parent');
+        const contentParent = document.getElementById('parent-details-content');
+        if (btnParent && contentParent) {
+          btnParent.addEventListener('click', () => {
+            const isOpen = contentParent.classList.toggle('open');
+            btnParent.textContent = isOpen 
+              ? '▲ 保護者・指導者向け詳細を閉じる' 
+              : '▼ 保護者・指導者の方へ（詳細な科学的データを見る）';
+          });
+        }
 
         const onResize = () => {
           App.Sensor.updateVideoTransform();
