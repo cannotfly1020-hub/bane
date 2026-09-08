@@ -79,7 +79,7 @@
       letter-spacing: 0.5px;
     }
 
-    /* ブロスタ風3D押し込みボタン */
+    /* ブロスタ風3Dボタン */
     .btn-brawl {
       display: inline-flex;
       align-items: center;
@@ -208,7 +208,6 @@
       pointer-events: auto;
     }
 
-    /* ヘッダー行：文字はみ出し・縦崩れを完全防御 */
     .header-main-row {
       display: flex;
       align-items: center;
@@ -234,10 +233,9 @@
       gap: 5px;
       flex: 1;
       justify-content: flex-end;
-      min-width: 0; /* flexbox内テキスト省略のための必須指定 */
+      min-width: 0;
     }
 
-    /* 選手名ボタン（長い名前でもはみ出さず1行で省略表示） */
     #btn-open-profile {
       height: 30px;
       padding: 0 7px;
@@ -259,7 +257,6 @@
       line-height: 1.2;
     }
 
-    /* カメラ・カルテボタン（押し潰されない固定最小幅） */
     #btn-flip-camera {
       height: 30px;
       min-width: 38px;
@@ -427,8 +424,8 @@
       bottom: 108px;
       left: 50%;
       transform: translateX(-50%);
-      width: 240px;
-      height: 70px;
+      width: 250px;
+      height: 74px;
       border: 2.5px solid #10b981;
       border-radius: 14px;
       background: rgba(16, 185, 129, 0.14);
@@ -441,6 +438,12 @@
       transition: all 0.2s ease;
       box-shadow: 0 0 16px rgba(16, 185, 129, 0.35);
       overflow: hidden;
+    }
+
+    #foot-lock-box.warning {
+      border-color: #ef4444 !important;
+      background: rgba(239, 68, 68, 0.2) !important;
+      box-shadow: 0 0 18px rgba(239, 68, 68, 0.6) !important;
     }
 
     #foot-lock-box.counting {
@@ -456,7 +459,6 @@
       animation: alertPulseAnim 0.7s infinite alternate;
     }
 
-    /* 静止カウントダウンプログレスバー */
     #scan-progress-bar-wrap {
       position: absolute;
       bottom: 0;
@@ -476,11 +478,14 @@
     #foot-lock-text-top {
       font-size: 11px;
       color: #ffffff;
+      text-align: center;
+      padding: 0 4px;
     }
     #foot-lock-text-sub {
       font-size: 9px;
       color: #34d399;
       margin-top: 1px;
+      text-align: center;
     }
 
     /* 下部HUD */
@@ -589,7 +594,7 @@
       padding: 0 6px;
     }
 
-    /* 小学生＆保護者向けレポート */
+    /* レポート装飾 */
     .character-card {
       background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
       border: 2px solid #ffd000;
@@ -746,7 +751,7 @@
       <!-- 足元枠 ＆ 3秒静止ゲージ -->
       <div id="foot-lock-box">
         <div class="brawl-text" id="foot-lock-text-top">ここに両足を揃える</div>
-        <div class="brawl-text" id="foot-lock-text-sub">立ち位置ロック</div>
+        <div class="brawl-text" id="foot-lock-text-sub">足首を緑枠の中に入れてね</div>
         <div id="scan-progress-bar-wrap">
           <div id="scan-progress-fill"></div>
         </div>
@@ -795,7 +800,7 @@
         </div>
         <div class="header-actions-box">
           <button id="btn-open-profile" class="btn-brawl btn-dark brawl-text">
-            <span>👤</span> <span id="header-player-label">選手A (140cm)</span>
+            <span>👤</span> <span id="header-player-label">ツモリ リョウスケ (178cm)</span>
           </button>
           <button id="btn-flip-camera" class="btn-brawl btn-cyan brawl-text">
             🔄
@@ -1081,11 +1086,11 @@
             if (pWrap) pWrap.style.display = 'none';
             if (fBox) fBox.className = '';
             if (fTextTop) fTextTop.textContent = 'ここに両足を揃える';
-            if (fTextSub) fTextSub.textContent = '立ち位置ロック';
+            if (fTextSub) fTextSub.textContent = '足首を緑枠の中に入れてね';
           } else if (stepNum === 2) {
             pill1.classList.add('completed');
             pill2.classList.add('active');
-            guide.textContent = '② 緑の枠に両足を揃えて3秒静止（自動スキャン）';
+            guide.textContent = '② 緑の枠に足首を揃えて3秒静止（自動スキャン）';
             btnMain.className = 'btn-brawl btn-emerald main-trigger-btn brawl-text alert-pulse';
             btnMain.textContent = '🧍 足元枠に立って3秒静止（縮尺ロック中）';
             App.State.mode = 'STEP2_SCAN';
@@ -1169,7 +1174,7 @@
               App.UI.updateHeaderUser();
               App.UI.closeModal('modal-profile');
               App.UI.setStep(2);
-              App.Audio.speak(`${p.name}さん。足元の緑枠に立って3秒静止してね`);
+              App.Audio.speak(`${p.name}さん。足元の緑枠に足首を揃えて3秒静止してね`);
             });
             const delBtn = row.querySelector('button');
             delBtn.addEventListener('click', (e) => {
@@ -1376,6 +1381,19 @@
           }
         },
 
+        /**
+         * MediaPipeの正規化座標(0.0~1.0)を、画面上のピクセル実座標に変換
+         * (ユーザーカメラ時の反転とキャンバスサイズを考慮)
+         */
+        toScreenCoords(normX, normY) {
+          const w = this.canvasEl.width;
+          const h = this.canvasEl.height;
+          const isFlipped = App.State.cameraFacing === 'user';
+          const sx = isFlipped ? (1.0 - normX) * w : normX * w;
+          const sy = normY * h;
+          return { x: sx, y: sy };
+        },
+
         onPoseResults(results) {
           if (!this.ctx || !this.canvasEl) return;
           this.canvasEl.width = this.canvasEl.clientWidth;
@@ -1404,37 +1422,125 @@
         },
 
         drawSkeleton(lm) {
-          const w = this.canvasEl.width;
-          const h = this.canvasEl.height;
           this.ctx.fillStyle = '#ffd000';
           this.ctx.strokeStyle = '#38bdf8';
           this.ctx.lineWidth = 3;
 
-          const isFlipped = App.State.cameraFacing === 'user';
-          const points = [11, 12, 23, 24, 25, 26, 27, 28];
+          const points = [11, 12, 23, 24, 25, 26, 27, 28, 29, 30];
           points.forEach(i => {
-            const x = isFlipped ? (1 - lm[i].x) * w : lm[i].x * w;
-            const y = lm[i].y * h;
+            const p = this.toScreenCoords(lm[i].x, lm[i].y);
             this.ctx.beginPath();
-            this.ctx.arc(x, y, 4, 0, Math.PI * 2);
+            this.ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
             this.ctx.fill();
           });
+        },
+
+        /**
+         * 🦵 【最重要改善】足関節の幾何検証と足元枠（完全矩形）内外判定
+         * 膝や股関節による誤作動を100%遮断する
+         */
+        validateAnklesInFootBox(lm) {
+          // ① MediaPipe信頼度（visibility）スコアの検証
+          // 見切れ時の予測ハルシネーション（画面下部に勝手に出る偽座標）を弾く
+          const lAnkle = lm[27];
+          const rAnkle = lm[28];
+          const lHeel = lm[29];
+          const rHeel = lm[30];
+          const lKnee = lm[25];
+          const rKnee = lm[26];
+          const lHip = lm[23];
+          const rHip = lm[24];
+          const nose = lm[0];
+
+          const minVis = 0.65;
+          const isFootVisible = (
+            (lAnkle.visibility >= minVis || lHeel.visibility >= minVis) &&
+            (rAnkle.visibility >= minVis || rHeel.visibility >= minVis)
+          );
+
+          if (!isFootVisible) {
+            return { ok: false, reason: '足元が見えません。2.5m離れてね', isWarning: true };
+          }
+
+          // ② 解剖学的トポロジー（並び順）の検証
+          // 頭頂 < 股関節 < 膝 < 足首（Y座標は下に向かって増加するため）
+          const avgHipY = (lHip.y + rHip.y) / 2;
+          const avgKneeY = (lKnee.y + rKnee.y) / 2;
+          const avgAnkleY = (lAnkle.y + rAnkle.y) / 2;
+
+          if (!(nose.y < avgHipY && avgHipY < avgKneeY && avgKneeY < avgAnkleY)) {
+            return { ok: false, reason: '正しい姿勢で立ってね', isWarning: true };
+          }
+
+          // ③ すねの長さ（膝〜足首の距離比率）の検証
+          // カメラに近すぎて膝しか映っていない場合、すねの長さが短くなるため遮断
+          const totalBodyH = avgAnkleY - nose.y;
+          const shinH = avgAnkleY - avgKneeY;
+          if (shinH / totalBodyH < 0.16) {
+            return { ok: false, reason: 'カメラに近すぎます。下がってね', isWarning: true };
+          }
+
+          // ④ 緑の足元枠（#foot-lock-box）との完全矩形（X・Y）当たり判定
+          const footBoxEl = document.getElementById('foot-lock-box');
+          if (!footBoxEl) return { ok: false, reason: '枠が見つかりません' };
+
+          const boxRect = footBoxEl.getBoundingClientRect();
+          // 少しの遊び（±10px）を持たせた判定マージン
+          const boxLeft = boxRect.left - 10;
+          const boxRight = boxRect.right + 10;
+          const boxTop = boxRect.top - 12;
+          const boxBottom = boxRect.bottom + 15;
+
+          // スクリーン座標に変換
+          const lAnkleP = this.toScreenCoords(lAnkle.x, lAnkle.y);
+          const rAnkleP = this.toScreenCoords(rAnkle.x, rAnkle.y);
+          const lHeelP = this.toScreenCoords(lHeel.x, lHeel.y);
+          const rHeelP = this.toScreenCoords(rHeel.x, rHeel.y);
+
+          // 左足・右足がそれぞれ枠内に入っているか
+          const isLeftFootInBox = (
+            (lAnkleP.x >= boxLeft && lAnkleP.x <= boxRight && lAnkleP.y >= boxTop && lAnkleP.y <= boxBottom) ||
+            (lHeelP.x >= boxLeft && lHeelP.x <= boxRight && lHeelP.y >= boxTop && lHeelP.y <= boxBottom)
+          );
+
+          const isRightFootInBox = (
+            (rAnkleP.x >= boxLeft && rAnkleP.x <= boxRight && rAnkleP.y >= boxTop && rAnkleP.y <= boxBottom) ||
+            (rHeelP.x >= boxLeft && rHeelP.x <= boxRight && rHeelP.y >= boxTop && rHeelP.y <= boxBottom)
+          );
+
+          if (!isLeftFootInBox || !isRightFootInBox) {
+            return { ok: false, reason: '緑の枠に両足を揃えてね', isWarning: false };
+          }
+
+          // ⑤ 全身の十分なサイズ（極端に小さかったり頭が見切れていないこと）
+          const totalPx = totalBodyH * this.canvasEl.height;
+          if (totalPx < 160 || nose.y < 0.05) {
+            return { ok: false, reason: '頭から足先まで映してね', isWarning: true };
+          }
+
+          return { ok: true, totalPx };
         },
 
         /* 3秒静止スキャン＆縮尺ロック処理 */
         processThreeSecondHold(lm) {
           const now = performance.now();
-          const headY = lm[0].y;
-          const heelY = Math.max(lm[27].y, lm[28].y);
-          const totalPx = (heelY - headY) * this.canvasEl.height;
+          const check = this.validateAnklesInFootBox(lm);
 
-          // 足元枠の当たり判定（踵が画面下部70%以降かつ頭がしっかり上部にあること）
-          const isInPosition = (heelY > 0.70 && headY < 0.40 && totalPx > 120);
+          const fBox = document.getElementById('foot-lock-box');
 
-          if (!isInPosition) {
-            this.resetScanProgress('足元の枠に立ってね');
+          if (!check.ok) {
+            if (fBox) {
+              if (check.isWarning) {
+                fBox.classList.add('warning');
+              } else {
+                fBox.classList.remove('warning');
+              }
+            }
+            this.resetScanProgress(check.reason);
             return;
           }
+
+          if (fBox) fBox.classList.remove('warning');
 
           // 静止開始
           if (!App.State.calib.holdStartTime) {
@@ -1454,7 +1560,7 @@
           const fTextSub = document.getElementById('foot-lock-text-sub');
 
           if (fTextTop) fTextTop.textContent = `動かずに静止！ あと ${remainSeconds} 秒`;
-          if (fTextSub) fTextSub.textContent = `全身縮尺スキャン中 (${(progress * 100).toFixed(0)}%)`;
+          if (fTextSub) fTextSub.textContent = `足首ロック中 (${(progress * 100).toFixed(0)}%)`;
 
           // 毎秒のカウント音
           if (remainSeconds !== App.State.calib.lastSecondBeep && remainSeconds > 0) {
@@ -1465,7 +1571,7 @@
           // 3秒静止完了！
           if (elapsed >= App.State.calib.requiredHoldMs) {
             if (App.State.currentUser.heightCm > 0) {
-              App.State.calib.pxPerCm = totalPx / App.State.currentUser.heightCm;
+              App.State.calib.pxPerCm = check.totalPx / App.State.currentUser.heightCm;
               App.State.calib.baselineHipY = ((lm[23].y + lm[24].y) / 2) * this.canvasEl.height;
               App.State.calib.isDone = true;
 
@@ -1485,7 +1591,7 @@
           const fTextTop = document.getElementById('foot-lock-text-top');
           const fTextSub = document.getElementById('foot-lock-text-sub');
           if (fTextTop) fTextTop.textContent = 'ここに両足を揃える';
-          if (fTextSub) fTextSub.textContent = reasonText || '立ち位置ロック';
+          if (fTextSub) fTextSub.textContent = reasonText || '足首を緑枠の中に入れてね';
         }
       },
 
@@ -1717,7 +1823,7 @@
             this.UI.updateHeaderUser();
             this.UI.closeModal('modal-profile');
             this.UI.setStep(2);
-            this.Audio.speak(`${name}さん。足元の緑枠に立って3秒静止してね`);
+            this.Audio.speak(`${name}さん。足元の緑枠に足首を揃えて3秒静止してね`);
           });
         }
 
@@ -1772,7 +1878,7 @@
             if (this.State.mode === 'STEP1_PROFILE') {
               this.UI.openModal('modal-profile');
             } else if (this.State.mode === 'STEP2_SCAN') {
-              this.UI.showToast('足元の枠に立って3秒静止してね');
+              this.UI.showToast('足元の枠に足首を揃えて3秒静止してね');
             } else {
               this.Engine.simulateResult(this.State.testType);
             }
