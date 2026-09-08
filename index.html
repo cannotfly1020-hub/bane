@@ -1,167 +1,167 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" class="h-full">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>瞬発力・爆発バネドック</title>
-  <!-- Tailwind CSS CDN -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>💥 瞬発力・爆発バネドック</title>
+  
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Fonts: M PLUS Rounded 1c (900) -->
+  
+  <!-- Google Fonts: M PLUS Rounded 1c (Black 900) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@800;900&display=swap" rel="stylesheet">
+  
+  <!-- MediaPipe Pose & Camera Utils -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
 
   <style>
-    :root {
-      --font-brawl: 'M PLUS Rounded 1c', sans-serif;
-    }
     * {
-      box-sizing: border-box;
+      touch-action: manipulation;
       user-select: none;
       -webkit-user-select: none;
-      font-family: var(--font-brawl);
-    }
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100dvh;
-      overflow: hidden;
-      background: #070c18;
-      color: #ffffff;
+      font-family: 'M PLUS Rounded 1c', sans-serif;
     }
 
-    /* 放射状サンバースト回転背景 */
+    /* 40秒でゆっくり回転する半透明サンバースト光線 */
+    @keyframes spinRays {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    /* 要測定・アラート時の黄色発光パルス */
+    @keyframes alertPulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7);
+        border-color: #fbbf24;
+      }
+      50% {
+        box-shadow: 0 0 0 8px rgba(251, 191, 36, 0);
+        border-color: #f59e0b;
+      }
+    }
+
+    /* スキャン中の上下走査ライン */
+    @keyframes scanLine {
+      0% { top: 10%; opacity: 0.2; }
+      50% { top: 85%; opacity: 0.9; }
+      100% { top: 10%; opacity: 0.2; }
+    }
+
     .sunburst-bg {
       position: absolute;
-      inset: -50%;
-      width: 200%;
-      height: 200%;
+      top: 50%;
+      left: 50%;
+      width: 260vmax;
+      height: 260vmax;
       background: repeating-conic-gradient(
         from 0deg,
         rgba(245, 158, 11, 0.05) 0deg 15deg,
-        transparent 15deg 30deg
+        rgba(0, 0, 0, 0) 15deg 30deg
       );
-      animation: spinRays 45s linear infinite;
+      animation: spinRays 40s linear infinite;
       pointer-events: none;
       z-index: 1;
     }
-    @keyframes spinRays {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+
+    .alert-pulse {
+      animation: alertPulse 1.6s infinite ease-in-out;
     }
 
-    /* ブロスタ風極太文字シャドウ */
+    .scan-pulse-line {
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, #fbbf24, #f59e0b, transparent);
+      box-shadow: 0 0 12px #fbbf24;
+      animation: scanLine 2s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 28;
+    }
+
+    /* ブロスタ風フォント & 二重テキストシャドウ */
     .brawl-text {
-      text-shadow: 0 2px 0 #000, 0 4px 6px rgba(0,0,0,0.85);
-    }
-    .brawl-text-gold {
-      color: #fde047;
-      text-shadow: 0 2px 0 #78350f, 0 4px 8px rgba(0,0,0,0.9);
+      text-shadow: 0 2px 0 #000, 0 4px 8px rgba(0, 0, 0, 0.85);
     }
 
-    /* 共通3D立体ボタン */
+    /* 立体3D押し込みボタン */
     .btn-brawl {
+      position: relative;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       font-weight: 900;
       border-radius: 9999px;
-      border: 3px solid #ffffff;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.6);
-      transition: transform 0.08s ease, box-shadow 0.08s ease;
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      transition: all 0.08s ease;
       cursor: pointer;
     }
     .btn-brawl:active {
       transform: translateY(3px);
+      box-shadow: 0 2px 0 #000, 0 4px 8px rgba(0, 0, 0, 0.5) !important;
     }
 
     .btn-orange {
       background: linear-gradient(180deg, #fb923c 0%, #ea580c 100%);
-      border-color: #ffedd5;
-      box-shadow: 0 4px 0 #9a3412, 0 6px 12px rgba(0,0,0,0.4);
+      color: #ffffff;
+      box-shadow: 0 5px 0 #9a3412, 0 8px 16px rgba(0, 0, 0, 0.6);
     }
-    .btn-orange:active {
-      box-shadow: 0 1px 0 #9a3412, 0 2px 6px rgba(0,0,0,0.4);
-    }
-
-    .btn-gold {
-      background: linear-gradient(180deg, #fde047 0%, #d97706 100%);
-      border-color: #fef9c3;
-      color: #451a03;
-      text-shadow: none;
-      box-shadow: 0 4px 0 #78350f, 0 6px 12px rgba(0,0,0,0.4);
-    }
-    .btn-gold:active {
-      box-shadow: 0 1px 0 #78350f, 0 2px 6px rgba(0,0,0,0.4);
-    }
-
     .btn-emerald {
       background: linear-gradient(180deg, #34d399 0%, #059669 100%);
-      border-color: #d1fae5;
-      box-shadow: 0 4px 0 #064e3b, 0 6px 12px rgba(0,0,0,0.4);
+      color: #ffffff;
+      box-shadow: 0 5px 0 #064e3b, 0 8px 16px rgba(0, 0, 0, 0.6);
     }
-    .btn-emerald:active {
-      box-shadow: 0 1px 0 #064e3b, 0 2px 6px rgba(0,0,0,0.4);
+    .btn-gold {
+      background: linear-gradient(180deg, #fde047 0%, #ca8a04 100%);
+      color: #1e1b4b;
+      box-shadow: 0 5px 0 #713f12, 0 8px 16px rgba(0, 0, 0, 0.6);
     }
-
     .btn-dark {
       background: linear-gradient(180deg, #334155 0%, #0f172a 100%);
-      border-color: #64748b;
-      box-shadow: 0 4px 0 #020617, 0 6px 12px rgba(0,0,0,0.4);
-    }
-    .btn-dark:active {
-      box-shadow: 0 1px 0 #020617, 0 2px 6px rgba(0,0,0,0.4);
+      color: #f1f5f9;
+      box-shadow: 0 5px 0 #020617, 0 8px 16px rgba(0, 0, 0, 0.6);
     }
 
-    /* パネル＆バッジ */
+    /* 重厚な半透明立体パネル */
     .panel-brawl {
       background: rgba(15, 23, 42, 0.88);
       border: 2px solid #334155;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 8px 24px rgba(0,0,0,0.5);
-      border-radius: 16px;
+      border-radius: 1rem;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 8px 24px rgba(0, 0, 0, 0.5);
       backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
+
+    /* ゲーム風ステータスバッジ */
     .badge-brawl {
-      border: 2px solid rgba(255,255,255,0.25);
       border-radius: 9999px;
-      font-size: 0.78rem;
-      font-weight: 900;
       padding: 0.25rem 0.65rem;
+      font-size: 0.75rem;
+      font-weight: 900;
+      border: 1.5px solid;
       display: inline-flex;
       align-items: center;
       gap: 0.25rem;
     }
-
-    /* アラート発光パルス */
-    .alert-pulse {
-      animation: alertPulse 1.2s infinite alternate ease-in-out;
-    }
-    @keyframes alertPulse {
-      0% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.4); transform: scale(1); }
-      100% { box-shadow: 0 0 16px 4px rgba(250, 204, 21, 0.85); transform: scale(1.03); }
-    }
-
-    /* カメラ映像反転 */
-    .mirror-camera {
-      transform: scaleX(-1);
-    }
   </style>
 </head>
-<body class="relative w-full h-full flex flex-col justify-between overflow-hidden bg-gradient-to-b from-[#070c18] via-[#0c1428] to-[#050811]">
 
-  <!-- 回転サンバースト -->
+<body class="h-full w-full overflow-hidden bg-[#070c18] text-white flex flex-col justify-between relative select-none">
+  <!-- 回転サンバースト背景レイヤー -->
   <div class="sunburst-bg"></div>
 
-  <!-- 1. 最上部ヘッダー -->
-  <header class="relative z-20 w-full px-3 pt-2 pb-1.5 flex items-center justify-between border-b border-slate-800/80 bg-slate-950/70">
+  <!-- 1. ヘッダーナビゲーション (コンパクト固定) -->
+  <header class="relative z-20 w-full px-3 py-1.5 flex items-center justify-between border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-md">
     <div class="flex items-center gap-1.5">
       <span class="text-xl">💥</span>
-      <h1 class="text-sm font-black tracking-wide text-amber-400 brawl-text">爆発バネドック</h1>
+      <h1 class="text-xs sm:text-sm font-black brawl-text tracking-wide text-amber-400">爆発バネドック</h1>
     </div>
 
-    <!-- 身長バッジ（未設定時は黄色点滅アラート） -->
-    <button id="header-height-badge" onclick="App.UI.openModal('modal-calib')" class="badge-brawl alert-pulse bg-amber-500/20 text-amber-300 border-amber-400">
+    <!-- 身長バッジ（未測定時は黄色点滅アラート） -->
+    <button id="header-height-badge" onclick="App.UI.openCalibrationModal()" class="badge-brawl alert-pulse bg-amber-500/20 text-amber-300 border-amber-400">
       <span id="header-height-text">📏 身長をセット！</span>
     </button>
 
@@ -175,101 +175,128 @@
     </div>
   </header>
 
-  <!-- 2. テスト選択タブ -->
-  <nav class="relative z-20 w-full px-2 py-1.5 flex gap-1.5 justify-center bg-slate-900/60">
-    <button id="tab-rj" onclick="App.UI.selectTest('RJ')" class="flex-1 py-1.5 px-2 text-xs rounded-xl font-black transition-all bg-amber-500 text-slate-950 shadow-md">
+  <!-- 2. テスト種別タブ (上部横並び) -->
+  <nav class="relative z-20 w-full px-2 pt-1.5 pb-1 flex gap-1.5 justify-center">
+    <button id="tab-RJ" onclick="App.UI.selectTest('RJ')" class="flex-1 py-1 px-2 rounded-xl text-[11px] font-black border-2 border-amber-400 bg-amber-500 text-slate-950 shadow-md">
       💥 連続トランポリン
     </button>
-    <button id="tab-vertical" onclick="App.UI.selectTest('VERTICAL')" class="flex-1 py-1.5 px-2 text-xs rounded-xl font-black transition-all bg-slate-800 text-slate-300">
-      🦘 ロケット垂直跳び
+    <button id="tab-VERTICAL" onclick="App.UI.selectTest('VERTICAL')" class="flex-1 py-1 px-2 rounded-xl text-[11px] font-black border-2 border-slate-700 bg-slate-900/80 text-slate-300 hover:border-slate-500">
+      🚀 ロケット垂直跳び
     </button>
-    <button id="tab-brake" onclick="App.UI.selectTest('BRAKE')" class="flex-1 py-1.5 px-2 text-xs rounded-xl font-black transition-all bg-slate-800 text-slate-300">
+    <button id="tab-BRAKE" onclick="App.UI.selectTest('BRAKE')" class="flex-1 py-1 px-2 rounded-xl text-[11px] font-black border-2 border-slate-700 bg-slate-900/80 text-slate-300 hover:border-slate-500">
       🛑 てっぺき急停止
     </button>
   </nav>
 
-  <!-- 3. メインビューポート（最大化カメラ＋AR描画） -->
-  <main class="relative z-10 flex-1 w-full overflow-hidden bg-black flex items-center justify-center">
-    <!-- カメラ映像 -->
-    <video id="camera-video" playsinline autoplay muted class="absolute inset-0 w-full h-full object-cover mirror-camera"></video>
-    <!-- 骨格＆エフェクトキャンバス -->
-    <canvas id="ar-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-10"></canvas>
+  <!-- 3. 中央カメラ＆キャンバススクリーン（足元最大視界設計） -->
+  <main class="relative flex-1 w-full overflow-hidden flex items-center justify-center bg-black/40">
+    <div id="screen-wrapper" class="relative w-full h-full flex items-center justify-center overflow-hidden">
+      <!-- カメラビデオ要素 -->
+      <video id="webcam-video" playsinline muted autoplay class="absolute w-full h-full object-cover transform -scale-x-100"></video>
+      <!-- 骨格描画用キャンバス -->
+      <canvas id="output-canvas" class="absolute w-full h-full object-cover z-10"></canvas>
 
-    <!-- スマホ角度水準インジケーター（上部中央） -->
-    <div id="gyro-badge" class="absolute top-2.5 z-20 px-3 py-1 rounded-full bg-slate-950/80 border border-slate-700 backdrop-blur-md flex items-center gap-1.5 shadow-lg">
-      <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400" id="gyro-dot"></span>
-      <span id="gyro-status-text" class="text-[11px] font-bold text-slate-200">📐 スマホを立ててね</span>
-    </div>
-
-    <!-- リアルタイム数値バッジ（足元を邪魔しないよう配置） -->
-    <div class="absolute bottom-16 left-2.5 z-20 panel-brawl px-3 py-2 flex flex-col items-start border-amber-500/50">
-      <span class="text-[10px] text-amber-300 font-bold" id="badge-left-title">⚡ 足裏タッチ速度</span>
-      <div class="flex items-baseline gap-0.5">
-        <span id="val-badge-left" class="text-2xl font-black text-amber-400 brawl-text">--</span>
-        <span class="text-[10px] text-slate-400 font-bold">秒</span>
+      <!-- スマホ角度水準インジケーター（上部中央・タップでパーミッション要求） -->
+      <div id="gyro-badge" class="absolute top-2.5 z-20 px-3 py-1 rounded-full bg-slate-950/85 border border-slate-700 backdrop-blur-md flex items-center gap-1.5 shadow-lg cursor-pointer" onclick="App.Sensor.requestGyroPermission()">
+        <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400" id="gyro-dot"></span>
+        <span id="gyro-status-text" class="text-[11px] font-bold text-slate-200">📐 スマホを立ててね</span>
       </div>
-    </div>
 
-    <div class="absolute bottom-16 right-2.5 z-20 panel-brawl px-3 py-2 flex flex-col items-end border-sky-500/50">
-      <span class="text-[10px] text-sky-300 font-bold" id="badge-right-title">🦘 ジャンプバネ高</span>
-      <div class="flex items-baseline gap-0.5">
-        <span id="val-badge-right" class="text-2xl font-black text-sky-400 brawl-text">--</span>
-        <span class="text-[10px] text-slate-400 font-bold">cm</span>
+      <!-- リアルタイム数値バッジ（足元を遮らない位置に配置） -->
+      <div class="absolute bottom-16 left-2.5 z-20 panel-brawl px-3 py-2 flex flex-col items-start border-amber-500/50">
+        <span class="text-[10px] text-amber-300 font-bold" id="badge-left-title">⚡ 足裏タッチ速度</span>
+        <div class="flex items-baseline gap-0.5">
+          <span id="val-badge-left" class="text-2xl font-black text-amber-400 brawl-text">--</span>
+          <span class="text-[10px] text-slate-400 font-bold" id="badge-left-unit">秒</span>
+        </div>
       </div>
-    </div>
 
-    <!-- 足元セーフ枠（地面すれすれ・最大視界確保） -->
-    <div id="foot-safe-zone" class="absolute bottom-1 z-10 w-48 h-12 rounded-2xl border-2 border-dashed border-emerald-400 bg-emerald-500/10 flex items-center justify-center transition-all">
-      <span class="text-[10px] font-black tracking-wider text-emerald-300 drop-shadow">👣 ここに両足をセット</span>
-    </div>
-
-    <!-- 巨大カウントダウン（3, 2, 1, GO!） -->
-    <div id="countdown-overlay" class="hidden absolute inset-0 z-30 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center">
-      <div id="countdown-number" class="text-8xl font-black text-amber-400 brawl-text animate-bounce">3</div>
-      <p class="text-sm font-bold text-white mt-2 drop-shadow">カメラの前でピシッと構えて！</p>
-    </div>
-
-    <!-- 測定中メッセージバナー -->
-    <div id="active-prompt-banner" class="hidden absolute top-12 z-20 px-4 py-1.5 rounded-full bg-amber-500 text-slate-950 font-black text-xs shadow-2xl border-2 border-white animate-pulse">
-      💥 地面は熱い鉄板だ！パチンと跳ね返せ！
-    </div>
-
-    <!-- 10秒ウルトドリルHUD -->
-    <div id="drill-hud-overlay" class="hidden absolute inset-x-3 top-12 z-20 flex flex-col gap-1 pointer-events-none">
-      <div class="flex justify-between items-center bg-slate-950/80 px-3 py-1.5 rounded-xl border border-amber-500/50">
-        <div class="text-xs font-black text-amber-400">🔥 連続コンボ: <span id="drill-combo-count" class="text-lg text-white">0</span></div>
-        <div class="text-xs font-black text-rose-400">⏱ 残り: <span id="drill-timer-count" class="text-lg text-white">10.0</span>s</div>
+      <div class="absolute bottom-16 right-2.5 z-20 panel-brawl px-3 py-2 flex flex-col items-end border-sky-500/50">
+        <span class="text-[10px] text-sky-300 font-bold" id="badge-right-title">🦘 ジャンプバネ高</span>
+        <div class="flex items-baseline gap-0.5">
+          <span id="val-badge-right" class="text-2xl font-black text-sky-400 brawl-text">--</span>
+          <span class="text-[10px] text-slate-400 font-bold" id="badge-right-unit">cm</span>
+        </div>
       </div>
-      <div class="w-full h-2.5 rounded-full bg-slate-800 overflow-hidden border border-slate-700">
-        <div id="drill-ult-bar" class="h-full bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 transition-all duration-75" style="width: 0%"></div>
+
+      <!-- 足元セーフ枠（画面最下部・最大視界確保） -->
+      <div id="foot-safe-zone" class="absolute bottom-1 z-10 w-52 h-12 rounded-2xl border-2 border-dashed border-emerald-400 bg-emerald-500/10 flex items-center justify-center transition-all">
+        <span class="text-[10px] font-black tracking-wider text-emerald-300 drop-shadow">👣 ここに両足をセット</span>
+      </div>
+
+      <!-- 巨大カウントダウン（3, 2, 1, GO!） -->
+      <div id="countdown-overlay" class="hidden absolute inset-0 z-30 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center">
+        <div id="countdown-number" class="text-8xl font-black text-amber-400 brawl-text animate-bounce">3</div>
+        <p id="countdown-subtext" class="text-sm font-bold text-white mt-2 drop-shadow">カメラの前でピシッと構えて！</p>
+      </div>
+
+      <!-- 骨格スキャン中ガイドオーバーレイ（AIキャリブレーション用） -->
+      <div id="scan-overlay" class="hidden absolute inset-0 z-25 bg-black/40 backdrop-blur-[2px] flex flex-col items-center justify-between p-4 pointer-events-none">
+        <div class="scan-pulse-line"></div>
+        
+        <!-- スキャン上部ガイド -->
+        <div class="panel-brawl px-4 py-2 border-amber-400 text-center max-w-xs mt-10">
+          <span class="text-xs font-black text-amber-300" id="scan-title">📏 骨格AIスキャン中...</span>
+          <p class="text-[11px] text-slate-200 mt-0.5" id="scan-instruction">カメラから約2.5m離れて直立しよう！</p>
+        </div>
+
+        <!-- スキャン進捗サークル -->
+        <div class="flex flex-col items-center gap-2 mb-16">
+          <div class="relative w-20 h-20 flex items-center justify-center">
+            <svg class="w-full h-full transform -rotate-90">
+              <circle cx="40" cy="40" r="34" stroke="rgba(255,255,255,0.2)" stroke-width="6" fill="none" />
+              <circle id="scan-progress-ring" cx="40" cy="40" r="34" stroke="#fbbf24" stroke-width="6" stroke-dasharray="213.6" stroke-dashoffset="213.6" stroke-linecap="round" fill="none" class="transition-all duration-75" />
+            </svg>
+            <span id="scan-percent-text" class="absolute text-sm font-black text-white">0%</span>
+          </div>
+          <span id="scan-status-pill" class="badge-brawl bg-slate-900/90 text-amber-300 border-amber-500">全身を映してね</span>
+        </div>
+      </div>
+
+      <!-- 測定中メッセージバナー -->
+      <div id="active-prompt-banner" class="hidden absolute top-12 z-20 px-4 py-1.5 rounded-full bg-amber-500 text-slate-950 font-black text-xs shadow-2xl border-2 border-white animate-pulse">
+        💥 地面は熱い鉄板だ！パチンと跳ね返せ！
+      </div>
+
+      <!-- 10秒ウルトドリルHUD -->
+      <div id="drill-hud-overlay" class="hidden absolute inset-x-3 top-12 z-20 flex flex-col gap-1 pointer-events-none">
+        <div class="flex justify-between items-center bg-slate-950/80 px-3 py-1.5 rounded-xl border border-amber-500/50">
+          <div class="text-xs font-black text-amber-400">🔥 連続コンボ: <span id="drill-combo-count" class="text-lg text-white">0</span></div>
+          <div class="text-xs font-black text-rose-400">⏱ 残り: <span id="drill-timer-count" class="text-lg text-white">10.0</span>s</div>
+        </div>
+        <div class="w-full h-2.5 rounded-full bg-slate-800 overflow-hidden border border-slate-700">
+          <div id="drill-ult-bar" class="h-full bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 transition-all duration-75" style="width: 0%"></div>
+        </div>
       </div>
     </div>
   </main>
 
-  <!-- 4. 超コンパクト1行フッター（カメラ下部視界を全開） -->
-  <footer class="relative z-20 w-full px-2 py-1.5 bg-slate-950 border-t border-slate-800 flex items-center justify-between gap-1.5 h-12">
-    <!-- メイン巨大アクションボタン（身長測定ファースト連動） -->
-    <button id="btn-main-action" onclick="App.UI.onMainActionClick()" class="btn-brawl btn-gold flex-1 h-9 text-xs tracking-wider">
-      🔒 まずは身長をピシッと測ろう！
+  <!-- 4. フッター操作部（スリム1行レイアウト・高さ44px） -->
+  <footer class="relative z-20 w-full px-2 py-1.5 bg-slate-950/90 border-t border-slate-800 flex items-center gap-2">
+    <!-- メイン巨大ボタン（身長未設定時はロック中） -->
+    <button id="btn-main-action" onclick="App.UI.onMainActionClick()" class="btn-brawl btn-orange flex-1 h-11 text-xs sm:text-sm tracking-wide">
+      <span id="btn-main-action-text">🔒 まずは身長をピシッと測ろう！</span>
     </button>
-    <button onclick="App.Drill.startDrillSession()" class="btn-brawl btn-emerald h-9 px-3 text-xs tracking-wide">
-      ⚡ 10秒ドリル
+    <!-- ドリル切り替えボタン -->
+    <button id="btn-drill-toggle" onclick="App.Drill.toggle()" class="btn-brawl btn-gold h-11 px-3 text-xs flex items-center gap-1">
+      <span>🎮</span><span id="btn-drill-text">10秒ドリル</span>
     </button>
   </footer>
 
   <!-- 5. モーダル群 -->
-
-  <!-- ① 身長設定＆直立スキャンモーダル（最重要ゲート） -->
-  <div id="modal-calib" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3">
-    <div class="panel-brawl w-full max-w-sm p-4 flex flex-col gap-3 border-amber-500">
-      <div class="flex items-center justify-between border-b border-slate-700 pb-2">
-        <h2 class="text-sm font-black text-amber-400 brawl-text">📏 身長セット＆直立スキャン</h2>
-        <button onclick="App.UI.closeModal('modal-calib')" class="text-slate-400 text-lg font-bold">✕</button>
+  <!-- ① 身長設定＆直立スキャンモーダル -->
+  <div id="modal-calib" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="panel-brawl w-full max-w-sm p-4 flex flex-col gap-3.5 border-amber-400">
+      <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+        <h2 class="text-sm font-black text-amber-400 flex items-center gap-1.5">
+          <span>📏</span> 身長AI測定キャリブレーション
+        </h2>
+        <button onclick="App.UI.closeModal('modal-calib')" class="text-slate-400 hover:text-white text-lg">✕</button>
       </div>
 
       <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-2.5 text-xs text-amber-200">
-        💡 <strong>正確に測るヒミツ:</strong><br>
-        身長をセットすると、AIがあなたの足のバネ力を正確に測れるようになるぞ！
+        💡 <strong>AI測定のステップ:</strong><br>
+        身長をセットしたら、カメラから約2.5m離れて<strong>全身を直立スキャン</strong>するぞ！AIが画面ピクセルを正確に合わせるぞ！
       </div>
 
       <!-- 身長選択スライダー -->
@@ -278,7 +305,7 @@
           <label class="text-xs font-bold text-slate-300">きみの身長は？</label>
           <span id="calib-height-display" class="text-xl font-black text-amber-400">140 cm</span>
         </div>
-        <input id="calib-height-slider" type="range" min="100" max="185" value="140" step="1" oninput="App.UI.onHeightSliderChange(this.value)" class="w-full accent-amber-500">
+        <input id="calib-height-slider" type="range" min="100" max="190" value="140" step="1" oninput="App.UI.onHeightSliderChange(this.value)" class="w-full accent-amber-500">
       </div>
 
       <!-- スマホ直立ガイド -->
@@ -287,28 +314,24 @@
         <span id="calib-gyro-status" class="font-bold text-amber-400">🟡 もう少し起こしてね</span>
       </div>
 
-      <!-- 2.5m離れるチュートリアル -->
       <div class="text-[11px] text-slate-300 leading-relaxed bg-slate-800/60 p-2.5 rounded-xl border border-slate-700">
-        1️⃣ スマホを壁や水筒に<strong>ほぼ垂直（まっすぐ）</strong>に立てかける<br>
-        2️⃣ カメラから<strong>約2.5m</strong>離れて、頭からつま先まで映る位置に立つ<br>
-        3️⃣ 下のボタンを押して準備OK！
+        1️⃣ 身長を選んだら<strong>「スキャン開始」</strong>を押す<br>
+        2️⃣ カメラから約2.5m離れ、足元枠に両足を合わせて<strong>1.5秒ピシッと直立</strong>する<br>
+        3️⃣ AIが全身ピクセルをロックしたら測定可能！
       </div>
 
-      <button onclick="App.UI.confirmCalibration()" class="btn-brawl btn-orange w-full py-2.5 text-sm">
-        📸 この身長でロックしてはじめる！
+      <button onclick="App.Calibration.beginScanMode()" class="btn-brawl btn-orange w-full py-2.5 text-sm">
+        📸 骨格AIスキャンを開始する！
       </button>
     </div>
   </div>
 
   <!-- ② 診断レポート＆ローカルスローリプレイモーダル -->
-  <div id="modal-report" class="hidden fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3">
+  <div id="modal-report" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
     <div class="panel-brawl w-full max-w-sm p-4 flex flex-col gap-3 border-amber-400 max-h-[95dvh] overflow-y-auto">
-      <div class="flex items-center justify-between border-b border-slate-700 pb-2">
-        <div class="flex items-center gap-1.5">
-          <span class="text-xl">🏆</span>
-          <h2 class="text-sm font-black text-amber-400 brawl-text">爆発バネ診断レポート</h2>
-        </div>
-        <button onclick="App.UI.closeModal('modal-report')" class="text-slate-400 text-lg font-bold">✕</button>
+      <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+        <h2 class="text-sm font-black text-yellow-400">💥 バネ診断リポート！</h2>
+        <button onclick="App.UI.closeModal('modal-report')" class="text-slate-400 hover:text-white text-lg">✕</button>
       </div>
 
       <!-- STAR PLAYER ランクバッジ -->
@@ -318,7 +341,7 @@
         <p id="report-test-name" class="text-xs text-slate-300 font-bold">💥 連続トランポリン跳び</p>
       </div>
 
-      <!-- スローモーションリプレイ動画（ローカル完結） -->
+      <!-- スローモーションリプレイ動画 -->
       <div class="relative w-full aspect-video bg-black rounded-xl overflow-hidden border border-slate-700 flex items-center justify-center">
         <video id="report-replay-video" loop muted playsinline class="w-full h-full object-contain hidden"></video>
         <div id="report-replay-placeholder" class="text-xs text-slate-400 flex flex-col items-center gap-1">
@@ -351,11 +374,13 @@
   </div>
 
   <!-- ③ 測定履歴カルテモーダル -->
-  <div id="modal-history" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3">
-    <div class="panel-brawl w-full max-w-sm p-4 flex flex-col gap-3 border-sky-500 max-h-[90dvh]">
-      <div class="flex items-center justify-between border-b border-slate-700 pb-2">
-        <h2 class="text-sm font-black text-sky-400 brawl-text">📊 爆発バネカルテ（履歴）</h2>
-        <button onclick="App.UI.closeModal('modal-history')" class="text-slate-400 text-lg font-bold">✕</button>
+  <div id="modal-history" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="panel-brawl w-full max-w-sm p-4 flex flex-col gap-3 max-h-[80dvh]">
+      <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+        <h2 class="text-sm font-black text-sky-400 flex items-center gap-1.5">
+          <span>📊</span> バネの成長カルテ
+        </h2>
+        <button onclick="App.UI.closeModal('modal-history')" class="text-slate-400 hover:text-white text-lg">✕</button>
       </div>
 
       <div id="history-log-list" class="flex flex-col gap-2 overflow-y-auto max-h-60 pr-1 text-xs">
@@ -374,41 +399,71 @@
   </div>
 
   <!-- トースト通知 -->
-  <div id="toast" class="fixed top-12 left-1/2 -translate-x-1/2 z-50 hidden panel-brawl px-4 py-2 text-xs font-black text-amber-300 border-amber-400 shadow-2xl transition-all"></div>
+  <div id="toast-bubble" class="hidden fixed top-5 left-1/2 transform -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-amber-500 text-slate-950 font-black text-xs shadow-2xl transition-all">
+    通知メッセージ
+  </div>
 
   <script>
     /**
      * 瞬発力・爆発バネドック 完全統合アプリケーション名前空間
      */
     const App = {
+      // 物理定数 ＆ しきい値
+      CONFIG: {
+        G: 9.80665,
+        GYRO_PITCH_MIN: 75,
+        GYRO_PITCH_MAX: 88,
+        HOLD_TIME_MS: 1500,
+        SCAN_HOLD_TIME_MS: 1500,
+        DRILL_DURATION_SEC: 10,
+        DISPLACEMENT_THRESHOLD_CM: 1.5,
+        TILT_THRESHOLD_DEG: 5.0,
+        DEFAULT_PX_PER_CM: 2.5
+      },
+
+      // アプリケーション全体状態
       State: {
-        mode: 'TEST_IDLE', // TEST_IDLE | TEST_RUNNING | DRILL_ACTIVE
-        testType: 'RJ',    // RJ | VERTICAL | BRAKE
+        mode: 'TEST_IDLE', // 'TEST_IDLE' | 'CALIB_SCANNING' | 'COUNTDOWN' | 'TEST_RUNNING' | 'DRILL_ACTIVE'
+        testType: 'RJ',    // 'RJ' | 'VERTICAL' | 'BRAKE'
         userHeightCm: 140,
         cameraFacing: 'user',
+        isLocked: false,
+        isDrillMode: false,
+        activeReplayUrl: null,
         calibration: {
           isCalibrated: false,
           pxPerCm: 2.5,
-          baselineHipY: 0
+          baselineFootBox: null,
+          baselineHipY: 0,
+          rawHeightPx: 0
         }
       },
 
       Audio: {
         ctx: null,
+        isAudioUnlocked: false,
 
         init() {
           if (!this.ctx) {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (AudioContext) {
-              this.ctx = new AudioContext();
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) {
+              this.ctx = new AudioCtx();
             }
           }
           if (this.ctx && this.ctx.state === 'suspended') {
             this.ctx.resume();
           }
+          this.isAudioUnlocked = true;
         },
 
-        playSE(freq, dur = 0.08, type = 'triangle', vol = 0.25) {
+        unlockAudioOnFirstTouch() {
+          this.init();
+          if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+          }
+        },
+
+        playTone(freq, duration = 0.08, type = 'sine', volume = 0.25) {
           try {
             this.init();
             if (!this.ctx) return;
@@ -416,951 +471,934 @@
             const gain = this.ctx.createGain();
             osc.type = type;
             osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-            gain.gain.setValueAtTime(vol, this.ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
+            gain.gain.setValueAtTime(volume, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
             osc.connect(gain);
             gain.connect(this.ctx.destination);
             osc.start();
-            osc.stop(this.ctx.currentTime + dur);
-          } catch (e) {}
+            osc.stop(this.ctx.currentTime + duration);
+          } catch (e) {
+            console.warn('Audio playTone error:', e);
+          }
         },
 
+        // 地面接地時：パチン打楽器音
         playImpact() {
-          // 接地パチン打楽器音
           try {
             this.init();
             if (!this.ctx) return;
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(160, this.ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.07);
-            gain.gain.setValueAtTime(0.35, this.ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.07);
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            osc.start();
-            osc.stop(this.ctx.currentTime + 0.07);
-          } catch (e) {}
-        },
-
-        playExplosion() {
-          // 離地ピュオーン上昇音
-          try {
-            this.init();
-            if (!this.ctx) return;
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            osc.type = 'sine';
+            osc.type = 'triangle';
             osc.frequency.setValueAtTime(320, this.ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.18);
-            gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.18);
+            osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.06);
+            gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.06);
             osc.connect(gain);
             gain.connect(this.ctx.destination);
             osc.start();
-            osc.stop(this.ctx.currentTime + 0.18);
+            osc.stop(this.ctx.currentTime + 0.06);
           } catch (e) {}
         },
 
-        playLock() {
-          // ロック完了ピロリン音
-          this.playSE(587.33, 0.08, 'sine', 0.2);
-          setTimeout(() => this.playSE(880.00, 0.14, 'sine', 0.25), 80);
+        // 離地時：ピュオーン上昇シンセ音
+        playExplosion() {
+          try {
+            this.init();
+            if (!this.ctx) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(260, this.ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(740, this.ctx.currentTime + 0.12);
+            gain.gain.setValueAtTime(0.28, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.12);
+          } catch (e) {}
         },
 
+        // 3重ロック完了時音
+        playLock() {
+          this.playTone(523.25, 0.08, 'sine', 0.25); // C5
+          setTimeout(() => this.playTone(659.25, 0.12, 'sine', 0.25), 90); // E5
+        },
+
+        // ファンファーレ音
+        playFanfare() {
+          const notes = [523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((freq, idx) => {
+            setTimeout(() => this.playTone(freq, 0.14, 'triangle', 0.3), idx * 110);
+          });
+        },
+
+        // 音声読み上げ
         speak(text) {
           if (!('speechSynthesis' in window)) return;
           try {
             window.speechSynthesis.cancel();
-            const ut = new SpeechSynthesisUtterance(text);
-            ut.lang = 'ja-JP';
-            ut.rate = 1.15;
-            ut.pitch = 1.2;
-            window.speechSynthesis.speak(ut);
-          } catch (e) {}
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = 'ja-JP';
+            utter.rate = 1.15;
+            utter.pitch = 1.1;
+            window.speechSynthesis.speak(utter);
+          } catch (e) {
+            console.warn('SpeechSynthesis error:', e);
+          }
         }
       },
 
       UI: {
         selectTest(type) {
+          App.Audio.init();
           App.State.testType = type;
-          ['tab-rj', 'tab-vertical', 'tab-brake'].forEach(id => {
-            const btn = document.getElementById(id);
-            if (btn) {
-              btn.className = 'flex-1 py-1.5 px-2 text-xs rounded-xl font-black transition-all bg-slate-800 text-slate-300';
+          ['RJ', 'VERTICAL', 'BRAKE'].forEach(t => {
+            const tab = document.getElementById(`tab-${t}`);
+            if (t === type) {
+              tab.className = 'flex-1 py-1 px-2 rounded-xl text-[11px] font-black border-2 border-amber-400 bg-amber-500 text-slate-950 shadow-md';
+            } else {
+              tab.className = 'flex-1 py-1 px-2 rounded-xl text-[11px] font-black border-2 border-slate-700 bg-slate-900/80 text-slate-300 hover:border-slate-500';
             }
           });
 
-          const activeBtn = document.getElementById(
-            type === 'RJ' ? 'tab-rj' : (type === 'VERTICAL' ? 'tab-vertical' : 'tab-brake')
-          );
-          if (activeBtn) {
-            activeBtn.className = 'flex-1 py-1.5 px-2 text-xs rounded-xl font-black transition-all bg-amber-500 text-slate-950 shadow-md';
-          }
-
+          // バッジの表示ラベルをテストごとに切り替え
           const lTitle = document.getElementById('badge-left-title');
           const rTitle = document.getElementById('badge-right-title');
+          const lUnit = document.getElementById('badge-left-unit');
+          const rUnit = document.getElementById('badge-right-unit');
+
           if (type === 'RJ') {
-            if (lTitle) lTitle.innerText = '⚡ 足裏タッチ速度';
-            if (rTitle) rTitle.innerText = '🦘 ジャンプバネ高';
+            lTitle.innerText = '⚡ 足裏タッチ速度';
+            lUnit.innerText = '秒';
+            rTitle.innerText = '🦘 ジャンプバネ高';
+            rUnit.innerText = 'cm';
           } else if (type === 'VERTICAL') {
-            if (lTitle) lTitle.innerText = '🏋️ たくわえ沈み';
-            if (rTitle) rTitle.innerText = '🚀 ロケット跳躍';
-          } else {
-            if (lTitle) lTitle.innerText = '📐 前膝アングル';
-            if (rTitle) rTitle.innerText = '🛑 ストップ判定';
+            lTitle.innerText = '📦 たくわえ沈み込み';
+            lUnit.innerText = 'cm';
+            rTitle.innerText = '🚀 ロケット垂直跳び';
+            rUnit.innerText = 'cm';
+          } else if (type === 'BRAKE') {
+            lTitle.innerText = '🛑 てっぺき前膝角';
+            lUnit.innerText = '度';
+            rTitle.innerText = '⚡ 停止ストップ速度';
+            rUnit.innerText = '秒';
           }
-          this.updateBadges('--', '--');
+          this.showToast(`モード切替: ${type}`);
         },
 
-        updateBadges(mainVal, subVal) {
-          const lVal = document.getElementById('val-badge-left');
-          const rVal = document.getElementById('val-badge-right');
-          if (lVal) lVal.innerText = mainVal;
-          if (rVal) rVal.innerText = subVal;
+        updateBadges(leftVal, rightVal) {
+          document.getElementById('val-badge-left').innerText = leftVal !== null && leftVal !== undefined ? leftVal : '--';
+          document.getElementById('val-badge-right').innerText = rightVal !== null && rightVal !== undefined ? rightVal : '--';
+        },
+
+        onMainActionClick() {
+          App.Audio.unlockAudioOnFirstTouch();
+          if (!App.State.calibration.isCalibrated) {
+            this.openCalibrationModal();
+          } else {
+            this.showToast('全身を足元枠に合わせてピシッと立とう！');
+            App.Audio.speak('カメラの前でピシッと立ってね！');
+          }
+        },
+
+        openCalibrationModal() {
+          App.Audio.unlockAudioOnFirstTouch();
+          this.openModal('modal-calib');
         },
 
         onHeightSliderChange(val) {
           App.State.userHeightCm = parseInt(val, 10);
-          const disp = document.getElementById('calib-height-display');
-          if (disp) disp.innerText = `${val} cm`;
-        },
-
-        onMainActionClick() {
-          App.Audio.init();
-          if (!App.State.calibration.isCalibrated) {
-            this.openModal('modal-calib');
-          } else {
-            this.startCountdown();
-          }
-        },
-
-        confirmCalibration() {
-          App.Audio.init();
-          App.State.calibration.isCalibrated = true;
-          this.closeModal('modal-calib');
-
-          // ヘッダーバッジ更新
-          const badge = document.getElementById('header-height-badge');
-          const badgeText = document.getElementById('header-height-text');
-          if (badge) {
-            badge.classList.remove('alert-pulse', 'bg-amber-500/20', 'text-amber-300', 'border-amber-400');
-            badge.classList.add('bg-emerald-500/20', 'text-emerald-300', 'border-emerald-400');
-          }
-          if (badgeText) {
-            badgeText.innerText = `📏 ${App.State.userHeightCm}cm OK!`;
-          }
-
-          // メインボタン解放
-          const btn = document.getElementById('btn-main-action');
-          if (btn) {
-            btn.className = 'btn-brawl btn-emerald flex-1 h-9 text-xs tracking-wider';
-            btn.innerText = '🚀 全身を映すと自動スタート！';
-          }
-
-          App.Audio.playLock();
-          App.Audio.speak('ナイス！身長をロックしたぞ！カメラから約2.5m離れて全身を映そう！');
-          this.showToast('✅ 身長ロック完了！カメラ前に立ってね！');
-        },
-
-        startCountdown() {
-          if (App.State.mode === 'TEST_RUNNING') return;
-          const overlay = document.getElementById('countdown-overlay');
-          const num = document.getElementById('countdown-number');
-          if (!overlay || !num) return;
-
-          overlay.classList.remove('hidden');
-          let count = 3;
-          num.innerText = count;
-          App.Audio.playSE(440, 0.1, 'sine', 0.3);
-
-          const timer = setInterval(() => {
-            count--;
-            if (count > 0) {
-              num.innerText = count;
-              App.Audio.playSE(440 + (3 - count) * 80, 0.1, 'sine', 0.3);
-            } else if (count === 0) {
-              num.innerText = 'GO!';
-              App.Audio.playSE(880, 0.2, 'sine', 0.4);
-            } else {
-              clearInterval(timer);
-              overlay.classList.add('hidden');
-              App.State.mode = 'TEST_RUNNING';
-              App.Engine.startMeasurement();
-            }
-          }, 900);
+          document.getElementById('calib-height-display').innerText = `${val} cm`;
         },
 
         openModal(id) {
-          App.Audio.init();
-          const m = document.getElementById(id);
-          if (m) m.classList.remove('hidden');
-          if (id === 'modal-history') App.Storage.renderHistory();
+          document.getElementById(id).classList.remove('hidden');
         },
 
         closeModal(id) {
-          const m = document.getElementById(id);
-          if (m) m.classList.add('hidden');
+          document.getElementById(id).classList.add('hidden');
+          if (id === 'modal-report' && App.State.activeReplayUrl) {
+            URL.revokeObjectURL(App.State.activeReplayUrl);
+            App.State.activeReplayUrl = null;
+          }
         },
 
         showToast(text) {
-          const t = document.getElementById('toast');
-          if (!t) return;
-          t.innerText = text;
-          t.classList.remove('hidden');
-          setTimeout(() => t.classList.add('hidden'), 2800);
+          const toast = document.getElementById('toast-bubble');
+          toast.innerText = text;
+          toast.classList.remove('hidden');
+          clearTimeout(this._toastTimer);
+          this._toastTimer = setTimeout(() => {
+            toast.classList.add('hidden');
+          }, 2400);
+        },
+
+        unlockCalibrationUI() {
+          const badge = document.getElementById('header-height-badge');
+          badge.classList.remove('alert-pulse', 'bg-amber-500/20', 'text-amber-300', 'border-amber-400');
+          badge.classList.add('bg-emerald-500/20', 'text-emerald-300', 'border-emerald-400');
+          document.getElementById('header-height-text').innerText = `📏 ${App.State.userHeightCm}cm (OK!)`;
+
+          const mainBtn = document.getElementById('btn-main-action');
+          mainBtn.classList.remove('btn-orange');
+          mainBtn.classList.add('btn-emerald');
+          document.getElementById('btn-main-action-text').innerText = '🚀 全身を映すと自動スタート！';
         }
       },
 
       Sensor: {
-        stream: null,
         videoElem: null,
         canvasElem: null,
         ctx: null,
         pose: null,
-        isPoseReady: false,
-        lockStartTime: 0,
-        isGoldenReady: false,
-        historyPelvisY: [],
-        sparks: [],
+        cameraStream: null,
+        gyroPitch: 80,
+        isProcessingFrame: false,
+        lockStartTime: null,
+        lastHipY: null,
 
-        async initCamera() {
-          this.videoElem = document.getElementById('camera-video');
-          this.canvasElem = document.getElementById('ar-canvas');
-          if (this.canvasElem) {
-            this.ctx = this.canvasElem.getContext('2d');
-          }
+        async init() {
+          this.videoElem = document.getElementById('webcam-video');
+          this.canvasElem = document.getElementById('output-canvas');
+          this.ctx = this.canvasElem.getContext('2d');
 
-          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            App.UI.showToast('⚠️ カメラ機能がサポートされていません');
-            this.startSyntheticTracker();
-            return;
-          }
+          this.initGyro();
+          await this.setupCamera();
+          this.setupPoseInstance();
+        },
 
+        async setupCamera() {
           try {
-            if (this.stream) {
-              this.stream.getTracks().forEach(t => t.stop());
+            if (this.cameraStream) {
+              this.cameraStream.getTracks().forEach(track => track.stop());
+              this.videoElem.srcObject = null;
             }
             const constraints = {
               video: {
                 facingMode: App.State.cameraFacing,
-                width: { ideal: 720 },
-                height: { ideal: 1280 }
+                width: { ideal: 640 },
+                height: { ideal: 480 }
               },
               audio: false
             };
-            this.stream = await navigator.mediaDevices.getUserMedia(constraints);
-            if (this.videoElem) {
-              this.videoElem.srcObject = this.stream;
+            this.cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+            this.videoElem.srcObject = this.cameraStream;
+            await new Promise(res => {
               this.videoElem.onloadedmetadata = () => {
-                this.resizeCanvas();
-                this.initMediaPipe();
+                this.videoElem.play();
+                res();
               };
-            }
-          } catch (err) {
-            console.warn('Camera access unavailable:', err);
-            App.UI.showToast('⚠️ カメラの起動に失敗しました（シミュレーション起動）');
-            this.startSyntheticTracker();
+            });
+            this.resizeCanvas();
+            window.addEventListener('resize', () => this.resizeCanvas());
+          } catch (e) {
+            console.warn('Webcam not accessible or permission denied. Running fallback dummy loop.', e);
+            App.UI.showToast('カメラに接続できません。画面タップで試せます。');
           }
-        },
-
-        toggleCamera() {
-          App.State.cameraFacing = (App.State.cameraFacing === 'user') ? 'environment' : 'user';
-          const video = document.getElementById('camera-video');
-          if (video) {
-            if (App.State.cameraFacing === 'user') {
-              video.classList.add('mirror-camera');
-            } else {
-              video.classList.remove('mirror-camera');
-            }
-          }
-          this.initCamera();
-          App.UI.showToast(App.State.cameraFacing === 'user' ? '🔄 インカメラにしたよ' : '🔄 外カメラにしたよ');
         },
 
         resizeCanvas() {
           if (!this.canvasElem || !this.videoElem) return;
-          this.canvasElem.width = this.videoElem.videoWidth || this.canvasElem.clientWidth || 720;
-          this.canvasElem.height = this.videoElem.videoHeight || this.canvasElem.clientHeight || 1280;
+          this.canvasElem.width = this.videoElem.videoWidth || 640;
+          this.canvasElem.height = this.videoElem.videoHeight || 480;
+        },
+
+        async toggleCamera() {
+          App.State.cameraFacing = (App.State.cameraFacing === 'user') ? 'environment' : 'user';
+          if (App.State.cameraFacing === 'user') {
+            this.videoElem.classList.add('transform', '-scale-x-100');
+          } else {
+            this.videoElem.classList.remove('transform', '-scale-x-100');
+          }
+          await this.setupCamera();
         },
 
         initGyro() {
           if (window.DeviceOrientationEvent) {
             window.addEventListener('deviceorientation', (e) => {
-              const beta = Math.abs(e.beta !== null ? e.beta : 90);
-              const isStrictlyUpright = (beta >= 75 && beta <= 88);
-              const gyroDot = document.getElementById('gyro-dot');
-              const gyroText = document.getElementById('gyro-status-text');
-              const calibGyro = document.getElementById('calib-gyro-status');
-
-              if (gyroDot) {
-                gyroDot.className = `inline-block w-2.5 h-2.5 rounded-full ${isStrictlyUpright ? 'bg-emerald-400' : 'bg-amber-400'}`;
+              if (e.beta !== null) {
+                this.gyroPitch = Math.round(e.beta);
+                this.updateGyroUI();
               }
-              if (gyroText) {
-                gyroText.innerText = isStrictlyUpright ? '📐 直立 OK (75°-88°)' : '📐 スマホを起こして！';
-                gyroText.className = isStrictlyUpright ? 'text-[11px] font-bold text-emerald-300' : 'text-[11px] font-bold text-amber-300';
-              }
-              if (calibGyro) {
-                calibGyro.innerText = isStrictlyUpright ? '🟢 75°〜88°で垂直OK！' : '🟡 もう少し垂直に立てよう！';
-                calibGyro.className = isStrictlyUpright ? 'font-bold text-emerald-400' : 'font-bold text-amber-400';
-              }
-            }, false);
+            });
           }
         },
 
-        async initMediaPipe() {
-          if (window.Pose) {
-            this.setupPoseInstance();
-            return;
+        async requestGyroPermission() {
+          App.Audio.unlockAudioOnFirstTouch();
+          if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            try {
+              const res = await DeviceOrientationEvent.requestPermission();
+              if (res === 'granted') {
+                App.UI.showToast('ジャイロセンサーをONにしました！');
+              }
+            } catch (e) {
+              console.warn(e);
+            }
           }
-          const script = document.createElement('script');
-          script.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js';
-          script.crossOrigin = 'anonymous';
-          script.onload = () => this.setupPoseInstance();
-          script.onerror = () => {
-            console.warn('Pose CDN load failed, falling back to synthetic tracker.');
-            this.startSyntheticTracker();
-          };
-          document.head.appendChild(script);
+        },
+
+        updateGyroUI() {
+          const dot = document.getElementById('gyro-dot');
+          const txt = document.getElementById('gyro-status-text');
+          const calibStatus = document.getElementById('calib-gyro-status');
+          const isGood = this.gyroPitch >= App.CONFIG.GYRO_PITCH_MIN && this.gyroPitch <= App.CONFIG.GYRO_PITCH_MAX;
+
+          if (isGood) {
+            dot.className = 'inline-block w-2.5 h-2.5 rounded-full bg-emerald-400';
+            txt.innerText = `📐 角度バッチリ (${this.gyroPitch}°)`;
+            if (calibStatus) {
+              calibStatus.innerText = `🟢 角度バッチリ (${this.gyroPitch}°)`;
+              calibStatus.className = 'font-bold text-emerald-400';
+            }
+          } else {
+            dot.className = 'inline-block w-2.5 h-2.5 rounded-full bg-amber-400';
+            txt.innerText = `📐 スマホを立ててね (${this.gyroPitch}°)`;
+            if (calibStatus) {
+              calibStatus.innerText = `🟡 もう少し起こしてね (${this.gyroPitch}°)`;
+              calibStatus.className = 'font-bold text-amber-400';
+            }
+          }
         },
 
         setupPoseInstance() {
-          try {
-            this.pose = new window.Pose({
-              locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
-            });
-            this.pose.setOptions({
-              modelComplexity: 1,
-              smoothLandmarks: true,
-              enableSegmentation: false,
-              minDetectionConfidence: 0.5,
-              minTrackingConfidence: 0.5
-            });
-            this.pose.onResults((res) => this.onPoseResults(res));
-            this.isPoseReady = true;
-
-            const sendFrame = async () => {
-              if (this.videoElem && this.videoElem.readyState >= 2) {
-                try {
-                  await this.pose.send({ image: this.videoElem });
-                } catch (e) {}
-              }
-              requestAnimationFrame(sendFrame);
-            };
-            requestAnimationFrame(sendFrame);
-          } catch (e) {
-            console.error('Pose setup error:', e);
-            this.startSyntheticTracker();
+          if (typeof Pose === 'undefined') {
+            console.warn('MediaPipe Pose library is loading or blocked. Starting render fallback.');
+            requestAnimationFrame(() => this.processFallbackLoop());
+            return;
           }
+
+          this.pose = new Pose({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+          });
+
+          this.pose.setOptions({
+            modelComplexity: 1,
+            smoothLandmarks: true,
+            enableSegmentation: false,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+          });
+
+          this.pose.onResults((results) => this.onPoseResults(results));
+
+          const sendFrame = async () => {
+            if (this.videoElem && this.videoElem.readyState >= 2 && !this.isProcessingFrame) {
+              this.isProcessingFrame = true;
+              try {
+                await this.pose.send({ image: this.videoElem });
+              } catch (e) {
+                console.error(e);
+              } finally {
+                this.isProcessingFrame = false;
+              }
+            }
+            requestAnimationFrame(sendFrame);
+          };
+          requestAnimationFrame(sendFrame);
+        },
+
+        processFallbackLoop() {
+          this.ctx.clearRect(0, 0, this.canvasElem.width, this.canvasElem.height);
+          requestAnimationFrame(() => this.processFallbackLoop());
         },
 
         onPoseResults(results) {
           if (!this.ctx || !this.canvasElem) return;
+          this.ctx.save();
+          this.ctx.clearRect(0, 0, this.canvasElem.width, this.canvasElem.height);
+
+          // インカメラの場合は描画を反転
+          if (App.State.cameraFacing === 'user') {
+            this.ctx.scale(-1, 1);
+            this.ctx.translate(-this.canvasElem.width, 0);
+          }
+
+          if (results.poseLandmarks) {
+            this.drawSkeleton(results.poseLandmarks);
+
+            // ① スキャンキャリブレーション中
+            if (App.State.mode === 'CALIB_SCANNING') {
+              App.Calibration.processFrame(results.poseLandmarks, this.canvasElem.width, this.canvasElem.height);
+            }
+            // ② 通常測定待機中（3重ロック判定）
+            else if (App.State.mode === 'TEST_IDLE' && App.State.calibration.isCalibrated) {
+              this.checkTriLockGate(results.poseLandmarks, this.canvasElem.width, this.canvasElem.height);
+            }
+            // ③ テスト測定実行中
+            else if (App.State.mode === 'TEST_RUNNING') {
+              App.Engine.processTestFrame(results.poseLandmarks, this.canvasElem.width, this.canvasElem.height);
+            }
+            // ④ 10秒ウルトドリル中
+            else if (App.State.mode === 'DRILL_ACTIVE') {
+              App.Drill.processFrame(results.poseLandmarks, this.canvasElem.width, this.canvasElem.height);
+            }
+          }
+          this.ctx.restore();
+        },
+
+        drawSkeleton(landmarks) {
           const w = this.canvasElem.width;
           const h = this.canvasElem.height;
-          this.ctx.clearRect(0, 0, w, h);
+          const points = [11, 12, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
 
-          if (!results.poseLandmarks) {
-            this.isGoldenReady = false;
-            this.lockStartTime = 0;
-            return;
-          }
-
-          const lm = results.poseLandmarks;
-          this.drawSkeleton(lm, w, h);
-          this.drawSparks();
-
-          const nose = lm[0];
-          const lShoulder = lm[11], rShoulder = lm[12];
-          const lHip = lm[23], rHip = lm[24];
-          const lKnee = lm[25], rKnee = lm[26];
-          const lAnkle = lm[27], rAnkle = lm[28];
-          const lHeel = lm[29], rHeel = lm[30];
-
-          const midHipX = (lHip.x + rHip.x) / 2;
-          const midHipY = (lHip.y + rHip.y) / 2;
-          const midAnkleX = (lAnkle.x + rAnkle.x) / 2;
-          const midAnkleY = (lAnkle.y + rAnkle.y) / 2;
-          const midShoulderY = (lShoulder.y + rShoulder.y) / 2;
-
-          // スケール確定（頭頂〜足首ピクセル長と入力身長の比率）
-          if (App.State.calibration.isCalibrated) {
-            const bodyPx = Math.abs(midAnkleY - nose.y) * h;
-            if (bodyPx > 50) {
-              App.State.calibration.pxPerCm = bodyPx / Math.max(100, App.State.userHeightCm);
+          this.ctx.fillStyle = '#38bdf8';
+          points.forEach(idx => {
+            const lm = landmarks[idx];
+            if (lm && lm.visibility > 0.4) {
+              this.ctx.beginPath();
+              this.ctx.arc(lm.x * w, lm.y * h, 5, 0, 2 * Math.PI);
+              this.ctx.fill();
             }
-          }
+          });
 
-          const poseData = {
-            nose, lShoulder, rShoulder, lHip, rHip, lKnee, rKnee, lAnkle, rAnkle, lHeel, rHeel,
-            midHipX, midHipY, midAnkleX, midAnkleY, midShoulderY,
-            canvasW: w, canvasH: h,
-            time: performance.now()
-          };
-
-          if (App.State.mode === 'TEST_IDLE') {
-            this.processIdleGating(poseData);
-          } else if (App.State.mode === 'TEST_RUNNING') {
-            App.Engine.updateFrame(poseData);
-          } else if (App.State.mode === 'DRILL_ACTIVE') {
-            App.Drill.updateFrame(poseData);
-          }
-        },
-
-        processIdleGating(pose) {
-          if (!App.State.calibration.isCalibrated) return;
-          const w = pose.canvasW;
-          const h = pose.canvasH;
-
-          // 1. 全身インフレーム判定
-          const isFullBodyIn = (
-            pose.nose.y > 0.05 && pose.nose.y < 0.35 &&
-            pose.lAnkle.y < 0.98 && pose.rAnkle.y < 0.98 &&
-            pose.lAnkle.x > 0.15 && pose.rAnkle.x < 0.85
-          );
-
-          // 2. 水平度チェック（傾き < 5°）
-          const shoulderSlope = Math.abs(pose.lShoulder.y - pose.rShoulder.y);
-          const hipSlope = Math.abs(pose.lHip.y - pose.rHip.y);
-          const isTiltOk = (shoulderSlope < 0.04 && hipSlope < 0.04);
-
-          // 3. 重心動揺収束（骨盤の上下ブレ ±1.5cm以内）
-          this.historyPelvisY.push({ y: pose.midHipY, t: pose.time });
-          if (this.historyPelvisY.length > 20) this.historyPelvisY.shift();
-
-          let isPelvisStable = false;
-          if (this.historyPelvisY.length >= 15) {
-            const yVals = this.historyPelvisY.map(p => p.y);
-            const diffCm = ((Math.max(...yVals) - Math.min(...yVals)) * h) / Math.max(1, App.State.calibration.pxPerCm);
-            isPelvisStable = (diffCm <= 1.8);
-          }
-
-          const footBox = document.getElementById('foot-safe-zone');
-          const isAllPass = (isFullBodyIn && isTiltOk && isPelvisStable);
-
-          if (isAllPass) {
-            if (!this.isGoldenReady) {
-              this.isGoldenReady = true;
-              this.lockStartTime = pose.time;
-              App.Audio.playLock();
-              if (footBox) {
-                footBox.style.borderColor = '#fbbf24';
-                footBox.style.boxShadow = '0 0 20px #f59e0b, inset 0 0 10px rgba(245,158,11,0.6)';
-              }
-            } else {
-              const holdSec = (pose.time - this.lockStartTime) / 1000;
-              if (holdSec >= 1.5) {
-                this.isGoldenReady = false;
-                this.lockStartTime = 0;
-                App.UI.startCountdown();
-              }
-            }
-          } else {
-            this.isGoldenReady = false;
-            this.lockStartTime = 0;
-            if (footBox) {
-              footBox.style.borderColor = '#34d399';
-              footBox.style.boxShadow = 'none';
-            }
-          }
-        },
-
-        checkInvalidTrial(pose) {
-          if (pose.nose.y <= 0.02) {
-            return { invalid: true, msg: '頭が見切れちゃった！半歩遠くに置いてもう1回跳ぼう！' };
-          }
-          const kneeToHipY = Math.min(
-            Math.abs(pose.lKnee.y - pose.lHip.y),
-            Math.abs(pose.rKnee.y - pose.rHip.y)
-          );
-          if (kneeToHipY < 0.07) {
-            return { invalid: true, msg: '膝を抱え込まずに天井へまっすぐ跳ぼう！' };
-          }
-          return { invalid: false };
-        },
-
-        drawSkeleton(lm, w, h) {
-          const connections = [
-            [11, 12], [11, 23], [12, 24], [23, 24],
-            [11, 13], [13, 15], [12, 14], [14, 16],
-            [23, 25], [25, 27], [24, 26], [26, 28],
-            [27, 29], [28, 30]
-          ];
-          this.ctx.save();
-          this.ctx.lineWidth = 3.5;
-          this.ctx.lineCap = 'round';
-          this.ctx.strokeStyle = this.isGoldenReady ? '#fde047' : '#38bdf8';
-          this.ctx.shadowColor = this.isGoldenReady ? '#f59e0b' : '#0284c7';
-          this.ctx.shadowBlur = 8;
-
-          connections.forEach(([i, j]) => {
-            const p1 = lm[i], p2 = lm[j];
+          const drawBone = (i1, i2, strokeStyle = '#f59e0b') => {
+            const p1 = landmarks[i1];
+            const p2 = landmarks[i2];
             if (p1 && p2 && p1.visibility > 0.4 && p2.visibility > 0.4) {
               this.ctx.beginPath();
               this.ctx.moveTo(p1.x * w, p1.y * h);
               this.ctx.lineTo(p2.x * w, p2.y * h);
+              this.ctx.strokeStyle = strokeStyle;
+              this.ctx.lineWidth = 3;
               this.ctx.stroke();
             }
-          });
+          };
 
-          [11, 12, 23, 24, 25, 26, 27, 28].forEach((idx) => {
-            const p = lm[idx];
-            if (p && p.visibility > 0.4) {
-              this.ctx.beginPath();
-              this.ctx.arc(p.x * w, p.y * h, 5, 0, Math.PI * 2);
-              this.ctx.fillStyle = this.isGoldenReady ? '#fef08a' : '#ffffff';
-              this.ctx.fill();
-            }
-          });
-          this.ctx.restore();
+          drawBone(11, 12, '#38bdf8'); // 肩
+          drawBone(11, 23); drawBone(12, 24); // 体幹
+          drawBone(23, 24, '#38bdf8'); // 骨盤
+          drawBone(23, 25); drawBone(24, 26); // 太もも
+          drawBone(25, 27); drawBone(26, 28); // すね
+          drawBone(27, 31, '#10b981'); drawBone(28, 32, '#10b981'); // 足裏
         },
 
-        emitSpark(x, y, count = 12, color = '#facc15') {
-          for (let i = 0; i < count; i++) {
-            this.sparks.push({
-              x, y,
-              vx: (Math.random() - 0.5) * 8,
-              vy: (Math.random() - 1.1) * 9,
-              life: 1.0,
-              color
-            });
+        // 【誤作動ゼロ】3重ロック式ゲートイン
+        checkTriLockGate(landmarks, w, h) {
+          const nose = landmarks[0];
+          const lAnkle = landmarks[27];
+          const rAnkle = landmarks[28];
+          const lShoulder = landmarks[11];
+          const rShoulder = landmarks[12];
+          const lHip = landmarks[23];
+          const rHip = landmarks[24];
+
+          if (!nose || !lAnkle || !rAnkle || !lShoulder || !rShoulder || !lHip || !rHip) return;
+
+          // 1. 幾何アライメント：頭と足首が画面内に余裕を持って収まっているか
+          const isVisible = nose.y > 0.05 && lAnkle.y < 0.95 && rAnkle.y < 0.95 &&
+                            nose.visibility > 0.5 && lAnkle.visibility > 0.5 && rAnkle.visibility > 0.5;
+
+          // 肩と腰の傾き角 < 5°
+          const shoulderTilt = Math.abs(Math.atan2(rShoulder.y - lShoulder.y, rShoulder.x - lShoulder.x) * 180 / Math.PI);
+          const isLevel = Math.abs(shoulderTilt) < App.CONFIG.TILT_THRESHOLD_DEG || Math.abs(shoulderTilt - 180) < App.CONFIG.TILT_THRESHOLD_DEG;
+
+          // 2. 重心動揺収束：骨盤中心のブレが ±1.5cm 以内
+          const hipCenterY = ((lHip.y + rHip.y) / 2) * h;
+          let isStable = false;
+          if (this.lastHipY !== null) {
+            const diffPx = Math.abs(hipCenterY - this.lastHipY);
+            const diffCm = diffPx / App.State.calibration.pxPerCm;
+            isStable = diffCm <= App.CONFIG.DISPLACEMENT_THRESHOLD_CM;
+          }
+          this.lastHipY = hipCenterY;
+
+          const footBox = document.getElementById('foot-safe-zone');
+
+          if (isVisible && isLevel && isStable) {
+            if (!this.lockStartTime) {
+              this.lockStartTime = performance.now();
+              App.Audio.playTone(440, 0.05, 'sine', 0.15);
+            }
+            const elapsed = performance.now() - this.lockStartTime;
+            footBox.className = 'absolute bottom-1 z-10 w-52 h-12 rounded-2xl border-4 border-yellow-400 bg-yellow-500/20 flex items-center justify-center transition-all shadow-[0_0_20px_rgba(250,204,21,0.6)]';
+
+            if (elapsed >= App.CONFIG.HOLD_TIME_MS) {
+              this.lockStartTime = null;
+              App.Audio.playLock();
+              App.Engine.startCountdown();
+            }
+          } else {
+            this.lockStartTime = null;
+            footBox.className = 'absolute bottom-1 z-10 w-52 h-12 rounded-2xl border-2 border-dashed border-emerald-400 bg-emerald-500/10 flex items-center justify-center transition-all';
+          }
+        }
+      },
+
+      Calibration: {
+        scanStartTime: null,
+        scanSamples: [],
+
+        beginScanMode() {
+          App.UI.closeModal('modal-calib');
+          App.State.mode = 'CALIB_SCANNING';
+          this.scanStartTime = null;
+          this.scanSamples = [];
+
+          document.getElementById('scan-overlay').classList.remove('hidden');
+          App.Audio.speak('カメラから2.5メートル離れて、頭から足先まで映してね！');
+        },
+
+        processFrame(landmarks, w, h) {
+          const nose = landmarks[0];
+          const lHeel = landmarks[29];
+          const rHeel = landmarks[30];
+          const lHip = landmarks[23];
+          const rHip = landmarks[24];
+
+          const statusPill = document.getElementById('scan-status-pill');
+          const progressRing = document.getElementById('scan-progress-ring');
+          const percentText = document.getElementById('scan-percent-text');
+
+          if (!nose || !lHeel || !rHeel || nose.visibility < 0.6 || lHeel.visibility < 0.5 || rHeel.visibility < 0.5) {
+            this.scanStartTime = null;
+            this.scanSamples = [];
+            statusPill.innerText = '全身をカメラに映してね';
+            statusPill.className = 'badge-brawl bg-slate-900/90 text-amber-300 border-amber-500';
+            this.updateProgress(0, progressRing, percentText);
+            return;
+          }
+
+          // 頭頂〜踵のピクセル高さ計算（鼻から頭頂へ約10%分上部を補正推定）
+          const topHeadY = Math.max(0, (nose.y - (landmarks[11].y - nose.y) * 0.5) * h);
+          const heelY = Math.max(lHeel.y, rHeel.y) * h;
+          const bodyHeightPx = heelY - topHeadY;
+
+          if (bodyHeightPx < h * 0.4) {
+            this.scanStartTime = null;
+            statusPill.innerText = 'もう少しカメラに近づいてね';
+            this.updateProgress(0, progressRing, percentText);
+            return;
+          }
+
+          // 姿勢がピシッと直立しているか確認
+          if (!this.scanStartTime) {
+            this.scanStartTime = performance.now();
+            App.Audio.playTone(587.33, 0.08, 'sine', 0.2); // D5
+            statusPill.innerText = 'ピシッと1.5秒キープ！';
+            statusPill.className = 'badge-brawl bg-emerald-950/90 text-emerald-300 border-emerald-400 animate-pulse';
+          }
+
+          this.scanSamples.push(bodyHeightPx);
+          const elapsed = performance.now() - this.scanStartTime;
+          const progressRatio = Math.min(1.0, elapsed / App.CONFIG.SCAN_HOLD_TIME_MS);
+          this.updateProgress(progressRatio, progressRing, percentText);
+
+          if (progressRatio >= 1.0) {
+            // スキャン完了：平均ピクセルから絶対スケールを確定
+            const avgHeightPx = this.scanSamples.reduce((a, b) => a + b, 0) / this.scanSamples.length;
+            App.State.calibration.rawHeightPx = avgHeightPx;
+            App.State.calibration.pxPerCm = avgHeightPx / App.State.userHeightCm;
+            App.State.calibration.baselineHipY = ((lHip.y + rHip.y) / 2) * h;
+            App.State.calibration.isCalibrated = true;
+            App.State.mode = 'TEST_IDLE';
+
+            document.getElementById('scan-overlay').classList.add('hidden');
+            App.UI.unlockCalibrationUI();
+            App.Audio.playFanfare();
+            App.Audio.speak('ピロリン♪ 身長スキャン大成功！準備完了だ！');
+            App.UI.showToast(`AIキャリブレーション成功！(${App.State.calibration.pxPerCm.toFixed(2)} px/cm)`);
           }
         },
 
-        drawSparks() {
-          if (!this.sparks.length) return;
-          this.ctx.save();
-          for (let i = this.sparks.length - 1; i >= 0; i--) {
-            const s = this.sparks[i];
-            s.x += s.vx;
-            s.y += s.vy;
-            s.vy += 0.35;
-            s.life -= 0.04;
-            if (s.life <= 0) {
-              this.sparks.splice(i, 1);
-              continue;
-            }
-            this.ctx.beginPath();
-            this.ctx.arc(s.x, s.y, 4 * s.life, 0, Math.PI * 2);
-            this.ctx.fillStyle = s.color;
-            this.ctx.globalAlpha = s.life;
-            this.ctx.fill();
-          }
-          this.ctx.restore();
-        },
-
-        startSyntheticTracker() {
-          // カメラまたはMediaPipeが利用不可の場合でも完全動作するフォールバック
-          setInterval(() => {
-            if (App.State.mode === 'TEST_RUNNING') {
-              const fakePose = {
-                nose: { x: 0.5, y: 0.2, visibility: 0.9 },
-                lShoulder: { x: 0.45, y: 0.35, visibility: 0.9 },
-                rShoulder: { x: 0.55, y: 0.35, visibility: 0.9 },
-                lHip: { x: 0.46, y: 0.55, visibility: 0.9 },
-                rHip: { x: 0.54, y: 0.55, visibility: 0.9 },
-                lKnee: { x: 0.46, y: 0.72, visibility: 0.9 },
-                rKnee: { x: 0.54, y: 0.72, visibility: 0.9 },
-                lAnkle: { x: 0.46, y: 0.90, visibility: 0.9 },
-                rAnkle: { x: 0.54, y: 0.90, visibility: 0.9 },
-                midHipX: 0.5, midHipY: 0.55,
-                midAnkleX: 0.5, midAnkleY: 0.90,
-                midShoulderY: 0.35,
-                canvasW: this.canvasElem ? this.canvasElem.width : 720,
-                canvasH: this.canvasElem ? this.canvasElem.height : 1280,
-                time: performance.now()
-              };
-              App.Engine.updateFrame(fakePose);
-            }
-          }, 40);
+        updateProgress(ratio, ringElem, textElem) {
+          const circumference = 213.6; // 2 * PI * 34
+          const offset = circumference * (1 - ratio);
+          ringElem.style.strokeDashoffset = offset;
+          textElem.innerText = `${Math.round(ratio * 100)}%`;
         }
       },
 
       Engine: {
-        RJ_PHASE: {
-          STANDBY: 0,
-          DROP_1:  1,
-          GROUND:  2,
-          AIR_2:   3,
-          LANDED:  4
+        fsmPhase: 0, // 0: STANDBY, 1: DROP_1, 2: GROUND, 3: AIR_2, 4: LANDED
+        touchStartTime: 0,
+        takeoffTime: 0,
+        landingTime: 0,
+        baselineHipY: 0,
+        peakHipY: 0,
+        mediaRecorder: null,
+        recordedChunks: [],
+
+        startCountdown() {
+          App.State.mode = 'COUNTDOWN';
+          const overlay = document.getElementById('countdown-overlay');
+          const num = document.getElementById('countdown-number');
+          overlay.classList.remove('hidden');
+
+          let count = 3;
+          num.innerText = count;
+          App.Audio.playTone(440, 0.09, 'sine', 0.3); // ピッ
+
+          const timer = setInterval(() => {
+            count--;
+            if (count > 0) {
+              num.innerText = count;
+              App.Audio.playTone(440, 0.09, 'sine', 0.3);
+            } else if (count === 0) {
+              num.innerText = 'GO!';
+              num.className = 'text-8xl font-black text-emerald-400 brawl-text animate-ping';
+              App.Audio.playTone(880, 0.22, 'square', 0.4); // ポーン！
+              App.Audio.speak('跳べっ！');
+            } else {
+              clearInterval(timer);
+              overlay.classList.add('hidden');
+              num.className = 'text-8xl font-black text-amber-400 brawl-text animate-bounce';
+              this.beginTestExecution();
+            }
+          }, 850);
         },
 
-        phase: 0,
-        baselineHipY: null,
-        baselineAnkleY: null,
-        tGroundIn: 0,
-        tGroundOut: 0,
-        tAirPeak: 0,
-        tLanded: 0,
-        contactTimeSec: 0,
-        flightTimeSec: 0,
-        peakPelvisStrokePx: 0,
-        deepestDipPx: 0,
-        minBrakeAngle: 180,
+        beginTestExecution() {
+          App.State.mode = 'TEST_RUNNING';
+          this.fsmPhase = 0;
+          this.startLocalRecording();
+          document.getElementById('active-prompt-banner').classList.remove('hidden');
+        },
 
-        startMeasurement() {
-          this.phase = this.RJ_PHASE.STANDBY;
-          this.baselineHipY = null;
-          this.baselineAnkleY = null;
-          this.contactTimeSec = 0;
-          this.flightTimeSec = 0;
-          this.peakPelvisStrokePx = 0;
-          this.deepestDipPx = 0;
-          this.minBrakeAngle = 180;
+        startLocalRecording() {
+          try {
+            const canvas = App.Sensor.canvasElem;
+            if (!canvas) return;
+            const stream = canvas.captureStream(30);
+            const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8') ? 'video/webm;codecs=vp8' :
+                             MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : '';
+            this.mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+            this.recordedChunks = [];
+            this.mediaRecorder.ondataavailable = (e) => {
+              if (e.data && e.data.size > 0) {
+                this.recordedChunks.push(e.data);
+              }
+            };
+            this.mediaRecorder.start();
+          } catch (e) {
+            console.warn('MediaRecorder error:', e);
+          }
+        },
 
-          App.Drill.startLocalRecording();
+        stopLocalRecordingAndShowReplay(callback) {
+          if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+            this.mediaRecorder.onstop = () => {
+              const blob = new Blob(this.recordedChunks, { type: this.mediaRecorder.mimeType || 'video/webm' });
+              if (App.State.activeReplayUrl) {
+                URL.revokeObjectURL(App.State.activeReplayUrl);
+              }
+              App.State.activeReplayUrl = URL.createObjectURL(blob);
+              callback(App.State.activeReplayUrl);
+            };
+            this.mediaRecorder.stop();
+          } else {
+            callback(null);
+          }
+        },
 
-          const prompt = document.getElementById('active-prompt-banner');
-          if (prompt) {
-            prompt.classList.remove('hidden');
-            if (App.State.testType === 'RJ') {
-              prompt.innerText = '💥 地面は熱い鉄板だ！パチンと跳ね返せ！';
-            } else if (App.State.testType === 'VERTICAL') {
-              prompt.innerText = '🚀 膝をためて天井までぶっ跳べ！';
-            } else {
-              prompt.innerText = '🛑 ダッシュから前膝ピタッと急停止！';
+        processTestFrame(landmarks, w, h) {
+          const lAnkle = landmarks[27];
+          const rAnkle = landmarks[28];
+          const lHip = landmarks[23];
+          const rHip = landmarks[24];
+          const nose = landmarks[0];
+
+          if (!lAnkle || !rAnkle || !lHip || !rHip || !nose) return;
+
+          // 頭の見切れ検知（無効試行）
+          if (nose.y < 0.02) {
+            this.abortWithFeedback('頭が見切れちゃった！あと半歩遠くに置いてもう1回跳ぼう！');
+            return;
+          }
+
+          const currentHipY = ((lHip.y + rHip.y) / 2) * h;
+          const currentAnkleY = Math.max(lAnkle.y, rAnkle.y) * h;
+          const pxPerCm = App.State.calibration.pxPerCm || App.CONFIG.DEFAULT_PX_PER_CM;
+
+          // 2連続リバウンドジャンプ（RJ）ステートマシン
+          if (App.State.testType === 'RJ') {
+            const groundThresholdPx = 1.8 * pxPerCm;
+
+            if (this.fsmPhase === 0) { // STANDBY
+              this.baselineHipY = currentHipY;
+              this.fsmPhase = 1; // DROP_1 へ
+            } else if (this.fsmPhase === 1) { // DROP_1（予備ジャンプ）
+              if (currentHipY > this.baselineHipY - 5) {
+                this.fsmPhase = 2; // GROUND（接地）
+                this.touchStartTime = performance.now();
+                App.Audio.playImpact();
+              }
+            } else if (this.fsmPhase === 2) { // GROUND（接地中〜再離地）
+              // 離地検出
+              if (currentHipY < this.baselineHipY - groundThresholdPx) {
+                this.takeoffTime = performance.now();
+                this.fsmPhase = 3; // AIR_2
+                this.peakHipY = currentHipY;
+                App.Audio.playExplosion();
+              }
+            } else if (this.fsmPhase === 3) { // AIR_2（最大爆発跳躍空中）
+              if (currentHipY < this.peakHipY) {
+                this.peakHipY = currentHipY; // 最高点追従
+              }
+              // 再着地検出
+              if (currentHipY >= this.baselineHipY - (groundThresholdPx * 0.5)) {
+                this.landingTime = performance.now();
+                this.fsmPhase = 4; // LANDED
+                App.Audio.playImpact();
+                this.finalizeRJTest();
+              }
+            }
+          }
+          // 垂直跳び
+          else if (App.State.testType === 'VERTICAL') {
+            if (this.fsmPhase === 0) {
+              this.baselineHipY = currentHipY;
+              this.peakHipY = currentHipY;
+              this.fsmPhase = 1;
+            } else if (this.fsmPhase === 1) {
+              if (currentHipY < this.peakHipY) this.peakHipY = currentHipY;
+              if (this.baselineHipY - this.peakHipY > 15 * pxPerCm && currentHipY >= this.baselineHipY - 5) {
+                this.finalizeVerticalTest();
+              }
             }
           }
         },
 
-        updateFrame(pose) {
-          const h = pose.canvasH;
-          const pxPerCm = Math.max(1.2, App.State.calibration.pxPerCm || 2.5);
-
-          const invalidCheck = App.Sensor.checkInvalidTrial(pose);
-          if (invalidCheck.invalid && this.phase >= this.RJ_PHASE.GROUND) {
-            this.abortAndRetry(invalidCheck.msg);
-            return;
-          }
-
-          if (this.baselineHipY === null) {
-            this.baselineHipY = pose.midHipY;
-            this.baselineAnkleY = pose.midAnkleY;
-            this.phase = this.RJ_PHASE.DROP_1;
-            return;
-          }
-
-          if (App.State.testType === 'RJ') {
-            this.processRJStateMachine(pose, h, pxPerCm);
-          } else if (App.State.testType === 'VERTICAL') {
-            this.processVerticalJump(pose, h, pxPerCm);
-          } else if (App.State.testType === 'BRAKE') {
-            this.processBrakeTest(pose);
-          }
-        },
-
-        processRJStateMachine(pose, h, pxPerCm) {
-          const hipOffsetPx = (this.baselineHipY - pose.midHipY) * h;
-          const ankleOffsetPx = (this.baselineAnkleY - pose.midAnkleY) * h;
-
-          switch (this.phase) {
-            case this.RJ_PHASE.DROP_1:
-              if (ankleOffsetPx <= 6 && hipOffsetPx <= 8) {
-                this.phase = this.RJ_PHASE.GROUND;
-                this.tGroundIn = pose.time;
-                App.Audio.playImpact();
-                App.Sensor.emitSpark(pose.midAnkleX * pose.canvasW, pose.midAnkleY * h, 14, '#f97316');
-              }
-              break;
-
-            case this.RJ_PHASE.GROUND:
-              if (ankleOffsetPx > 8 || hipOffsetPx > 10) {
-                this.tGroundOut = pose.time;
-                this.contactTimeSec = Math.max(0.12, (this.tGroundOut - this.tGroundIn) / 1000);
-                this.phase = this.RJ_PHASE.AIR_2;
-                this.peakPelvisStrokePx = hipOffsetPx;
-                App.Audio.playExplosion();
-                App.Sensor.emitSpark(pose.midAnkleX * pose.canvasW, pose.midAnkleY * h, 20, '#38bdf8');
-                App.UI.updateBadges(this.contactTimeSec.toFixed(2), '--');
-              }
-              break;
-
-            case this.RJ_PHASE.AIR_2:
-              if (hipOffsetPx > this.peakPelvisStrokePx) {
-                this.peakPelvisStrokePx = hipOffsetPx;
-                this.tAirPeak = pose.time;
-              }
-              if (ankleOffsetPx <= 8 && (pose.time - this.tGroundOut > 200)) {
-                this.tLanded = pose.time;
-                this.flightTimeSec = (this.tLanded - this.tGroundOut) / 1000;
-                this.phase = this.RJ_PHASE.LANDED;
-                this.finalizeRJ(pxPerCm);
-              }
-              break;
-          }
-        },
-
-        finalizeRJ(pxPerCm) {
-          const g = 9.80665;
-          const hAirCm = (1 / 8) * g * Math.pow(this.flightTimeSec, 2) * 100;
-          const hPelvisCm = Math.max(0, this.peakPelvisStrokePx) / pxPerCm;
-
-          // ハイブリッド二重計算
-          let trueJumpHeightCm = (hAirCm * 0.70) + (hPelvisCm * 0.30);
-          trueJumpHeightCm = Math.min(75, Math.max(12, trueJumpHeightCm));
-          const tc = this.contactTimeSec;
-
-          let contactRank = (tc <= 0.20) ? '【🌟 神速パチンタッチ！】' : (tc <= 0.26 ? '【⚡ ナイス反発！】' : '【⚠️ べた足・沈み込み】');
-          let heightRank = (trueJumpHeightCm >= 35) ? '【🚀 ロケットジャンプ】' : (trueJumpHeightCm >= 25 ? '【⚡ ナイトジャンプ】' : '【★ ホップジャンプ】');
-          let totalRank = (tc <= 0.20 && trueJumpHeightCm >= 35) ? '【🌟 SUPER BRAWLER達成！】' : (tc <= 0.26 && trueJumpHeightCm >= 25 ? '【⚡ LEVEL 2 実戦バネマスター】' : '【★ 覚醒バネ Lv.1】');
-
-          App.UI.updateBadges(tc.toFixed(2), trueJumpHeightCm.toFixed(1));
-          this.finishSession({
-            testName: '💥 連続トランポリン跳び（反発バネ）',
-            rank: totalRank,
-            scoreLeftLabel: '足裏タッチスピード',
-            scoreLeftVal: `${tc.toFixed(2)}秒`,
-            scoreRightLabel: '最大ロケットジャンプ',
-            scoreRightVal: `${trueJumpHeightCm.toFixed(1)}cm`,
-            advice: `🚀 <strong>${contactRank}</strong><br>跳躍バネ高は <strong>${heightRank} (${trueJumpHeightCm.toFixed(1)}cm)</strong> を記録！これが剛速球と爆発ダッシュを生む最大の武器だ！`
-          });
-        },
-
-        processVerticalJump(pose, h, pxPerCm) {
-          const hipOffsetPx = (this.baselineHipY - pose.midHipY) * h;
-          if (hipOffsetPx < -8) {
-            this.deepestDipPx = Math.max(this.deepestDipPx, Math.abs(hipOffsetPx));
-          } else if (hipOffsetPx > this.peakPelvisStrokePx) {
-            this.peakPelvisStrokePx = hipOffsetPx;
-          }
-
-          if (this.peakPelvisStrokePx > 18 && Math.abs(hipOffsetPx) <= 8) {
-            const jumpCm = this.peakPelvisStrokePx / pxPerCm;
-            const dipCm = this.deepestDipPx / pxPerCm;
-            App.UI.updateBadges(dipCm.toFixed(1), jumpCm.toFixed(1));
-            this.finishSession({
-              testName: '🦘 ロケット垂直ジャンプ',
-              rank: jumpCm >= 38 ? '【🌟 スカイロケット級】' : '【⚡ ハイジャンプ級】',
-              scoreLeftLabel: 'たくわえ沈み込み',
-              scoreLeftVal: `${dipCm.toFixed(1)}cm`,
-              scoreRightLabel: 'さいだいジャンプ高',
-              scoreRightVal: `${jumpCm.toFixed(1)}cm`,
-              advice: `🚀 沈み込み <strong>${dipCm.toFixed(1)}cm</strong> から一気に <strong>${jumpCm.toFixed(1)}cm</strong> 爆発跳躍！`
-            });
-          }
-        },
-
-        processBrakeTest(pose) {
-          const angle = this.calcJointAngle(pose.lHip, pose.lKnee, pose.lAnkle);
-          if (angle < this.minBrakeAngle) this.minBrakeAngle = angle;
-
-          if (this.minBrakeAngle < 165 && angle > this.minBrakeAngle + 5) {
-            const finalAngle = Math.round(this.minBrakeAngle);
-            const passed = (finalAngle >= 130 && finalAngle <= 155);
-            App.UI.updateBadges(`${finalAngle}°`, passed ? '合格' : '要練習');
-            this.finishSession({
-              testName: '🛑 てっぺき急停止ブレーキ',
-              rank: passed ? '【🌟 てっぺき急停止成功！】' : '【⚠️ ひざクニャ沈み込み】',
-              scoreLeftLabel: '前膝固定アングル',
-              scoreLeftVal: `${finalAngle}°`,
-              scoreRightLabel: 'ブレーキ制動判定',
-              scoreRightVal: passed ? '合格' : '要練習',
-              advice: passed ? '前膝がガツンと踏ん張り、パワーを逃さず地面に壁を作れたぞ！' : '膝が深く曲がりすぎて力が逃げちゃった！太ももとお尻でガチッと固めよう！'
-            });
-          }
-        },
-
-        calcJointAngle(A, B, C) {
-          const AB = Math.hypot(B.x - A.x, B.y - A.y);
-          const BC = Math.hypot(B.x - C.x, B.y - C.y);
-          const AC = Math.hypot(C.x - A.x, C.y - A.y);
-          const rad = Math.acos((AB * AB + BC * BC - AC * AC) / (2 * AB * BC));
-          return (rad * 180) / Math.PI || 180;
-        },
-
-        finishSession(resultData) {
+        finalizeRJTest() {
+          document.getElementById('active-prompt-banner').classList.add('hidden');
           App.State.mode = 'TEST_IDLE';
-          const banner = document.getElementById('active-prompt-banner');
-          if (banner) banner.classList.add('hidden');
 
-          App.Drill.stopLocalRecording();
-          App.Audio.playExplosion();
-          App.Audio.speak('テスト完了！診断レポートが出たぞ！');
+          const contactTimeSec = Math.max(0.12, (this.takeoffTime - this.touchStartTime) / 1000);
+          const flightTimeSec = Math.max(0.2, (this.landingTime - this.takeoffTime) / 1000);
 
-          const titleElem = document.getElementById('report-title-rank');
-          const testNameElem = document.getElementById('report-test-name');
-          const lScore = document.getElementById('report-score-contact');
-          const rScore = document.getElementById('report-score-height');
-          const lLabel = document.getElementById('report-label-left');
-          const rLabel = document.getElementById('report-label-right');
-          const advice = document.getElementById('report-advice-text');
+          // 物理滞空時間公式: h = 1/8 * g * t^2
+          const heightByFlightCm = (1 / 8) * App.CONFIG.G * Math.pow(flightTimeSec, 2) * 100;
+          // 骨盤ピクセル追従値
+          const heightByPelvisCm = (this.baselineHipY - this.peakHipY) / App.State.calibration.pxPerCm;
+          // ハイブリッド統合（滞空時間をベースとしつつ、骨盤追従値で過大評価を補正）
+          const finalHeightCm = Math.min(heightByFlightCm, heightByPelvisCm * 1.25);
 
-          if (titleElem) titleElem.innerText = resultData.rank;
-          if (testNameElem) testNameElem.innerText = resultData.testName;
-          if (lScore) lScore.innerText = resultData.scoreLeftVal;
-          if (rScore) rScore.innerText = resultData.scoreRightVal;
-          if (lLabel) lLabel.innerText = resultData.scoreLeftLabel;
-          if (rLabel) rLabel.innerText = resultData.scoreRightLabel;
-          if (advice) advice.innerHTML = resultData.advice;
+          App.UI.updateBadges(contactTimeSec.toFixed(2), Math.round(finalHeightCm));
 
-          App.Storage.saveLog({
-            date: new Date().toLocaleDateString('ja-JP'),
-            type: App.State.testType,
-            mainVal: resultData.scoreLeftVal,
-            subVal: resultData.scoreRightVal,
-            rank: resultData.rank
+          this.stopLocalRecordingAndShowReplay((videoUrl) => {
+            this.showResultModal('RJ', contactTimeSec, finalHeightCm, videoUrl);
           });
+        },
 
+        finalizeVerticalTest() {
+          document.getElementById('active-prompt-banner').classList.add('hidden');
+          App.State.mode = 'TEST_IDLE';
+          const heightCm = Math.max(15, (this.baselineHipY - this.peakHipY) / App.State.calibration.pxPerCm);
+
+          App.UI.updateBadges(null, Math.round(heightCm));
+          this.stopLocalRecordingAndShowReplay((videoUrl) => {
+            this.showResultModal('VERTICAL', null, heightCm, videoUrl);
+          });
+        },
+
+        abortWithFeedback(speechMsg) {
+          document.getElementById('active-prompt-banner').classList.add('hidden');
+          App.State.mode = 'TEST_IDLE';
+          this.fsmPhase = 0;
+          App.Audio.speak(speechMsg);
+          App.UI.showToast(speechMsg);
+          if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+            this.mediaRecorder.stop();
+          }
+        },
+
+        showResultModal(type, contactSec, heightCm, videoUrl) {
+          const rankTitle = document.getElementById('report-title-rank');
+          const testName = document.getElementById('report-test-name');
+          const adviceText = document.getElementById('report-advice-text');
+          const videoElem = document.getElementById('report-replay-video');
+          const placeholder = document.getElementById('report-replay-placeholder');
+
+          if (videoUrl) {
+            videoElem.src = videoUrl;
+            videoElem.playbackRate = 0.5; // 0.5倍速スロー再生
+            videoElem.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+            videoElem.play();
+          } else {
+            videoElem.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+          }
+
+          let rankBadge = '';
+          let advice = '';
+
+          if (type === 'RJ') {
+            testName.innerText = '💥 連続トランポリン跳び';
+            document.getElementById('report-label-left').innerText = '足裏タッチスピード';
+            document.getElementById('report-label-right').innerText = 'ロケットジャンプ';
+            document.getElementById('report-score-contact').innerText = `${contactSec.toFixed(2)} 秒`;
+            document.getElementById('report-score-height').innerText = `${Math.round(heightCm)} cm`;
+
+            if (contactSec <= 0.20 && heightCm >= 35) {
+              rankBadge = '【🌟 SUPER BRAWLER達成！】';
+              advice = '🚀 アキレス腱のスーパーゴムパチンコが火を吹いているぞ！地面を押す時間が短く、空へ飛び出す力がバツグンだ！プロ野球選手クラスの瞬発力だ！';
+            } else if (contactSec <= 0.26) {
+              rankBadge = '【⚡ LEVEL 2 実戦バネマスター】';
+              advice = '⚡ ナイス反発！地面のパワーをしっかりもらえているぞ！足首をもっとガチッと固めれば、神速パチンタッチになれるぞ！';
+            } else {
+              rankBadge = '【★ 覚醒バネ Lv.1（伸びしろMAX！）】';
+              advice = '⚠️ 膝がクニャッと沈み込みすぎちゃった！地面は熱い鉄板だと思って、つま先でパチンと弾き返してみよう！';
+            }
+          }
+
+          rankTitle.innerText = rankBadge;
+          adviceText.innerText = advice;
+
+          App.Audio.playFanfare();
+          App.Audio.speak(`${rankBadge}！すごいぞ！`);
           App.UI.openModal('modal-report');
-        },
 
-        abortAndRetry(reasonVoice) {
-          App.State.mode = 'TEST_IDLE';
-          const banner = document.getElementById('active-prompt-banner');
-          if (banner) banner.classList.add('hidden');
-          App.Audio.speak(reasonVoice);
-          App.UI.showToast(`⚠️ ${reasonVoice}`);
+          // 履歴に保存
+          App.Storage.saveLog({
+            type,
+            contactSec,
+            heightCm: Math.round(heightCm),
+            rankBadge,
+            date: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
+          });
         }
       },
 
       Drill: {
+        comboCount: 0,
+        ultProgress: 0,
+        remainingSec: 10,
         timerInterval: null,
-        timeLeft: 10.0,
-        combo: 0,
-        recorder: null,
-        recordedChunks: [],
-        lastBounceTime: 0,
+        lastJumpTime: 0,
 
-        startDrillSession() {
-          App.Audio.init();
-          const hud = document.getElementById('drill-hud-overlay');
-          const comboElem = document.getElementById('drill-combo-count');
-          const timerElem = document.getElementById('drill-timer-count');
-          const ultBar = document.getElementById('drill-ult-bar');
-          if (hud) hud.classList.remove('hidden');
+        toggle() {
+          App.Audio.unlockAudioOnFirstTouch();
+          if (!App.State.calibration.isCalibrated) {
+            App.UI.openCalibrationModal();
+            return;
+          }
 
-          this.timeLeft = 10.0;
-          this.combo = 0;
-          if (comboElem) comboElem.innerText = '0';
-          if (timerElem) timerElem.innerText = '10.0';
-          if (ultBar) ultBar.style.width = '0%';
+          if (App.State.mode === 'DRILL_ACTIVE') {
+            this.stop();
+          } else {
+            this.start();
+          }
+        },
 
+        start() {
           App.State.mode = 'DRILL_ACTIVE';
-          this.startLocalRecording();
-          App.Audio.speak('10秒ウルトドリルスタート！跳べ！');
+          this.comboCount = 0;
+          this.ultProgress = 0;
+          this.remainingSec = App.CONFIG.DRILL_DURATION_SEC;
+
+          document.getElementById('drill-hud-overlay').classList.remove('hidden');
+          document.getElementById('btn-drill-text').innerText = 'ドリル停止';
+
+          App.Audio.speak('10秒ウルトドリルスタート！跳んで跳んで跳びまくれ！');
+          App.Audio.playTone(880, 0.2, 'square', 0.3);
 
           this.timerInterval = setInterval(() => {
-            this.timeLeft -= 0.1;
-            if (this.timeLeft <= 0) {
-              clearInterval(this.timerInterval);
-              if (hud) hud.classList.add('hidden');
-              this.stopLocalRecording();
-              App.Audio.playExplosion();
-              App.Audio.speak(`ドリル終了！最大コンボは${this.combo}回だ！`);
-              App.UI.showToast(`🔥 ドリル完了！コンボ: ${this.combo}！`);
-              App.State.mode = 'TEST_IDLE';
+            this.remainingSec -= 0.1;
+            if (this.remainingSec <= 0) {
+              this.finish();
             } else {
-              if (timerElem) timerElem.innerText = Math.max(0, this.timeLeft).toFixed(1);
+              document.getElementById('drill-timer-count').innerText = this.remainingSec.toFixed(1);
             }
           }, 100);
         },
 
-        updateFrame(pose) {
-          const now = pose.time;
-          if (now - this.lastBounceTime > 260) {
-            if (pose.midAnkleY < 0.88) {
-              this.lastBounceTime = now;
-              this.combo++;
-              const comboElem = document.getElementById('drill-combo-count');
-              const ultBar = document.getElementById('drill-ult-bar');
-              if (comboElem) comboElem.innerText = this.combo;
+        processFrame(landmarks, w, h) {
+          const lAnkle = landmarks[27];
+          const rAnkle = landmarks[28];
+          if (!lAnkle || !rAnkle) return;
 
-              const charge = Math.min(100, this.combo * 10);
-              if (ultBar) ultBar.style.width = `${charge}%`;
+          const now = performance.now();
+          const ankleY = Math.min(lAnkle.y, rAnkle.y) * h;
 
-              const noteFreq = 380 + (this.combo * 35);
-              App.Audio.playSE(Math.min(1100, noteFreq), 0.08, 'triangle');
-              App.Sensor.emitSpark(pose.midAnkleX * pose.canvasW, pose.midAnkleY * pose.canvasH, 12, '#f59e0b');
+          // 跳躍トリガー（0.3秒間隔制限）
+          if (now - this.lastJumpTime > 320 && ankleY < h * 0.78) {
+            this.lastJumpTime = now;
+            this.comboCount++;
+            this.ultProgress = Math.min(100, this.ultProgress + 12);
 
-              if (charge >= 100 && this.combo === 10) {
-                App.Audio.playExplosion();
-                App.Audio.speak('必殺スーパーバネ解放！！');
-                App.Sensor.emitSpark(pose.canvasW / 2, pose.canvasH / 2, 35, '#fef08a');
-              }
+            document.getElementById('drill-combo-count').innerText = this.comboCount;
+            document.getElementById('drill-ult-bar').style.width = `${this.ultProgress}%`;
+
+            // 音階上昇コンボ音
+            const pitch = 440 + Math.min(12, this.comboCount) * 45;
+            App.Audio.playTone(pitch, 0.08, 'triangle', 0.28);
+
+            if (this.ultProgress >= 100) {
+              App.Audio.playExplosion();
+              App.UI.showToast('💥 必殺スーパーバネウルト解放！！');
             }
           }
         },
 
-        startLocalRecording() {
-          const canvas = document.getElementById('ar-canvas');
-          if (!canvas || !canvas.captureStream) return;
-          try {
-            const stream = canvas.captureStream(30);
-            this.recordedChunks = [];
-            this.recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-            this.recorder.ondataavailable = (e) => {
-              if (e.data.size > 0) this.recordedChunks.push(e.data);
-            };
-            this.recorder.start();
-          } catch (e) {}
+        finish() {
+          clearInterval(this.timerInterval);
+          App.State.mode = 'TEST_IDLE';
+          document.getElementById('drill-hud-overlay').classList.add('hidden');
+          document.getElementById('btn-drill-text').innerText = '10秒ドリル';
+
+          App.Audio.playFanfare();
+          App.Audio.speak(`タイムアップ！${this.comboCount}コンボ達成！ナイスガッツだ！`);
+          App.UI.showToast(`🔥 ドリル終了！記録: ${this.comboCount} コンボ！`);
         },
 
-        stopLocalRecording() {
-          if (!this.recorder || this.recorder.state === 'inactive') return;
-          try {
-            this.recorder.onstop = () => {
-              const blob = new Blob(this.recordedChunks, { type: 'video/webm' });
-              const videoUrl = URL.createObjectURL(blob);
-              const replayVideo = document.getElementById('report-replay-video');
-              const placeholder = document.getElementById('report-replay-placeholder');
-
-              if (replayVideo) {
-                replayVideo.src = videoUrl;
-                replayVideo.playbackRate = 0.5;
-                replayVideo.classList.remove('hidden');
-                replayVideo.play().catch(() => {});
-              }
-              if (placeholder) placeholder.classList.add('hidden');
-            };
-            this.recorder.stop();
-          } catch (e) {}
+        stop() {
+          clearInterval(this.timerInterval);
+          App.State.mode = 'TEST_IDLE';
+          document.getElementById('drill-hud-overlay').classList.add('hidden');
+          document.getElementById('btn-drill-text').innerText = '10秒ドリル';
         }
       },
 
       Storage: {
-        STORAGE_KEY: 'brawl_jump_dock_logs',
+        KEY: 'brawl_jump_logs_v1',
 
-        saveLog(data) {
+        saveLog(entry) {
           try {
             const logs = this.loadLogs();
-            logs.unshift(data);
+            logs.unshift(entry);
             if (logs.length > 20) logs.pop();
-            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(logs));
+            localStorage.setItem(this.KEY, JSON.stringify(logs));
+            this.renderHistory();
           } catch (e) {}
         },
 
         loadLogs() {
           try {
-            return JSON.parse(localStorage.getItem(this.STORAGE_KEY)) || [];
+            const data = localStorage.getItem(this.KEY);
+            return data ? JSON.parse(data) : [];
           } catch (e) {
             return [];
           }
         },
 
         clearLogs() {
-          localStorage.removeItem(this.STORAGE_KEY);
+          localStorage.removeItem(this.KEY);
           this.renderHistory();
-          App.UI.showToast('🗑️ 履歴を消去しました');
+          App.UI.showToast('履歴をリセットしました');
         },
 
         renderHistory() {
-          const list = document.getElementById('history-log-list');
-          if (!list) return;
+          const container = document.getElementById('history-log-list');
+          if (!container) return;
           const logs = this.loadLogs();
-          if (!logs.length) {
-            list.innerHTML = '<div class="text-center text-slate-400 py-4">まだ記録がないよ！テストをやってみよう！</div>';
+
+          if (logs.length === 0) {
+            container.innerHTML = '<div class="text-slate-400 text-center py-6">まだ測定の記録がないぞ！<br>ピシッと跳んでみよう！</div>';
             return;
           }
-          list.innerHTML = logs.map(l => `
-            <div class="panel-brawl p-2 bg-slate-900/90 flex items-center justify-between border-slate-700">
-              <div class="flex flex-col">
-                <span class="text-[10px] text-slate-400">${l.date} - ${l.type}</span>
-                <span class="text-xs font-black text-amber-300">${l.rank}</span>
+
+          container.innerHTML = logs.map(l => `
+            <div class="panel-brawl p-2 bg-slate-900/80 flex justify-between items-center border-slate-700">
+              <div>
+                <span class="text-[10px] text-amber-400 font-black">${l.date} - ${l.type}</span>
+                <div class="text-xs font-bold text-white">${l.rankBadge || '測定完了'}</div>
               </div>
               <div class="text-right">
-                <span class="text-xs font-black text-white">${l.mainVal}</span>
-                <span class="text-[10px] text-sky-400 ml-1">${l.subVal}</span>
+                <span class="text-xs font-black text-sky-400">${l.heightCm} cm</span>
+                ${l.contactSec ? `<span class="text-[10px] text-slate-400 block">${l.contactSec.toFixed(2)}s</span>` : ''}
               </div>
             </div>
           `).join('');
@@ -1368,13 +1406,17 @@
       },
 
       init() {
-        this.Sensor.initCamera();
-        this.Sensor.initGyro();
-        window.addEventListener('resize', () => this.Sensor.resizeCanvas());
+        // 初回画面タップでオーディオアンロック
+        document.body.addEventListener('click', () => App.Audio.unlockAudioOnFirstTouch(), { once: true });
+        document.body.addEventListener('touchstart', () => App.Audio.unlockAudioOnFirstTouch(), { once: true });
+
+        // センサー＆カメラ初期化
+        this.Sensor.init();
+        this.Storage.renderHistory();
       }
     };
 
-    // DOMロード完了時に自動起動
+    // DOM読み込み完了時にアプリ起動
     window.addEventListener('DOMContentLoaded', () => {
       App.init();
     });
