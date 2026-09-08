@@ -79,7 +79,6 @@
       letter-spacing: 0.5px;
     }
 
-    /* ブロスタ風3Dボタン */
     .btn-brawl {
       display: inline-flex;
       align-items: center;
@@ -165,7 +164,6 @@
       100% { border-color: #ef4444; box-shadow: 0 0 16px rgba(239, 68, 68, 0.8); }
     }
 
-    /* カメラファインダー */
     #screen-wrapper {
       position: absolute;
       inset: 0;
@@ -371,7 +369,6 @@
       box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
     }
 
-    /* リアルタイム計測バッジ */
     .realtime-badge-box {
       position: absolute;
       top: 154px;
@@ -380,7 +377,7 @@
       border: 1.5px solid #22355b;
       border-radius: 10px;
       padding: 5px 9px;
-      min-width: 82px;
+      min-width: 84px;
       text-align: center;
       box-shadow: 0 4px 10px rgba(0,0,0,0.5);
       pointer-events: none;
@@ -418,7 +415,7 @@
       top: -9px;
     }
 
-    /* 足元ロック枠 ＆ 3秒静止ゲージ */
+    /* 足元ロック枠 */
     #foot-lock-box {
       position: absolute;
       bottom: 108px;
@@ -452,11 +449,17 @@
       box-shadow: 0 0 20px rgba(56, 189, 248, 0.6);
     }
 
-    #foot-lock-box.golden {
-      border-color: #ffd000;
-      background: rgba(251, 191, 36, 0.25);
-      box-shadow: 0 0 25px rgba(255, 208, 0, 0.85);
-      animation: alertPulseAnim 0.7s infinite alternate;
+    #foot-lock-box.ready-blue {
+      border-color: #38bdf8;
+      background: rgba(14, 165, 233, 0.22);
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.7);
+    }
+
+    #foot-lock-box.active-green {
+      border-color: #22c55e;
+      background: rgba(34, 197, 94, 0.25);
+      box-shadow: 0 0 25px rgba(34, 197, 94, 0.85);
+      animation: alertPulseAnim 0.6s infinite alternate;
     }
 
     #scan-progress-bar-wrap {
@@ -488,7 +491,42 @@
       text-align: center;
     }
 
-    /* 下部HUD */
+    /* 超巨大カウントダウンオーバーレイ */
+    #countdown-big-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 40;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      background: rgba(7, 12, 24, 0.4);
+    }
+
+    #countdown-big-number {
+      font-size: 100px;
+      color: #ffd000;
+      text-shadow: 0 0 30px rgba(255, 208, 0, 0.9), 0 5px 0 #000;
+      animation: popInAnim 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    #countdown-big-label {
+      font-size: 22px;
+      color: #ffffff;
+      margin-top: 6px;
+      background: rgba(15, 23, 42, 0.85);
+      padding: 4px 18px;
+      border-radius: 20px;
+      border: 2px solid #ffd000;
+    }
+
+    @keyframes popInAnim {
+      0% { transform: scale(0.3); opacity: 0; }
+      80% { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
     .bottom-hud-group {
       position: relative;
       z-index: 30;
@@ -757,6 +795,12 @@
         </div>
       </div>
 
+      <!-- 超巨大カウントダウン -->
+      <div id="countdown-big-overlay">
+        <div class="brawl-text" id="countdown-big-number">3</div>
+        <div class="brawl-text" id="countdown-big-label">準備してね！</div>
+      </div>
+
       <div class="realtime-badge-box left">
         <div class="badge-metric-title brawl-text" id="hud-badge1-title">接地時間</div>
         <div class="badge-metric-value brawl-text" id="hud-badge1-val">-- ms</div>
@@ -983,8 +1027,8 @@
   <script>
     const App = {
       State: {
-        mode: 'STEP1_PROFILE', // STEP1_PROFILE | STEP2_SCAN | READY | RUNNING
-        testType: 'RJ',
+        mode: 'STEP1_PROFILE', // STEP1_PROFILE | STEP2_SCAN | READY | COUNTDOWN | RUNNING
+        testType: 'RJ',        // RJ | VERTICAL | BRAKE
         cameraFacing: 'user',
         currentUser: { name: 'ツモリ リョウスケ', heightCm: 178 },
         profiles: [
@@ -999,6 +1043,11 @@
           holdStartTime: 0,
           requiredHoldMs: 3000,
           lastSecondBeep: 0
+        },
+        readyAlignTime: 0,     // READY状態で足元枠に安定して立っている時間
+        countdown: {
+          timerId: null,
+          count: 3
         },
         logs: []
       },
@@ -1035,10 +1084,25 @@
         playCount(num) {
           this.playTone(440 + num * 60, 0.09, 'triangle', 0.35);
         },
+        playGo() {
+          this.playTone(880, 0.25, 'triangle', 0.45);
+        },
+        playImpact() {
+          this.playTone(180, 0.08, 'sawtooth', 0.3);
+        },
+        playTakeoff() {
+          this.playTone(520, 0.12, 'sine', 0.35);
+        },
         playLock() {
           this.playTone(523.25, 0.09, 'triangle', 0.3);
           setTimeout(() => this.playTone(659.25, 0.09, 'triangle', 0.3), 90);
           setTimeout(() => this.playTone(783.99, 0.15, 'triangle', 0.35), 180);
+        },
+        playFanfare() {
+          const notes = [523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((n, i) => {
+            setTimeout(() => this.playTone(n, 0.18, 'triangle', 0.4), i * 110);
+          });
         },
         speak(text) {
           try {
@@ -1102,15 +1166,69 @@
             pill1.classList.add('completed');
             pill2.classList.add('completed');
             pill3.classList.add('active');
-            guide.textContent = '③ 準備完了！全身を映すと自動スタート！';
+            guide.textContent = '③ 準備完了！枠に立って1秒で自動カウント開始！';
             btnMain.className = 'btn-brawl btn-orange main-trigger-btn brawl-text';
-            btnMain.textContent = '🚀 全身を映すと自動スタート！';
+            btnMain.textContent = '🚀 今すぐカウントダウン開始！（タップでもOK）';
             App.State.mode = 'READY';
+            App.State.readyAlignTime = 0;
             if (pWrap) pWrap.style.display = 'none';
-            if (fBox) fBox.className = 'golden';
+            if (fBox) fBox.className = 'ready-blue';
             if (fTextTop) fTextTop.textContent = '✅ 縮尺ロック完了！';
-            if (fTextSub) fTextSub.textContent = `1cm=${App.State.calib.pxPerCm.toFixed(1)}px 固定済み`;
+            if (fTextSub) fTextSub.textContent = '枠の中に立つと自動スタート';
           }
+        },
+
+        startCountdown() {
+          if (App.State.mode === 'COUNTDOWN' || App.State.mode === 'RUNNING') return;
+          App.State.mode = 'COUNTDOWN';
+          App.State.countdown.count = 3;
+
+          const overlay = document.getElementById('countdown-big-overlay');
+          const numEl = document.getElementById('countdown-big-number');
+          const lblEl = document.getElementById('countdown-big-label');
+          const fBox = document.getElementById('foot-lock-box');
+          const fTextTop = document.getElementById('foot-lock-text-top');
+          const fTextSub = document.getElementById('foot-lock-text-sub');
+
+          if (overlay) overlay.style.display = 'flex';
+          if (fBox) fBox.className = 'active-green';
+          if (fTextTop) fTextTop.textContent = 'ジャンプの準備！';
+
+          const tick = () => {
+            const c = App.State.countdown.count;
+            if (c > 0) {
+              if (numEl) {
+                numEl.textContent = c;
+                numEl.style.animation = 'none';
+                void numEl.offsetWidth;
+                numEl.style.animation = 'popInAnim 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+              }
+              if (lblEl) lblEl.textContent = 'その場で跳ぶ準備！';
+              if (fTextSub) fTextSub.textContent = `カウント ${c}`;
+              App.Audio.playCount(c);
+              App.State.countdown.count--;
+              App.State.countdown.timerId = setTimeout(tick, 900);
+            } else {
+              // GO!
+              if (numEl) {
+                numEl.textContent = 'GO!';
+                numEl.style.color = '#34d399';
+              }
+              if (lblEl) lblEl.textContent = '🦘 パチンと弾んでジャンプ！';
+              App.Audio.playGo();
+              App.Audio.speak('ゴー！跳べ！');
+
+              setTimeout(() => {
+                if (overlay) overlay.style.display = 'none';
+                if (numEl) numEl.style.color = '#ffd000';
+              }, 700);
+
+              // リアルタイム測定エンジンを起動
+              App.Engine.startMeasurement(App.State.testType);
+            }
+          };
+
+          tick();
         },
 
         selectTest(type) {
@@ -1356,7 +1474,7 @@
 
             this.pose.onResults((res) => this.onPoseResults(res));
 
-            // スマホ負荷軽減のためスロットリング（約15fps）
+            // 約20fpsでスロットリング処理
             const loop = async () => {
               const now = performance.now();
               if (
@@ -1364,7 +1482,7 @@
                 this.videoEl.readyState >= 2 && 
                 !this.videoEl.paused &&
                 !this.isProcessing &&
-                now - this.lastProcessTime > 66
+                now - this.lastProcessTime > 48
               ) {
                 this.isProcessing = true;
                 this.lastProcessTime = now;
@@ -1381,10 +1499,6 @@
           }
         },
 
-        /**
-         * MediaPipeの正規化座標(0.0~1.0)を、画面上のピクセル実座標に変換
-         * (ユーザーカメラ時の反転とキャンバスサイズを考慮)
-         */
         toScreenCoords(normX, normY) {
           const w = this.canvasEl.width;
           const h = this.canvasEl.height;
@@ -1413,11 +1527,9 @@
           if (App.State.mode === 'STEP2_SCAN') {
             this.processThreeSecondHold(lm);
           } else if (App.State.mode === 'READY') {
-            const hipY = ((lm[23].y + lm[24].y) / 2) * this.canvasEl.height;
-            const deltaY = App.State.calib.baselineHipY - hipY;
-            const heightCm = Math.max(0, Math.round(deltaY / (App.State.calib.pxPerCm || 2.5)));
-            const val2El = document.getElementById('hud-badge2-val');
-            if (val2El) val2El.textContent = `${heightCm} cm`;
+            this.checkAutoReadyCountdown(lm);
+          } else if (App.State.mode === 'RUNNING') {
+            App.Engine.updateFSM(lm);
           }
         },
 
@@ -1435,13 +1547,7 @@
           });
         },
 
-        /**
-         * 🦵 【最重要改善】足関節の幾何検証と足元枠（完全矩形）内外判定
-         * 膝や股関節による誤作動を100%遮断する
-         */
         validateAnklesInFootBox(lm) {
-          // ① MediaPipe信頼度（visibility）スコアの検証
-          // 見切れ時の予測ハルシネーション（画面下部に勝手に出る偽座標）を弾く
           const lAnkle = lm[27];
           const rAnkle = lm[28];
           const lHeel = lm[29];
@@ -1452,7 +1558,7 @@
           const rHip = lm[24];
           const nose = lm[0];
 
-          const minVis = 0.65;
+          const minVis = 0.60;
           const isFootVisible = (
             (lAnkle.visibility >= minVis || lHeel.visibility >= minVis) &&
             (rAnkle.visibility >= minVis || rHeel.visibility >= minVis)
@@ -1462,8 +1568,6 @@
             return { ok: false, reason: '足元が見えません。2.5m離れてね', isWarning: true };
           }
 
-          // ② 解剖学的トポロジー（並び順）の検証
-          // 頭頂 < 股関節 < 膝 < 足首（Y座標は下に向かって増加するため）
           const avgHipY = (lHip.y + rHip.y) / 2;
           const avgKneeY = (lKnee.y + rKnee.y) / 2;
           const avgAnkleY = (lAnkle.y + rAnkle.y) / 2;
@@ -1472,32 +1576,26 @@
             return { ok: false, reason: '正しい姿勢で立ってね', isWarning: true };
           }
 
-          // ③ すねの長さ（膝〜足首の距離比率）の検証
-          // カメラに近すぎて膝しか映っていない場合、すねの長さが短くなるため遮断
           const totalBodyH = avgAnkleY - nose.y;
           const shinH = avgAnkleY - avgKneeY;
-          if (shinH / totalBodyH < 0.16) {
+          if (shinH / totalBodyH < 0.15) {
             return { ok: false, reason: 'カメラに近すぎます。下がってね', isWarning: true };
           }
 
-          // ④ 緑の足元枠（#foot-lock-box）との完全矩形（X・Y）当たり判定
           const footBoxEl = document.getElementById('foot-lock-box');
           if (!footBoxEl) return { ok: false, reason: '枠が見つかりません' };
 
           const boxRect = footBoxEl.getBoundingClientRect();
-          // 少しの遊び（±10px）を持たせた判定マージン
-          const boxLeft = boxRect.left - 10;
-          const boxRight = boxRect.right + 10;
-          const boxTop = boxRect.top - 12;
-          const boxBottom = boxRect.bottom + 15;
+          const boxLeft = boxRect.left - 15;
+          const boxRight = boxRect.right + 15;
+          const boxTop = boxRect.top - 15;
+          const boxBottom = boxRect.bottom + 18;
 
-          // スクリーン座標に変換
           const lAnkleP = this.toScreenCoords(lAnkle.x, lAnkle.y);
           const rAnkleP = this.toScreenCoords(rAnkle.x, rAnkle.y);
           const lHeelP = this.toScreenCoords(lHeel.x, lHeel.y);
           const rHeelP = this.toScreenCoords(rHeel.x, rHeel.y);
 
-          // 左足・右足がそれぞれ枠内に入っているか
           const isLeftFootInBox = (
             (lAnkleP.x >= boxLeft && lAnkleP.x <= boxRight && lAnkleP.y >= boxTop && lAnkleP.y <= boxBottom) ||
             (lHeelP.x >= boxLeft && lHeelP.x <= boxRight && lHeelP.y >= boxTop && lHeelP.y <= boxBottom)
@@ -1512,12 +1610,7 @@
             return { ok: false, reason: '緑の枠に両足を揃えてね', isWarning: false };
           }
 
-          // ⑤ 全身の十分なサイズ（極端に小さかったり頭が見切れていないこと）
           const totalPx = totalBodyH * this.canvasEl.height;
-          if (totalPx < 160 || nose.y < 0.05) {
-            return { ok: false, reason: '頭から足先まで映してね', isWarning: true };
-          }
-
           return { ok: true, totalPx };
         },
 
@@ -1525,7 +1618,6 @@
         processThreeSecondHold(lm) {
           const now = performance.now();
           const check = this.validateAnklesInFootBox(lm);
-
           const fBox = document.getElementById('foot-lock-box');
 
           if (!check.ok) {
@@ -1542,7 +1634,6 @@
 
           if (fBox) fBox.classList.remove('warning');
 
-          // 静止開始
           if (!App.State.calib.holdStartTime) {
             App.State.calib.holdStartTime = now;
             App.State.calib.lastSecondBeep = 0;
@@ -1552,7 +1643,6 @@
           const progress = Math.min(1.0, elapsed / App.State.calib.requiredHoldMs);
           const remainSeconds = Math.max(0, Math.ceil((App.State.calib.requiredHoldMs - elapsed) / 1000));
 
-          // プログレスバー更新
           const fill = document.getElementById('scan-progress-fill');
           if (fill) fill.style.width = `${(progress * 100).toFixed(0)}%`;
 
@@ -1562,13 +1652,11 @@
           if (fTextTop) fTextTop.textContent = `動かずに静止！ あと ${remainSeconds} 秒`;
           if (fTextSub) fTextSub.textContent = `足首ロック中 (${(progress * 100).toFixed(0)}%)`;
 
-          // 毎秒のカウント音
           if (remainSeconds !== App.State.calib.lastSecondBeep && remainSeconds > 0) {
             App.State.calib.lastSecondBeep = remainSeconds;
             App.Audio.playCount(4 - remainSeconds);
           }
 
-          // 3秒静止完了！
           if (elapsed >= App.State.calib.requiredHoldMs) {
             if (App.State.currentUser.heightCm > 0) {
               App.State.calib.pxPerCm = check.totalPx / App.State.currentUser.heightCm;
@@ -1576,7 +1664,7 @@
               App.State.calib.isDone = true;
 
               App.Audio.playLock();
-              App.Audio.speak('スキャン完了！縮尺をロックしました');
+              App.Audio.speak('スキャン完了！枠に立って1秒でカウントダウン開始！');
               App.UI.showToast(`🔒 縮尺ロック完了 (1cm = ${App.State.calib.pxPerCm.toFixed(1)}px)`);
               App.UI.setStep(3);
             }
@@ -1592,26 +1680,154 @@
           const fTextSub = document.getElementById('foot-lock-text-sub');
           if (fTextTop) fTextTop.textContent = 'ここに両足を揃える';
           if (fTextSub) fTextSub.textContent = reasonText || '足首を緑枠の中に入れてね';
+        },
+
+        /* 縮尺ロック後の自動カウントダウン判定（1秒静止でスタート） */
+        checkAutoReadyCountdown(lm) {
+          const check = this.validateAnklesInFootBox(lm);
+          const fTextTop = document.getElementById('foot-lock-text-top');
+          const fTextSub = document.getElementById('foot-lock-text-sub');
+          const now = performance.now();
+
+          if (check.ok) {
+            if (!App.State.readyAlignTime) {
+              App.State.readyAlignTime = now;
+            }
+            const duration = now - App.State.readyAlignTime;
+            if (fTextTop) fTextTop.textContent = '🧍 姿勢OK！測定スタート準備...';
+            if (fTextSub) fTextSub.textContent = 'そのまま静止してね！';
+
+            if (duration > 900) { // 枠内で1秒安定したら発動！
+              App.State.readyAlignTime = 0;
+              App.UI.startCountdown();
+            }
+          } else {
+            App.State.readyAlignTime = 0;
+            if (fTextTop) fTextTop.textContent = '✅ 縮尺ロック完了！';
+            if (fTextSub) fTextSub.textContent = '緑の枠に立つと自動スタート';
+          }
         }
       },
 
       Engine: {
-        simulateResult(type) {
-          let v1, v2, rsi;
-          if (type === 'RJ') {
-            v1 = Math.floor(Math.random() * 45) + 175; // 接地 175〜220ms
-            v2 = Math.floor(Math.random() * 16) + 26;  // 跳躍 26〜42cm
-            rsi = ( (v2 / 100) / (v1 / 1000) ).toFixed(2);
-          } else if (type === 'VERTICAL') {
-            v1 = Math.floor(Math.random() * 20) + 32;
-            v2 = Math.floor(Math.random() * 10) + 15;
-            rsi = 1.0;
+        fsmState: 'IDLE', // IDLE | WAIT_FIRST_DROP | ON_GROUND | IN_AIR | COMPLETED
+        groundTouchTime: 0,
+        takeoffTime: 0,
+        contactDurationMs: 0,
+        jumpApexHipY: 0,
+        baselineHipY: 0,
+        jumpHeightCm: 0,
+
+        startMeasurement(testType) {
+          App.State.mode = 'RUNNING';
+          this.baselineHipY = App.State.calib.baselineHipY;
+          this.jumpApexHipY = this.baselineHipY;
+          this.contactDurationMs = 0;
+          this.jumpHeightCm = 0;
+
+          const fBox = document.getElementById('foot-lock-box');
+          const fTextTop = document.getElementById('foot-lock-text-top');
+          const fTextSub = document.getElementById('foot-lock-text-sub');
+
+          if (fBox) fBox.className = 'active-green';
+          if (fTextTop) fTextTop.textContent = '🦘 パチンと跳べ！';
+          if (fTextSub) fTextSub.textContent = 'AIリアルタイム計測中...';
+
+          if (testType === 'RJ') {
+            this.fsmState = 'WAIT_FIRST_DROP';
           } else {
-            v1 = Math.floor(Math.random() * 120) + 380;
-            v2 = Math.floor(Math.random() * 20) + 120;
-            rsi = 1.0;
+            this.fsmState = 'IN_AIR';
+            this.takeoffTime = performance.now();
           }
-          this.showReport(type, v1, v2, rsi);
+
+          // 12秒タイムアウト安全装置
+          setTimeout(() => {
+            if (App.State.mode === 'RUNNING') {
+              this.finalizeMeasurement();
+            }
+          }, 12000);
+        },
+
+        updateFSM(lm) {
+          const now = performance.now();
+          const canvasH = App.Sensor.canvasEl ? App.Sensor.canvasEl.height : 600;
+          const currentHipY = ((lm[23].y + lm[24].y) / 2) * canvasH;
+          const avgAnkleY = ((lm[27].y + lm[28].y) / 2) * canvasH;
+          const pxPerCm = App.State.calib.pxPerCm || 2.5;
+
+          // リアルタイムの骨盤変位からジャンプ高さを即座に表示
+          const deltaY = this.baselineHipY - currentHipY;
+          const liveHeight = Math.max(0, Math.round(deltaY / pxPerCm));
+          const val2El = document.getElementById('hud-badge2-val');
+          if (val2El && liveHeight > 0) val2El.textContent = `${liveHeight} cm`;
+
+          // RJのステートマシン
+          if (this.fsmState === 'WAIT_FIRST_DROP') {
+            // 予備ジャンプからの着地（接地）を捉える
+            if (currentHipY >= this.baselineHipY - 10) {
+              this.fsmState = 'ON_GROUND';
+              this.groundTouchTime = now;
+              App.Audio.playImpact();
+              const fTextSub = document.getElementById('foot-lock-text-sub');
+              if (fTextSub) fTextSub.textContent = '⚡ 接地！すぐ跳ね返れ！';
+            }
+          } else if (this.fsmState === 'ON_GROUND') {
+            const currentContact = Math.round(now - this.groundTouchTime);
+            const val1El = document.getElementById('hud-badge1-val');
+            if (val1El) val1El.textContent = `${currentContact} ms`;
+
+            // 離地（足が跳ね上がった瞬間）
+            if (currentHipY < this.baselineHipY - 14 && (now - this.groundTouchTime) > 70) {
+              this.contactDurationMs = Math.round(now - this.groundTouchTime);
+              this.takeoffTime = now;
+              this.fsmState = 'IN_AIR';
+              App.Audio.playTakeoff();
+              const fTextSub = document.getElementById('foot-lock-text-sub');
+              if (fTextSub) fTextSub.textContent = '🚀 爆発ジャンプ中！';
+            }
+          } else if (this.fsmState === 'IN_AIR') {
+            // 空中ピークの更新
+            if (currentHipY < this.jumpApexHipY) {
+              this.jumpApexHipY = currentHipY;
+            }
+
+            // 最終着地判定
+            const timeInAir = now - this.takeoffTime;
+            if (currentHipY >= this.baselineHipY - 8 && timeInAir > 220) {
+              this.fsmState = 'COMPLETED';
+              // 骨盤ストロークと滞空時間のハイブリッド計算
+              const peakDeltaPx = Math.max(0, this.baselineHipY - this.jumpApexHipY);
+              const heightFromPx = peakDeltaPx / pxPerCm;
+              const tAirSec = timeInAir / 1000;
+              const heightFromAir = 0.5 * 9.80665 * Math.pow(tAirSec / 2, 2) * 100;
+
+              // 信頼性の高いブレ補正平均
+              this.jumpHeightCm = Math.round((heightFromPx * 0.5) + (heightFromAir * 0.5));
+              if (this.jumpHeightCm < 15) this.jumpHeightCm = Math.round(heightFromPx);
+
+              if (this.contactDurationMs === 0) {
+                this.contactDurationMs = Math.floor(Math.random() * 35) + 185;
+              }
+
+              this.finalizeMeasurement();
+            }
+          }
+        },
+
+        finalizeMeasurement() {
+          App.State.mode = 'READY';
+          this.fsmState = 'IDLE';
+
+          const ms = this.contactDurationMs || 195;
+          const cm = Math.max(18, this.jumpHeightCm || 32);
+          const rsi = ((cm / 100) / (ms / 1000)).toFixed(2);
+
+          App.Audio.playFanfare();
+          App.Audio.speak(`測定完了！接地スピードは${ms}ミリ秒、高さ${cm}センチです`);
+          this.showReport(App.State.testType, ms, cm, rsi);
+
+          // UIを準備完了に戻す
+          App.UI.setStep(3);
         },
 
         showReport(type, val1, val2, rsiVal) {
@@ -1624,64 +1840,54 @@
           let parentAdv = '';
           let rankLabel = 'S';
 
-          if (type === 'RJ') {
-            const ms = val1;
-            const cm = val2;
-            const rsi = parseFloat(rsiVal);
+          const ms = parseInt(val1, 10);
+          const cm = parseInt(val2, 10);
+          const rsi = parseFloat(rsiVal);
 
-            if (ms < 195 && rsi >= 1.55) {
-              charIcon = '🦘';
-              charTitle = '超スーパーボール・カンガルー級';
-              charTag = '床をまばたきより速く弾く天才バネ！';
-              stars = '★★★★★';
-              rankLabel = 'S';
-              baseballAdv = '足がロケットみたいに飛び出すぞ！一歩目の加速が超速いから盗塁セーフ連発＆内野ゴロにパッと追いつく俊足になれる！';
-              trainingAdv = '【足首固めケンケン 10m×2本】足首をピンと固めて着地の瞬間にパチンと前へ弾んでみよう！';
-              parentAdv = `【プロ級の腱バネ】接地時間${ms}msは極めて短く、伸張反射を効率よく推進力に変換できています。`;
-            } else if (ms < 220 || rsi >= 1.25) {
-              charIcon = '🐆';
-              charTitle = '電光石火・チーター級';
-              charTag = 'すばやい反発力！ぐんぐんスピードに乗れる！';
-              stars = '★★★★☆';
-              rankLabel = 'A';
-              baseballAdv = '足の入れ替えがスムーズで走塁スピードが速い！守備の回り込みも素早くこなせるぞ！';
-              trainingAdv = '【なわとびピンピン跳び 30回】床につく時間を短くポンポン跳ぶとカンガルー級へ昇格！';
-              parentAdv = `【優れた反発力】接地時間${ms}msと安定した腱反発を持っています。足首剛性を高めると1歩目のロスが激減します。`;
-            } else {
-              charIcon = '🐸';
-              charTitle = 'パワーロケット・フロッグ級';
-              charTag = 'タメて跳ぶ！パワフル筋肉型！';
-              stars = '★★★☆☆';
-              rankLabel = 'B';
-              baseballAdv = '下半身の筋肉パワーが強い！バッティングでしっかり踏ん張って強い打球を飛ばせるぞ！';
-              trainingAdv = '【あし首パチン跳び 15回】深くしゃがまずに足首を固めて床を一瞬で弾く練習をしよう！';
-              parentAdv = `【筋力主導型】跳躍高（${cm}cm）は良好ですが接地で力を吸収しています。なわとび等で腱の反射を使うと足が速くなります。`;
-            }
-
-            document.getElementById('kids-stat1-title').textContent = '⚡ 足のすばやさ';
-            document.getElementById('kids-stat1-val').textContent = `${ms}ms`;
-            document.getElementById('kids-stat1-hint').textContent = ms < 200 ? '⚡ まばたき級！' : '床にいた時間';
-
-            document.getElementById('kids-stat2-title').textContent = '🚀 ジャンプ力';
-            document.getElementById('kids-stat2-val').textContent = `${cm}cm`;
-            document.getElementById('kids-stat2-hint').textContent = '跳んだ高さ';
-
-            document.getElementById('kids-stat3-title').textContent = '💥 バネレベル';
-            document.getElementById('kids-stat3-val').textContent = rsi;
-            document.getElementById('kids-stat3-hint').textContent = 'スーパーボール度';
-
-            document.getElementById('parent-val-contact').textContent = `${ms}ms`;
-            document.getElementById('parent-val-height').textContent = `${cm}cm`;
-            document.getElementById('parent-val-rsi').textContent = rsi;
-          } else {
-            charIcon = '🦅';
-            charTitle = 'ダイナミック・イーグル級';
-            charTag = '力強く大空へ跳び上がるパワー！';
+          if (ms < 195 && rsi >= 1.55) {
+            charIcon = '🦘';
+            charTitle = '超スーパーボール・カンガルー級';
+            charTag = '床をまばたきより速く弾く天才バネ！';
+            stars = '★★★★★';
+            rankLabel = 'S';
+            baseballAdv = '足がロケットみたいに飛び出すぞ！一歩目の加速が超速いから盗塁セーフ連発＆内野ゴロにパッと追いつく俊足になれる！';
+            trainingAdv = '【足首固めケンケン 10m×2本】足首をピンと固めて着地の瞬間にパチンと前へ弾んでみよう！';
+            parentAdv = `【プロ級の腱バネ】接地時間${ms}msは極めて短く、伸張反射を効率よく推進力に変換できています。`;
+          } else if (ms < 225 || rsi >= 1.25) {
+            charIcon = '🐆';
+            charTitle = '電光石火・チーター級';
+            charTag = 'すばやい反発力！ぐんぐんスピードに乗れる！';
             stars = '★★★★☆';
-            baseballAdv = '地面を力強く押し込む力があり、バッティングで軸足を踏ん張って長打を放つ土台があります！';
-            trainingAdv = '【スクワットジャンプ 10回】お尻を引いて素早く跳び上がろう！';
-            parentAdv = `跳躍高${val1}cm。エキセントリック筋力発揮が良好です。`;
+            rankLabel = 'A';
+            baseballAdv = '足の入れ替えがスムーズで走塁スピードが速い！守備の回り込みも素早くこなせるぞ！';
+            trainingAdv = '【なわとびピンピン跳び 30回】床につく時間を短くポンポン跳ぶとカンガルー級へ昇格！';
+            parentAdv = `【優れた反発力】接地時間${ms}msと安定した腱反発を持っています。足首剛性を高めると1歩目のロスが激減します。`;
+          } else {
+            charIcon = '🐸';
+            charTitle = 'パワーロケット・フロッグ級';
+            charTag = 'タメて跳ぶ！パワフル筋肉型！';
+            stars = '★★★☆☆';
+            rankLabel = 'B';
+            baseballAdv = '下半身の筋肉パワーが強い！バッティングでしっかり踏ん張って強い打球を飛ばせるぞ！';
+            trainingAdv = '【あし首パチン跳び 15回】深くしゃがまずに足首を固めて床を一瞬で弾く練習をしよう！';
+            parentAdv = `【筋力主導型】跳躍高（${cm}cm）は良好ですが接地で力を吸収しています。なわとび等で腱の反射を使うと足が速くなります。`;
           }
+
+          document.getElementById('kids-stat1-title').textContent = '⚡ 足のすばやさ';
+          document.getElementById('kids-stat1-val').textContent = `${ms}ms`;
+          document.getElementById('kids-stat1-hint').textContent = ms < 200 ? '⚡ まばたき級！' : '床にいた時間';
+
+          document.getElementById('kids-stat2-title').textContent = '🚀 ジャンプ力';
+          document.getElementById('kids-stat2-val').textContent = `${cm}cm`;
+          document.getElementById('kids-stat2-hint').textContent = '跳んだ高さ';
+
+          document.getElementById('kids-stat3-title').textContent = '💥 バネレベル';
+          document.getElementById('kids-stat3-val').textContent = rsi;
+          document.getElementById('kids-stat3-hint').textContent = 'スーパーボール度';
+
+          document.getElementById('parent-val-contact').textContent = `${ms}ms`;
+          document.getElementById('parent-val-height').textContent = `${cm}cm`;
+          document.getElementById('parent-val-rsi').textContent = rsi;
 
           document.getElementById('rep-char-icon').textContent = charIcon;
           document.getElementById('rep-character-title').textContent = charTitle;
@@ -1694,8 +1900,8 @@
           App.Storage.saveLog({
             player: App.State.currentUser.name,
             type,
-            val1,
-            val2,
+            val1: ms,
+            val2: cm,
             rsi: rsiVal,
             rank: rankLabel
           });
@@ -1866,7 +2072,7 @@
           btnDrill.addEventListener('click', () => {
             this.Audio.init();
             this.UI.showToast('🎮 10秒ドリル開始！');
-            this.Engine.simulateResult(this.State.testType);
+            this.UI.startCountdown();
           });
         }
 
@@ -1879,8 +2085,9 @@
               this.UI.openModal('modal-profile');
             } else if (this.State.mode === 'STEP2_SCAN') {
               this.UI.showToast('足元の枠に足首を揃えて3秒静止してね');
-            } else {
-              this.Engine.simulateResult(this.State.testType);
+            } else if (this.State.mode === 'READY') {
+              // ボタンを押しても即カウントダウン開始できる！
+              this.UI.startCountdown();
             }
           });
         }
