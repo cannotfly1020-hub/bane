@@ -462,9 +462,9 @@
       left: 50%;
       transform: translateX(-50%);
       width: 250px;
-      height: 74px;
+      height: 50px;
       border: 2.5px solid #10b981;
-      border-radius: 14px;
+      border-radius: 12px;
       background: rgba(16, 185, 129, 0.14);
       z-index: 5;
       display: flex;
@@ -479,8 +479,8 @@
 
     #foot-lock-box.warning {
       border-color: #ef4444 !important;
-      background: rgba(239, 68, 68, 0.2) !important;
-      box-shadow: 0 0 18px rgba(239, 68, 68, 0.6) !important;
+      background: rgba(239, 68, 68, 0.25) !important;
+      box-shadow: 0 0 18px rgba(239, 68, 68, 0.7) !important;
     }
 
     #foot-lock-box.counting {
@@ -1099,9 +1099,11 @@
           isDone: false, 
           pxPerCm: 2.5, 
           baselineHipY: 0,
+          baselineShinPx: 0,
           holdStartTime: 0,
           requiredHoldMs: 3000,
-          lastSecondBeep: 0
+          lastSecondBeep: 0,
+          lastWarningSpokenTime: 0
         },
         readyAlignTime: 0,
         countdown: {
@@ -2073,10 +2075,11 @@
           if (!footBoxEl) return { ok: false, reason: '枠が見つかりません' };
 
           const boxRect = footBoxEl.getBoundingClientRect();
-          const boxLeft = boxRect.left - 15;
-          const boxRight = boxRect.right + 15;
-          const boxTop = boxRect.top - 15;
-          const boxBottom = boxRect.bottom + 18;
+          // 前後・左右の許容マージンを引き締め
+          const boxLeft = boxRect.left - 10;
+          const boxRight = boxRect.right + 10;
+          const boxTop = boxRect.top - 6;
+          const boxBottom = boxRect.bottom + 8;
 
           const lAnkleP = this.toScreenCoords(lAnkle.x, lAnkle.y);
           const rAnkleP = this.toScreenCoords(rAnkle.x, rAnkle.y);
@@ -2098,7 +2101,12 @@
           }
 
           const totalPx = totalBodyH * this.canvasEl.height;
-          return { ok: true, totalPx };
+          // 左右のすね（膝〜足首）の画面ピクセル長を計算
+          const lShinPx = Math.abs(lAnkle.y - lKnee.y) * this.canvasEl.height;
+          const rShinPx = Math.abs(rAnkle.y - rKnee.y) * this.canvasEl.height;
+          const avgShinPx = (lShinPx + rShinPx) / 2;
+
+          return { ok: true, totalPx, avgShinPx };
         },
 
         processThreeSecondHold(lm) {
@@ -2147,6 +2155,8 @@
             if (App.State.currentUser.heightCm > 0) {
               App.State.calib.pxPerCm = check.totalPx / App.State.currentUser.heightCm;
               App.State.calib.baselineHipY = ((lm[23].y + lm[24].y) / 2) * this.canvasEl.height;
+              // スキャン位置での基準すね長を保存
+              App.State.calib.baselineShinPx = check.avgShinPx;
               App.State.calib.isDone = true;
 
               App.Audio.playLock();
@@ -2174,26 +2184,72 @@
           if (reportModal && reportModal.classList.contains('open')) return;
 
           const check = this.validateAnklesInFootBox(lm);
+          const fBox = document.getElementById('foot-lock-box');
           const fTextTop = document.getElementById('foot-lock-text-top');
           const fTextSub = document.getElementById('foot-lock-text-sub');
           const now = performance.now();
 
-          if (check.ok) {
-            if (!App.State.readyAlignTime) {
-              App.State.readyAlignTime = now;
-            }
-            const duration = now - App.State.readyAlignTime;
-            if (fTextTop) fTextTop.textContent = '🧍 姿勢OK！測定スタート準備...';
-            if (fTextSub) fTextSub.textContent = 'そのまま静止してね！';
-
-            if (duration > 900) {
-              App.State.readyAlignTime = 0;
-              App.UI.startCountdown();
-            }
-          } else {
+          // 枠内に足首がない場合
+          if (!check.ok) {
             App.State.readyAlignTime = 0;
+            if (fBox) {
+              fBox.className = 'ready-blue';
+              if (check.isWarning) fBox.classList.add('warning');
+            }
             if (fTextTop) fTextTop.textContent = '✅ 縮尺ロック完了！';
-            if (fTextSub) fTextSub.textContent = '緑の枠に立つと自動スタート';
+            if (fTextSub) fTextSub.textContent = check.reason || '緑の枠に立つと自動スタート';
+            return;
+          }
+
+          // --- 立ち位置ズレ（前後距離）チェック（直立待機時のみ） ---
+          const baseShin = App.State.calib.baselineShinPx;
+          if (baseShin > 20) {
+            const currentShin = check.avgShinPx;
+            const ratio = currentShin / baseShin;
+            const hipY = ((lm[23].y + lm[24].y) / 2) * this.canvasEl.height;
+            const isHipTooLow = (hipY - App.State.calib.baselineHipY) > 28; // すでにしゃがみ込んでいる
+
+            // 音声警告クールダウン（3秒に1回）
+            const speakWarning = (text) => {
+              if (now - App.State.calib.lastWarningSpokenTime > 3000) {
+                App.State.calib.lastWarningSpokenTime = now;
+                App.Audio.speak(text);
+              }
+            };
+
+            // ① カメラに近づきすぎ（すねが10%以上長い）
+            if (ratio > 1.10) {
+              App.State.readyAlignTime = 0;
+              if (fBox) fBox.className = 'warning';
+              if (fTextTop) fTextTop.textContent = '⚠️ 前に出すぎです！';
+              if (fTextSub) fTextSub.textContent = 'スキャン位置より1歩下がってね';
+              speakWarning('前に出すぎだよ。一歩下がってね');
+              return;
+            }
+
+            // ② カメラから離れすぎ（すねが10%以上短く、かつ直立している）
+            if (ratio < 0.90 && !isHipTooLow) {
+              App.State.readyAlignTime = 0;
+              if (fBox) fBox.className = 'warning';
+              if (fTextTop) fTextTop.textContent = '⚠️ 下がりすぎです！';
+              if (fTextSub) fTextSub.textContent = 'もう少し前へ来てね';
+              speakWarning('下がりすぎだよ。もう少し前へ来てね');
+              return;
+            }
+          }
+
+          // 立ち位置ピッタリ・姿勢OK
+          if (fBox) fBox.className = 'active-green';
+          if (!App.State.readyAlignTime) {
+            App.State.readyAlignTime = now;
+          }
+          const duration = now - App.State.readyAlignTime;
+          if (fTextTop) fTextTop.textContent = '🧍 立ち位置OK！スタート準備...';
+          if (fTextSub) fTextSub.textContent = 'そのまま静止してね！';
+
+          if (duration > 900) {
+            App.State.readyAlignTime = 0;
+            App.UI.startCountdown();
           }
         }
       },
