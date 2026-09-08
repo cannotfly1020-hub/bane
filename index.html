@@ -1085,6 +1085,8 @@
         takeoffTime: 0,
         landingTime: 0,
         baselineHipY: 0,
+        standingHipSamples: [], // 直立静止時の基準骨盤サンプリング配列
+        baselineStandingHipY: 0,
         peakHipY: 0,
         lowestHipY: 0,
         testStartTimestamp: 0,
@@ -1109,6 +1111,7 @@
           this.lastPhaseChangeTime = 0;
           this.brakeHoldStart = 0;
           this.brakeLastAngle = 180;
+          this.standingHipSamples = [];
           if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
             try { this.mediaRecorder.stop(); } catch (e) {}
           }
@@ -1120,6 +1123,7 @@
           const num = App.DOM.countdownNumber;
           overlay.classList.remove('hidden');
 
+          this.standingHipSamples = []; // カウントダウン中に直立の骨盤高さを収集
           let count = 3;
           num.innerText = count;
           App.Audio.playTone(440, 0.09, 'sine', 0.3);
@@ -1157,7 +1161,17 @@
 
         beginTestExecution() {
           App.setMode('TEST_RUNNING');
+          // カウントダウン中に取得した直立骨盤の中央値を基準とする
+          if (this.standingHipSamples.length > 0) {
+            const sorted = [...this.standingHipSamples].sort((a, b) => a - b);
+            this.baselineStandingHipY = sorted[Math.floor(sorted.length / 2)];
+          } else {
+            this.baselineStandingHipY = App.Sensor.lastHipY || 0;
+          }
           this.resetTestState();
+          this.baselineHipY = this.baselineStandingHipY;
+          this.lowestHipY = this.baselineStandingHipY;
+          this.peakHipY = this.baselineStandingHipY;
           this.testStartTimestamp = performance.now();
           this.lastPhaseChangeTime = performance.now();
           this.startLocalRecording();
@@ -1267,7 +1281,7 @@
           if (App.State.testType === 'RJ') {
             this.processRJTest(currentHipY, pxPerCm, now);
           } else if (App.State.testType === 'VERTICAL') {
-            this.processVerticalTest(currentHipY, pxPerCm, now);
+            this.processVerticalTest(landmarks, currentHipY, pxPerCm, now, h);
           } else if (App.State.testType === 'BRAKE') {
             this.processBrakeTest(landmarks, currentHipY, pxPerCm, now);
           }
@@ -1324,39 +1338,39 @@
             }
             // 離地後最低滞空時間（100ms）およびピーク通過後の着地判定
             const timeInAir = now - this.takeoffTime;
-            if (timeInAir >= App.CONFIG.RJ_MIN_AIR_TIME_MS && currentHipY >= this.baselineHipY - (1.0 * pxPerCm)) {
-              this.landingTime = now;
-              this.fsmPhase = 5;
-              App.Audio.playImpact();
-              this.finalizeRJTest();
-            }
-          }
-        },
+        // 垂直跳び：直立基準からの沈み込み ＆ 滞空時間×骨盤変位のハイブリッド二重判定
+        processVerticalTest(landmarks, currentHipY, pxPerCm, now, h) {
+          const lAnkle = landmarks[27];
+          const rAnkle = landmarks[28];
+          const currentAnkleY = Math.min(lAnkle.y, rAnkle.y) * h;
 
-        processVerticalTest(currentHipY, pxPerCm, now) {
           if (this.fsmPhase === 0) {
-            this.baselineHipY = currentHipY;
-            this.lowestHipY = currentHipY;
-            this.peakHipY = currentHipY;
-            this.fsmPhase = 1; // 構え〜沈み込み＆ジャンプ上昇待ち
+            this.lowestHipY = this.baselineHipY;
+            this.peakHipY = this.baselineHipY;
+            this.fsmPhase = 1; // 沈み込み（タメ）〜離地検知へ
             this.lastPhaseChangeTime = now;
           } else if (this.fsmPhase === 1) {
+            // 最深沈み込み（タメ）を追従
             if (currentHipY > this.lowestHipY) {
               this.lowestHipY = currentHipY;
             }
-            // 沈み込みの深さに関わらず、骨盤が基準値より 2.0cm 以上上に跳び上がったら即座に上昇フェーズへ移行
+            // 直立基準値より 2.0cm 以上上に身体が浮き上がった瞬間を「離地（Takeoff）」とする
             if (currentHipY < this.baselineHipY - (2.0 * pxPerCm)) {
-              this.fsmPhase = 2; // 空中ピーク追従
+              this.takeoffTime = now;
               this.peakHipY = currentHipY;
+              this.fsmPhase = 2; // 空中ピーク追従
               this.lastPhaseChangeTime = now;
               App.Audio.playExplosion();
             }
           } else if (this.fsmPhase === 2) {
+            // 空中での最高到達点を追従
             if (currentHipY < this.peakHipY) {
               this.peakHipY = currentHipY;
             }
-            // 頂点を通過し、基準位置付近に戻ってきたら着地完了
-            if (currentHipY >= this.baselineHipY - (1.2 * pxPerCm)) {
+            const timeInAir = now - this.takeoffTime;
+            // 最低120ms経過後、基準立ち位置付近まで下降してきたら着地完了
+            if (timeInAir >= 120 && currentHipY >= this.baselineHipY - (1.2 * pxPerCm)) {
+              this.landingTime = now;
               this.finalizeVerticalTest();
             }
           }
@@ -1438,12 +1452,27 @@
         async finalizeVerticalTest() {
           App.setMode('TEST_IDLE');
           const pxPerCm = App.State.calibration.pxPerCm || App.CONFIG.DEFAULT_PX_PER_CM;
-          const sinkCm = Math.max(2, (this.lowestHipY - this.baselineHipY) / pxPerCm);
-          const heightCm = Math.max(5, (this.baselineHipY - this.peakHipY) / pxPerCm);
+          
+          // 1. 直立基準からの沈み込み深さ（小学生の適正レンジ: 5cm〜35cmに安全ガード）
+          const rawSinkCm = (this.lowestHipY - this.baselineHipY) / pxPerCm;
+          const sinkCm = Math.max(5, Math.min(35, rawSinkCm));
 
-          App.UI.updateBadges(Math.round(sinkCm), Math.round(heightCm));
+          // 2. 物理滞空時間公式による跳躍高: h = 1/8 * g * t^2
+          const flightSec = Math.max(0.18, (this.landingTime - this.takeoffTime) / 1000);
+          const heightByFlight = (1 / 8) * App.CONFIG.G * Math.pow(flightSec, 2) * 100;
+
+          // 3. 骨盤変位による跳躍高（直立基準から最高到達点までの差分）
+          const rawPelvisDiffPx = Math.max(0, this.baselineHipY - this.peakHipY);
+          const heightByPelvis = rawPelvisDiffPx / pxPerCm;
+
+          // 4. ハイブリッド二重クロス検証（滞空時間を主軸にし、骨盤変位で上限を安全制御）
+          // 小学生の垂直跳び（通常20〜45cm、跳べる子で50cm台）に即した外れ値カット
+          let finalHeightCm = (heightByFlight * 0.7) + (heightByPelvis * 0.3);
+          finalHeightCm = Math.max(8.0, Math.min(65.0, finalHeightCm));
+
+          App.UI.updateBadges(Math.round(sinkCm), Math.round(finalHeightCm));
           const videoUrl = await this.stopLocalRecordingAndShowReplay();
-          this.showResultModal('VERTICAL', sinkCm, heightCm, videoUrl);
+          this.showResultModal('VERTICAL', sinkCm, finalHeightCm, videoUrl);
         },
 
         async finalizeBrakeTest() {
@@ -1518,49 +1547,368 @@
             App.DOM.reportTestName.innerText = '🛑 てっぺき急停止ブレーキ';
             App.DOM.reportLabelLeft.innerText = '前膝固定ストップ角';
             App.DOM.reportLabelRight.innerText = '停止完了スピード';
-            App.DOM.reportScoreContact.innerText = `${metric2}°`;
-            App.DOM.reportScoreHeight.innerText = `${metric1.toFixed(2)} 秒`;
+        onPoseResults(results) {
+          if (!this.ctx || !this.canvasElem) return;
+          const w = this.canvasElem.width;
+          const h = this.canvasElem.height;
+          const isUser = App.State.cameraFacing === 'user';
 
-            if (metric2 >= 130 && metric2 <= 155) {
-              rankBadge = '【🌟 てっぺき急停止マスター！】';
-              advice = '🛑 前脚がピタッと鉄壁ロック！相手を抜き去る急停止ブレーキが完璧に決まっているぞ！';
+          this.ctx.save();
+          if (isUser) {
+            // インカメラ時はCanvasコンテキスト内で左右鏡像描画
+            this.ctx.translate(w, 0);
+            this.ctx.scale(-1, 1);
+          }
+
+          // ① カメラ映像をCanvas背景に焼き込み（リプレイ録画の完全可視化）
+          if (this.videoElem && this.videoElem.readyState >= 2) {
+            this.ctx.drawImage(this.videoElem, 0, 0, w, h);
+          } else {
+            this.ctx.clearRect(0, 0, w, h);
+          }
+
+          // ② 骨格描画
+          if (results.poseLandmarks && results.poseLandmarks.length >= 33) {
+            const lms = results.poseLandmarks;
+            this.drawSkeleton(lms, w, h);
+
+            this.ctx.restore(); // 判定ロジックは実座標系で行うためコンテキスト復帰
+
+            // カウントダウン中は直立時の骨盤Y座標をサンプリング蓄積
+            if (App.State.mode === 'COUNTDOWN') {
+              const lH = lms[23];
+              const rH = lms[24];
+              if (lH && rH && lH.visibility > 0.4 && rH.visibility > 0.4) {
+                App.Engine.standingHipSamples.push(((lH.y + rH.y) / 2) * h);
+              }
+            }
+
+            if (App.State.mode === 'CALIB_SCANNING') {
+              App.Calibration.processFrame(lms, w, h);
+            } else if (App.State.mode === 'TEST_IDLE' && App.State.calibration.isCalibrated) {
+              this.checkTriLockGate(lms, w, h);
+            } else if (App.State.mode === 'TEST_RUNNING') {
+              App.Engine.processTestFrame(lms, w, h);
+            } else if (App.State.mode === 'DRILL_ACTIVE') {
+              App.Drill.processFrame(lms, w, h);
+            }
+          } else {
+            this.ctx.restore();
+          }
+        },
+
+        drawSkeleton(landmarks, w, h) {
+          if (App.State.testType === 'RJ') {
+            this.processRJTest(currentHipY, pxPerCm, now);
+          } else if (App.State.testType === 'VERTICAL') {
+            this.processVerticalTest(landmarks, currentHipY, pxPerCm, now, h);
+          } else if (App.State.testType === 'BRAKE') {
+            this.processBrakeTest(landmarks, currentHipY, pxPerCm, now);
+          }
+        },
+
+        // 離地時刻の補正と物理整合性を確保したRJステートマシン（柔軟な2回跳躍検知＆1回跳躍救済）
+        processRJTest(currentHipY, pxPerCm, now) {
+          const upwardTriggerPx = 1.8 * pxPerCm; // わずか1.8cmの上昇でも確実にジャンプ開始を検知
+
+          if (this.fsmPhase === 0) {
+            this.baselineHipY = currentHipY;
+            this.peakHipY = currentHipY;
+            this.fsmPhase = 1; // 初回跳躍（予備ジャンプ）の上昇待ち
+            this.lastPhaseChangeTime = now;
+          } else if (this.fsmPhase === 1) {
+            // ① 初回ジャンプ上昇検知（骨盤が基準値より上へ）
+            if (currentHipY < this.peakHipY) {
+              this.peakHipY = currentHipY;
+            }
+            if (currentHipY < this.baselineHipY - upwardTriggerPx) {
+              this.fsmPhase = 2; // 下降〜着地待ちへ
+              this.lastPhaseChangeTime = now;
+            }
+          } else if (this.fsmPhase === 2) {
+            // ①のジャンプの頂点を更新
+            if (currentHipY < this.peakHipY) {
+              this.peakHipY = currentHipY;
+            }
+            // ② 下降して床接地（基準高さ付近に戻ってきた）
+            if (currentHipY >= this.baselineHipY - (0.8 * pxPerCm)) {
+              this.touchStartTime = now;
+              this.fsmPhase = 3; // 接地中〜再離地待ちへ
+              this.lastPhaseChangeTime = now;
+              App.Audio.playImpact();
+            }
+          } else if (this.fsmPhase === 3) {
+            // ③ 本跳躍でパチンと再離地
+            if (currentHipY < this.baselineHipY - (0.8 * pxPerCm)) {
+              this.takeoffTime = now;
+              this.peakHipY = currentHipY;
+              this.fsmPhase = 4; // 2回目の空中ピーク追従〜着地待ち
+              this.lastPhaseChangeTime = now;
+              App.Audio.playExplosion();
+            } else if (now - this.lastPhaseChangeTime > 1800) {
+              // 救済処理: もし2回目のジャンプを行わずに着地したまま立っていた場合、1回目の跳躍として救済判定
+              this.landingTime = now;
+              this.takeoffTime = this.testStartTimestamp + 600;
+              this.touchStartTime = this.takeoffTime - 200;
+              this.finalizeRJTest();
+            }
+          } else if (this.fsmPhase === 4) {
+            if (currentHipY < this.peakHipY) {
+              this.peakHipY = currentHipY;
+            }
+            // 離地後最低滞空時間（100ms）およびピーク通過後の着地判定
+            const timeInAir = now - this.takeoffTime;
+            if (timeInAir >= App.CONFIG.RJ_MIN_AIR_TIME_MS && currentHipY >= this.baselineHipY - (1.0 * pxPerCm)) {
+              this.landingTime = now;
+              this.finalizeRJTest();
+            }
+          }
+        },
+
+        // 垂直跳び：直立基準からの沈み込み ＆ 滞空時間×骨盤変位のハイブリッド二重判定
+        processVerticalTest(landmarks, currentHipY, pxPerCm, now, h) {
+          if (this.fsmPhase === 0) {
+            this.lowestHipY = this.baselineHipY;
+            this.peakHipY = this.baselineHipY;
+            this.fsmPhase = 1; // 沈み込み（タメ）〜離地検知へ
+            this.lastPhaseChangeTime = now;
+          } else if (this.fsmPhase === 1) {
+            // 最深沈み込み（タメ）を追従
+            if (currentHipY > this.lowestHipY) {
+              this.lowestHipY = currentHipY;
+            }
+            // 直立基準値より 2.0cm 以上上に身体が浮き上がった瞬間を「離地（Takeoff）」とする
+            if (currentHipY < this.baselineHipY - (2.0 * pxPerCm)) {
+              this.takeoffTime = now;
+              this.peakHipY = currentHipY;
+              this.fsmPhase = 2; // 空中ピーク追従
+              this.lastPhaseChangeTime = now;
+              App.Audio.playExplosion();
+            }
+          } else if (this.fsmPhase === 2) {
+            // 空中での最高到達点を追従
+            if (currentHipY < this.peakHipY) {
+              this.peakHipY = currentHipY;
+            }
+            const timeInAir = now - this.takeoffTime;
+            // 最低120ms経過後、基準立ち位置付近まで下降してきたら着地完了
+            if (timeInAir >= 120 && currentHipY >= this.baselineHipY - (1.2 * pxPerCm)) {
+              this.landingTime = now;
+              this.finalizeVerticalTest();
+            }
+          }
+        },
+
+        processBrakeTest(landmarks, currentHipY, pxPerCm, now) {
+          const lKnee = landmarks[25];
+          const rKnee = landmarks[26];
+          const lHip = landmarks[23];
+          const rHip = landmarks[24];
+          const lAnkle = landmarks[27];
+          const rAnkle = landmarks[28];
+
+          if (!lKnee || !rKnee || !lHip || !rHip || !lAnkle || !rAnkle ||
+              lKnee.visibility < 0.4 || rKnee.visibility < 0.4) {
+            return;
+          }
+
+          const leftAngle = this.calculateKneeAngle(lHip, lKnee, lAnkle);
+          const rightAngle = this.calculateKneeAngle(rHip, rKnee, rAnkle);
+          const currentKneeAngle = Math.min(leftAngle, rightAngle);
+
+          if (this.fsmPhase === 0) {
+            this.brakeInitialKneeAngle = currentKneeAngle;
+            this.brakeMinKneeAngle = currentKneeAngle;
+            this.brakeLastAngle = currentKneeAngle;
+            this.brakeHoldStart = 0;
+            this.fsmPhase = 1;
+            this.lastPhaseChangeTime = now;
+          } else if (this.fsmPhase === 1) {
+            if (currentKneeAngle < 165) {
+              this.touchStartTime = now;
+              this.brakeMinKneeAngle = currentKneeAngle;
+              this.brakeLastAngle = currentKneeAngle;
+              this.fsmPhase = 2;
+              this.lastPhaseChangeTime = now;
+            }
+          } else if (this.fsmPhase === 2) {
+            if (currentKneeAngle < this.brakeMinKneeAngle) {
+              this.brakeMinKneeAngle = currentKneeAngle;
+            }
+
+            const angleDelta = Math.abs(currentKneeAngle - this.brakeLastAngle);
+            this.brakeLastAngle = currentKneeAngle;
+
+            // MediaPipeのブレを許容（<= 5.5度）し、150msのキープで停止判定
+            if (angleDelta <= 5.5 && currentKneeAngle <= 162) {
+              if (!this.brakeHoldStart) {
+                this.brakeHoldStart = now;
+              } else if (now - this.brakeHoldStart >= 150) {
+                this.brakeStopTime = this.brakeHoldStart;
+                App.Audio.playImpact();
+                this.finalizeBrakeTest();
+              }
             } else {
+              this.brakeHoldStart = 0;
+            }
+          }
+        },
+
+        async finalizeRJTest() {
+          App.setMode('TEST_IDLE');
+
+          const contactTimeSec = Math.max(0.12, (this.takeoffTime - this.touchStartTime) / 1000);
+          const flightTimeSec = Math.max(0.15, (this.landingTime - this.takeoffTime) / 1000);
+
+          const heightByFlightCm = (1 / 8) * App.CONFIG.G * Math.pow(flightTimeSec, 2) * 100;
+          const rawPelvisDiffPx = Math.max(0, this.baselineHipY - this.peakHipY);
+          const heightByPelvisCm = rawPelvisDiffPx / (App.State.calibration.pxPerCm || App.CONFIG.DEFAULT_PX_PER_CM);
+          
+          const finalHeightCm = Math.max(5.0, Math.min(heightByFlightCm, heightByPelvisCm * 1.3));
+
+          App.UI.updateBadges(contactTimeSec.toFixed(2), Math.round(finalHeightCm));
+
+          const videoUrl = await this.stopLocalRecordingAndShowReplay();
+          this.showResultModal('RJ', contactTimeSec, finalHeightCm, videoUrl);
+        },
+
+        async finalizeVerticalTest() {
+          App.setMode('TEST_IDLE');
+          const pxPerCm = App.State.calibration.pxPerCm || App.CONFIG.DEFAULT_PX_PER_CM;
+          
+          // 1. 直立基準からの沈み込み深さ（小学生の適正レンジ: 5cm〜35cmに安全ガード）
+          const rawSinkCm = (this.lowestHipY - this.baselineHipY) / pxPerCm;
+          const sinkCm = Math.max(5, Math.min(35, rawSinkCm));
+
+          // 2. 物理滞空時間公式による跳躍高: h = 1/8 * g * t^2
+          const flightSec = Math.max(0.18, (this.landingTime - this.takeoffTime) / 1000);
+          const heightByFlight = (1 / 8) * App.CONFIG.G * Math.pow(flightSec, 2) * 100;
+
+          // 3. 骨盤変位による跳躍高（直立基準から最高到達点までの差分）
+          const rawPelvisDiffPx = Math.max(0, this.baselineHipY - this.peakHipY);
+          const heightByPelvis = rawPelvisDiffPx / pxPerCm;
+
+          // 4. ハイブリッド二重クロス検証（滞空時間を主軸にし、骨盤変位で上限を安全制御）
+          let finalHeightCm = (heightByFlight * 0.7) + (heightByPelvis * 0.3);
+          finalHeightCm = Math.max(8.0, Math.min(65.0, finalHeightCm));
+
+          App.UI.updateBadges(Math.round(sinkCm), Math.round(finalHeightCm));
+          const videoUrl = await this.stopLocalRecordingAndShowReplay();
+          this.showResultModal('VERTICAL', sinkCm, finalHeightCm, videoUrl);
+        },
+
+        async finalizeBrakeTest() {
+          App.setMode('TEST_IDLE');
+          const stopTimeSec = Math.max(0.1, (this.brakeStopTime - this.touchStartTime) / 1000);
+          const kneeAngle = this.brakeMinKneeAngle;
+
+          App.UI.updateBadges(kneeAngle, stopTimeSec.toFixed(2));
+          const videoUrl = await this.stopLocalRecordingAndShowReplay();
+          this.showResultModal('BRAKE', stopTimeSec, kneeAngle, videoUrl);
+        },
+
+        abortWithFeedback(speechMsg) {
+          App.setMode('TEST_IDLE');
+          App.Audio.speak(speechMsg);
+          App.UI.showToast(speechMsg);
+        },
+
+        showResultModal(type, metric1, metric2, videoUrl) {
+          const videoElem = App.DOM.reportVideo;
+          const placeholder = App.DOM.reportPlaceholder;
+
+          if (videoUrl) {
+            videoElem.src = videoUrl;
+            videoElem.playbackRate = 0.5;
+            videoElem.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+            videoElem.play().catch(() => {});
+          } else {
+            videoElem.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+          }
+
+          let rankBadge = '';
+          let advice = '';
+
+          if (type === 'RJ') {
+            App.DOM.reportTestName.innerText = '💥 連続トランポリン跳び';
+            App.DOM.reportLabelLeft.innerText = '足裏タッチスピード';
+            App.DOM.reportLabelRight.innerText = 'ロケットジャンプ';
+            App.DOM.reportScoreContact.innerText = `${metric1.toFixed(2)} 秒`;
+            App.DOM.reportScoreHeight.innerText = `${Math.round(metric2)} cm`;
+
+            if (metric1 <= 0.20 && metric2 >= 35) {
+              rankBadge = '【🌟 SUPER BRAWLER達成！】';
+              advice = '🚀 アキレス腱のスーパーゴムパチンコが火を吹いているぞ！地面を押す時間が極短で跳躍も最高だ！';
+            } else if (metric1 <= 0.26) {
+              rankBadge = '【⚡ LEVEL 2 実戦バネマスター】';
+              advice = '⚡ ナイス反発！足首をさらにガチッと固めれば、神速パチンタッチになれるぞ！';
+            } else {
+              rankBadge = '【★ 覚醒バネ Lv.1（伸びしろMAX！）】';
+              advice = '⚠️ 膝がクニャッと沈み込みすぎちゃった！地面は熱い鉄板だと思ってパチンと弾き返そう！';
+            }
+          } else if (type === 'VERTICAL') {
+            App.DOM.reportTestName.innerText = '🚀 ロケット垂直跳び';
+            App.DOM.reportLabelLeft.innerText = 'たくわえ沈み込み';
+            App.DOM.reportLabelRight.innerText = '垂直跳び到達高';
+            App.DOM.reportScoreContact.innerText = `${Math.round(metric1)} cm`;
+            App.DOM.reportScoreHeight.innerText = `${Math.round(metric2)} cm`;
+
+            if (metric2 >= 40) {
+              rankBadge = '【🌟 スーパージャイアント跳び！】';
+              advice = '🚀 驚異のロケット爆発！たくわえたパワーを空へ一直線に放出しきれているぞ！';
+            } else if (metric2 >= 28) {
+              rankBadge = '【⚡ LEVEL 2 ナイスロケット！】';
+              advice = '⚡ 素晴らしい跳躍力！腕の振り上げをさらに素早く連動させると50cm越えも狙えるぞ！';
+            } else {
+              rankBadge = '【★ 覚醒ロケット Lv.1】';
+              advice = '💡 しゃがんでから上に跳ぶリズムを「ピタッ、ドカン！」と一気に爆発させてみよう！';
+            }
+          } else if (type === 'BRAKE') {
+            App.DOM.reportTestName.innerText = '🛑 てっぺき急停止ブレーキ';
+            App.DOM.reportLabelLeft.innerText = '前膝固定ストップ角';
+            App.DOM.reportLabelRight.innerText = '停止完了スピード';
+            App.DOM.reportScoreContact.innerText = `${metric1.toFixed(2)} 秒`;
+            App.DOM.reportScoreHeight.innerText = `${metric2}°`;
+
+            if (metric2 >= 130 && metric2 <= 155 && metric1 <= 0.28) {
+              rankBadge = '【🌟 てっぺき急停止マスター！】';
+              advice = '🛡️ 前膝がカチッと固まって完璧な急停止だ！このストップが敵のフェイクを無効化するぞ！';
+            } else if (metric2 <= 120) {
               rankBadge = '【⚠️ ひざクニャ沈み込み】';
-              advice = '💡 膝が曲がりすぎて前方へ流れてしまったぞ！前足の裏全体でガツンと壁を作ろう！';
+              advice = '⚠️ 止まったときに膝が深く曲がりすぎちゃった！前足にグッと力を入れてガツンと止めよう！';
+            } else {
+              rankBadge = '【⚡ ナイスストップ！】';
+              advice = '⚡ しっかり止まれているぞ！頭が前に突っ込まないように体幹を意識しよう！';
             }
           }
 
           App.DOM.reportTitleRank.innerText = rankBadge;
           App.DOM.reportAdviceText.innerText = advice;
 
-          App.Audio.playFanfare();
-          App.Audio.speak(`${rankBadge}！`);
-          App.UI.openModal('modal-report');
-
           App.Storage.saveLog({
-            type,
-            metric1: metric1.toFixed ? metric1.toFixed(2) : metric1,
-            metric2: Math.round(metric2),
+            date: new Date().toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+            type: App.DOM.reportTestName.innerText,
             rankBadge,
-            date: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
+            metric1: `${App.DOM.reportLabelLeft.innerText}: ${App.DOM.reportScoreContact.innerText}`,
+            metric2: `${App.DOM.reportLabelRight.innerText}: ${App.DOM.reportScoreHeight.innerText}`
           });
+
+          App.UI.openModal('modal-report');
+          App.Audio.playFanfare();
         }
       },
 
       Drill: {
+        timerInterval: null,
         comboCount: 0,
         ultProgress: 0,
         remainingSec: 10,
-        timerInterval: null,
         lastJumpTime: 0,
 
         toggle() {
           App.Audio.unlockAudioOnFirstTouch();
-          if (!App.State.calibration.isCalibrated) {
-            App.UI.openCalibrationModal();
-            return;
-          }
-
           if (App.State.mode === 'DRILL_ACTIVE') {
             this.stop();
           } else {
